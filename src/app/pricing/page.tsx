@@ -1,12 +1,12 @@
-'use client';
+﻿'use client';
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Icon from '@/components/Icon';
 import { colors, gradients, radius, shadows } from '@/lib/tokens';
-const P=[{n:'Free',p:0,d:'Try it out',f:{'Clips/month':'3','Export':'720p MP4','Watermark':'Yes','Projects':'1','Captions':'Basic','Hook Detection':'✓','9:16 Reframe':'✓','Adjustments':'—','Calendar':'—','Analytics':'—','Templates':'5 basic','Priority':'—','API':'—','Team':'—'},pop:false},
-{n:'Solo Creator',p:9,d:'Individual creators',f:{'Clips/month':'20','Export':'1080p MP4','Watermark':'No','Projects':'5','Captions':'Custom','Hook Detection':'✓','9:16 Reframe':'✓','Adjustments':'Basic','Calendar':'✓','Analytics':'Basic','Templates':'All','Priority':'—','API':'—','Team':'—'},pop:false},
-{n:'Professional',p:24,d:'Serious creators',f:{'Clips/month':'100','Export':'2K & 4K','Watermark':'No','Projects':'Unlimited','Captions':'Animated','Hook Detection':'✓','9:16 Reframe':'✓','Adjustments':'Full suite','Calendar':'✓','Analytics':'Full','Templates':'All+Premium','Priority':'✓','API':'—','Team':'—'},pop:true},
-{n:'Big Agency',p:79,d:'Teams & agencies',f:{'Clips/month':'Unlimited','Export':'4K+ProRes','Watermark':'No','Projects':'Unlimited','Captions':'All styles','Hook Detection':'✓','9:16 Reframe':'✓','Adjustments':'Full suite','Calendar':'✓','Analytics':'Full+Reports','Templates':'All+Custom','Priority':'✓','API':'✓','Team':'Up to 10'},pop:false}];
+const P=[{n:'Free',p:0,d:'Try it out',f:{'Clips/month':'3','Export':'720p MP4','Watermark':'Yes','Projects':'1','Captions':'Basic','Hook Detection':'âœ“','9:16 Reframe':'âœ“','Adjustments':'â€”','Calendar':'â€”','Analytics':'â€”','Templates':'5 basic','Priority':'â€”','API':'â€”','Team':'â€”'},pop:false},
+{n:'Solo Creator',p:9,d:'Individual creators',f:{'Clips/month':'20','Export':'1080p MP4','Watermark':'No','Projects':'5','Captions':'Custom','Hook Detection':'âœ“','9:16 Reframe':'âœ“','Adjustments':'Basic','Calendar':'âœ“','Analytics':'Basic','Templates':'All','Priority':'â€”','API':'â€”','Team':'â€”'},pop:false},
+{n:'Professional',p:24,d:'Serious creators',f:{'Clips/month':'100','Export':'2K & 4K','Watermark':'No','Projects':'Unlimited','Captions':'Animated','Hook Detection':'âœ“','9:16 Reframe':'âœ“','Adjustments':'Full suite','Calendar':'âœ“','Analytics':'Full','Templates':'All+Premium','Priority':'âœ“','API':'â€”','Team':'â€”'},pop:true},
+{n:'Big Agency',p:79,d:'Teams & agencies',f:{'Clips/month':'Unlimited','Export':'4K+ProRes','Watermark':'No','Projects':'Unlimited','Captions':'All styles','Hook Detection':'âœ“','9:16 Reframe':'âœ“','Adjustments':'Full suite','Calendar':'âœ“','Analytics':'Full+Reports','Templates':'All+Custom','Priority':'âœ“','API':'âœ“','Team':'Up to 10'},pop:false}];
 export default function PricingPage(){
   const router=useRouter();
   const[annual,setAnnual]=useState(false);
@@ -16,7 +16,7 @@ export default function PricingPage(){
       <nav style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'16px 24px',maxWidth:1200,margin:'0 auto'}}>
         <div onClick={()=>router.push('/')} style={{display:'flex',alignItems:'center',gap:'10px',cursor:'pointer'}}>
           <div style={{width:32,height:32,borderRadius:radius.md,background:gradients.cta,display:'flex',alignItems:'center',justifyContent:'center'}}><Icon name="auto_awesome" size={18} style={{color:'#fff'}}/></div>
-          <span style={{fontSize:'18px',fontWeight:800}}>ContentClip</span>
+          <span style={{fontSize:'18px',fontWeight:800}}>HookClip</span>
         </div>
         <button onClick={()=>router.push('/auth')} style={{background:'#fff',color:'#000',fontSize:'13px',fontWeight:700,padding:'8px 18px',borderRadius:radius.md,border:'none',cursor:'pointer'}}>Get Started</button>
       </nav>
@@ -44,8 +44,8 @@ export default function PricingPage(){
             <thead><tr><th style={{textAlign:'left',padding:'12px',fontSize:'12px',fontWeight:600,color:colors.onSurfaceVariant,borderBottom:'1px solid rgba(70,69,85,0.1)'}}>Feature</th>
             {P.map(p=><th key={p.n} style={{textAlign:'center',padding:'12px',fontSize:'13px',fontWeight:700,color:p.pop?colors.primary:colors.onSurface,borderBottom:'1px solid rgba(70,69,85,0.1)'}}>{p.n}</th>)}</tr></thead>
             <tbody>{keys.map((key,i)=><tr key={key}><td style={{padding:'12px',fontSize:'13px',color:colors.onSurfaceVariant,borderBottom:i<keys.length-1?'1px solid rgba(70,69,85,0.05)':'none'}}>{key}</td>
-            {P.map(p=>{const v=p.f[key as keyof typeof p.f];return<td key={p.n} style={{textAlign:'center',padding:'12px',fontSize:'13px',borderBottom:i<keys.length-1?'1px solid rgba(70,69,85,0.05)':'none',color:v==='—'?colors.outlineVariant:v==='✓'?'#4ade80':colors.onSurface}}>
-              {v==='✓'?<Icon name="check" size={16} style={{color:'#4ade80'}}/>:v}
+            {P.map(p=>{const v=p.f[key as keyof typeof p.f];return<td key={p.n} style={{textAlign:'center',padding:'12px',fontSize:'13px',borderBottom:i<keys.length-1?'1px solid rgba(70,69,85,0.05)':'none',color:v==='â€”'?colors.outlineVariant:v==='âœ“'?'#4ade80':colors.onSurface}}>
+              {v==='âœ“'?<Icon name="check" size={16} style={{color:'#4ade80'}}/>:v}
             </td>;})}</tr>)}</tbody>
           </table>
         </div>

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import React, { useState, useRef } from 'react';
 import DashboardLayout from '@/components/DashboardLayout';
 import Icon from '@/components/Icon';
@@ -19,10 +19,10 @@ export default function SettingsPage(){
   const toggleNotif=(key:keyof typeof notifs)=>setNotifs(p=>({...p,[key]:!p[key]}));
   const tabs=[{id:'profile',label:'Profile',icon:'person'},{id:'billing',label:'Billing',icon:'credit_card'},{id:'notifications',label:'Notifications',icon:'notifications'},{id:'integrations',label:'Integrations',icon:'extension'}];
   const integrations=[
-    {name:'YouTube',icon:'smart_display',connected:true,color:'#FF0000',info:'Connect your YouTube channel to publish Shorts directly from ContentClip. You\'ll need to authorize with your Google account.'},
+    {name:'YouTube',icon:'smart_display',connected:true,color:'#FF0000',info:'Connect your YouTube channel to publish Shorts directly from HookClip. You\'ll need to authorize with your Google account.'},
     {name:'TikTok',icon:'music_note',connected:false,color:'#fff',info:'Link your TikTok account to schedule and auto-publish clips. Requires a TikTok Business or Creator account.'},
     {name:'Instagram',icon:'photo_camera',connected:false,color:'#E1306C',info:'Connect Instagram to publish Reels. Requires a Professional Instagram account linked to a Facebook Business page.'},
-    {name:'Google Drive',icon:'cloud',connected:true,color:'#4285F4',info:'Back up your exported clips to Google Drive automatically. Files are saved to a ContentClip folder.'},
+    {name:'Google Drive',icon:'cloud',connected:true,color:'#4285F4',info:'Back up your exported clips to Google Drive automatically. Files are saved to a HookClip folder.'},
   ];
   return(
     <DashboardLayout title="Account Settings" subtitle="Manage your profile, billing, and preferences.">
@@ -55,7 +55,7 @@ export default function SettingsPage(){
         <div style={{background:colors.surfaceContainerHigh,borderRadius:radius.lg,padding:'32px',marginBottom:'16px'}}>
           <h3 style={{fontSize:'16px',fontWeight:700,marginBottom:'24px'}}>Change Password</h3>
           <div style={{display:'flex',flexDirection:'column',gap:'16px'}}>
-            <div><label style={{fontSize:'12px',fontWeight:600,color:colors.onSurfaceVariant,display:'block',marginBottom:'6px'}}>Current Password</label><input type="password" placeholder="••••••••" style={inputField}/></div>
+            <div><label style={{fontSize:'12px',fontWeight:600,color:colors.onSurfaceVariant,display:'block',marginBottom:'6px'}}>Current Password</label><input type="password" placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" style={inputField}/></div>
             <div><label style={{fontSize:'12px',fontWeight:600,color:colors.onSurfaceVariant,display:'block',marginBottom:'6px'}}>New Password</label><input type="password" placeholder="Min 8 chars, uppercase, number, symbol" style={inputField}/><p style={{fontSize:'11px',color:colors.onSurfaceVariant,marginTop:'4px'}}>Use 8+ characters with uppercase, numbers, and symbols for a strong password.</p></div>
           </div>
           <button onClick={()=>alert('Password updated! Confirmation sent to your email.')} style={{background:colors.surfaceContainer,color:colors.onSurface,border:'1px solid '+colors.outlineVariant,fontWeight:600,padding:'10px 24px',borderRadius:radius.md,cursor:'pointer',fontSize:'13px',marginTop:'20px',fontFamily:"'Inter',sans-serif"}}>Update Password</button>
@@ -74,7 +74,7 @@ export default function SettingsPage(){
             <span style={{fontSize:'11px',fontWeight:700,color:'#cc97ff',background:'rgba(156,72,234,0.15)',padding:'4px 12px',borderRadius:radius.full}}>PRO</span>
           </div>
           <p style={{fontSize:'32px',fontWeight:800,marginBottom:'4px'}}>$24 <span style={{fontSize:'14px',color:colors.onSurfaceVariant,fontWeight:500}}>/month</span></p>
-          <p style={{fontSize:'13px',color:colors.onSurfaceVariant,marginBottom:'20px'}}>Professional plan · Renews Apr 30, 2026</p>
+          <p style={{fontSize:'13px',color:colors.onSurfaceVariant,marginBottom:'20px'}}>Professional plan Â· Renews Apr 30, 2026</p>
           <div style={{display:'flex',gap:'8px'}}>
             <button onClick={()=>setShowUpgrade(true)} style={{padding:'10px 20px',borderRadius:radius.md,background:gradients.primary,color:'#FAF7FF',border:'none',fontWeight:600,fontSize:'13px',cursor:'pointer',fontFamily:"'Inter',sans-serif"}}>Upgrade Plan</button>
             <button onClick={()=>setShowCancel(true)} style={{padding:'10px 20px',borderRadius:radius.md,background:'transparent',color:colors.onSurfaceVariant,border:'1px solid '+colors.outlineVariant,fontWeight:600,fontSize:'13px',cursor:'pointer',fontFamily:"'Inter',sans-serif"}}>Cancel</button>
@@ -104,7 +104,7 @@ export default function SettingsPage(){
                 <div style={{width:44,height:44,borderRadius:radius.md,background:int.color+'15',display:'flex',alignItems:'center',justifyContent:'center'}}><Icon name={int.icon} size={22} style={{color:int.color}}/></div>
                 <div><p style={{fontSize:'14px',fontWeight:600}}>{int.name}</p><p style={{fontSize:'12px',color:int.connected?'#4ade80':colors.onSurfaceVariant}}>{int.connected?'Connected':'Not connected'}</p></div>
               </div>
-              <button onClick={()=>alert(int.connected?int.name+' disconnected':int.name+' connection started — you will be redirected to authorize.')} style={{padding:'8px 18px',borderRadius:radius.md,background:int.connected?'transparent':gradients.primary,color:int.connected?colors.onSurfaceVariant:'#FAF7FF',border:int.connected?'1px solid '+colors.outlineVariant:'none',fontWeight:600,fontSize:'12px',cursor:'pointer',fontFamily:"'Inter',sans-serif"}}>{int.connected?'Disconnect':'Connect'}</button>
+              <button onClick={()=>alert(int.connected?int.name+' disconnected':int.name+' connection started â€” you will be redirected to authorize.')} style={{padding:'8px 18px',borderRadius:radius.md,background:int.connected?'transparent':gradients.primary,color:int.connected?colors.onSurfaceVariant:'#FAF7FF',border:int.connected?'1px solid '+colors.outlineVariant:'none',fontWeight:600,fontSize:'12px',cursor:'pointer',fontFamily:"'Inter',sans-serif"}}>{int.connected?'Disconnect':'Connect'}</button>
             </div>
             <div style={{background:colors.surfaceContainer,borderRadius:radius.md,padding:'12px',display:'flex',alignItems:'flex-start',gap:'8px'}}>
               <Icon name="info" size={16} style={{color:colors.primary,flexShrink:0,marginTop:'1px'}}/>
@@ -118,7 +118,7 @@ export default function SettingsPage(){
         <div onClick={e=>e.stopPropagation()} style={{background:colors.surfaceContainerHigh,borderRadius:radius.xl,padding:'32px',width:'100%',maxWidth:'500px'}}>
           <h3 style={{fontSize:'20px',fontWeight:700,marginBottom:'20px'}}>Upgrade Your Plan</h3>
           {PLANS.map(p=><button key={p.n} onClick={()=>{alert('Redirecting to Stripe checkout for '+p.n+'...');setShowUpgrade(false);}} style={{width:'100%',padding:'16px 20px',borderRadius:radius.lg,background:colors.surfaceContainer,border:'1px solid '+colors.outlineVariant,color:colors.onSurface,cursor:'pointer',marginBottom:'8px',display:'flex',justifyContent:'space-between',alignItems:'center',fontFamily:"'Inter',sans-serif"}}>
-            <div style={{textAlign:'left'}}><p style={{fontSize:'15px',fontWeight:700}}>{p.n}</p><p style={{fontSize:'11px',color:colors.onSurfaceVariant}}>{p.f.join(' · ')}</p></div>
+            <div style={{textAlign:'left'}}><p style={{fontSize:'15px',fontWeight:700}}>{p.n}</p><p style={{fontSize:'11px',color:colors.onSurfaceVariant}}>{p.f.join(' Â· ')}</p></div>
             <span style={{fontSize:'20px',fontWeight:800}}>${p.p}<span style={{fontSize:'12px',color:colors.onSurfaceVariant,fontWeight:500}}>/mo</span></span>
           </button>)}
         </div>

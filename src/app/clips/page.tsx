@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import React, { useState } from 'react';
 import DashboardLayout from '@/components/DashboardLayout';
 import Icon from '@/components/Icon';
@@ -22,7 +22,7 @@ export default function ClipsPage() {
   const [showDl,setShowDl] = useState<string|null>(null);
   const filtered = CLIPS.filter(c=>plat==='All'||c.platform.toLowerCase()===plat.toLowerCase()).sort((a,b)=>sort==='Most Viral'?b.score-a.score:0);
   const sc = (s:number) => s>=85?'#4ade80':s>=70?'#C0C1FF':'#fbbf24';
-  const handleShare = (clip:typeof CLIPS[0]) => { navigator.clipboard.writeText('https://contentclip.app/share/'+clip.id); alert('Share link copied to clipboard!'); };
+  const handleShare = (clip:typeof CLIPS[0]) => { navigator.clipboard.writeText('https://hookclip.app/share/'+clip.id); alert('Share link copied to clipboard!'); };
   return (
     <DashboardLayout title="Generated Clips" subtitle={CLIPS.length+' clips from "How AI is Changing Everything"'}>
       <div className="clips-filters" style={{ display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'24px',flexWrap:'wrap',gap:'12px' }}>

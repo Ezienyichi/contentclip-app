@@ -1,4 +1,4 @@
--- ContentClip Database Schema
+﻿-- HookClip Database Schema
 -- Run this in Supabase SQL Editor
 
 -- ============================================

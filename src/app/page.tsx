@@ -1,12 +1,12 @@
-'use client';
+﻿'use client';
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Icon from '@/components/Icon';
 import { colors, gradients, radius, shadows } from '@/lib/tokens';
 const TESTIMONIALS = [
-  { name: 'Sarah Chen', role: 'Creator · 1.2M followers', text: 'ContentClip cut my editing time from 8 hours to 20 minutes.', avatar: 'S' },
-  { name: 'Marcus Johnson', role: 'Podcast Host · Top 50', text: 'I paste my episode link and get 10 viral clips back.', avatar: 'M' },
-  { name: 'Priya Sharma', role: 'Agency · 40+ clients', text: 'Handles what used to take a 5-person team.', avatar: 'P' },
+  { name: 'Sarah Chen', role: 'Creator Â· 1.2M followers', text: 'HookClip cut my editing time from 8 hours to 20 minutes.', avatar: 'S' },
+  { name: 'Marcus Johnson', role: 'Podcast Host Â· Top 50', text: 'I paste my episode link and get 10 viral clips back.', avatar: 'M' },
+  { name: 'Priya Sharma', role: 'Agency Â· 40+ clients', text: 'Handles what used to take a 5-person team.', avatar: 'P' },
 ];
 export default function LandingPage() {
   const router = useRouter();
@@ -17,7 +17,7 @@ export default function LandingPage() {
       <nav style={{ position: 'sticky', top: 0, zIndex: 50, background: 'rgba(14,14,14,0.8)', backdropFilter: 'blur(12px)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 24px', borderBottom: '1px solid rgba(70,69,85,0.2)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }} onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
           <div style={{ width: 32, height: 32, borderRadius: radius.md, background: gradients.cta, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="auto_awesome" size={18} style={{ color: '#fff' }} /></div>
-          <span style={{ fontSize: '18px', fontWeight: 800, letterSpacing: '-0.02em' }}>ContentClip</span>
+          <span style={{ fontSize: '18px', fontWeight: 800, letterSpacing: '-0.02em' }}>HookClip</span>
         </div>
         <div className="nav-links" style={{ display: 'flex', alignItems: 'center', gap: '32px', fontSize: '14px', fontWeight: 500 }}>
           <a href="#features" style={{ color: colors.onSurfaceVariant, textDecoration: 'none' }}>Features</a>
@@ -37,7 +37,7 @@ export default function LandingPage() {
         <h1 style={{ fontSize: 'clamp(36px,6vw,72px)', fontWeight: 800, letterSpacing: '-0.03em', lineHeight: 1.08, marginBottom: 28, maxWidth: 900, marginLeft: 'auto', marginRight: 'auto', position: 'relative' }}>
           Turn Long Videos Into <span style={{ color: colors.primary }}>High-Performing</span> Short Clips in Minutes
         </h1>
-        <p style={{ fontSize: 18, color: colors.onSurfaceVariant, maxWidth: 640, margin: '0 auto 48px', lineHeight: 1.7, position: 'relative' }}>ContentClip automatically finds the best moments in your long-form content and formats them perfectly for TikTok, Reels, and YouTube Shorts.</p>
+        <p style={{ fontSize: 18, color: colors.onSurfaceVariant, maxWidth: 640, margin: '0 auto 48px', lineHeight: 1.7, position: 'relative' }}>HookClip automatically finds the best moments in your long-form content and formats them perfectly for TikTok, Reels, and YouTube Shorts.</p>
         <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 48, position: 'relative' }}>
           <button onClick={() => router.push('/auth')} style={{ background: gradients.primary, color: '#FAF7FF', fontWeight: 700, padding: '16px 32px', borderRadius: radius.xl, border: 'none', cursor: 'pointer', fontSize: 15, boxShadow: shadows.glowStrong, fontFamily: "'Inter', sans-serif" }}>Create My First Clip</button>
           <button onClick={() => setShowDemo(true)} style={{ background: colors.surfaceContainer, color: colors.onSurface, border: '1px solid ' + colors.outlineVariant, fontWeight: 700, padding: '16px 32px', borderRadius: radius.xl, cursor: 'pointer', fontSize: 15, display: 'flex', alignItems: 'center', gap: 8, fontFamily: "'Inter', sans-serif" }}><Icon name="play_circle" filled size={20} /> View Demo</button>
@@ -135,20 +135,20 @@ export default function LandingPage() {
       <section style={{ maxWidth: 900, margin: '0 auto', padding: '80px 24px', textAlign: 'center' }}>
         <h2 style={{ fontSize: 40, fontWeight: 800, marginBottom: 16 }}>Ready to go viral?</h2>
         <p style={{ color: colors.onSurfaceVariant, fontSize: 18, marginBottom: 36 }}>Join 50,000+ creators saving 20+ hours a week.</p>
-        <button onClick={() => router.push('/auth')} style={{ background: gradients.primary, color: '#FAF7FF', fontWeight: 700, padding: '16px 40px', borderRadius: radius.xl, border: 'none', cursor: 'pointer', fontSize: 16, boxShadow: shadows.glowStrong, fontFamily: "'Inter', sans-serif" }}>Start Creating — It&apos;s Free</button>
+        <button onClick={() => router.push('/auth')} style={{ background: gradients.primary, color: '#FAF7FF', fontWeight: 700, padding: '16px 40px', borderRadius: radius.xl, border: 'none', cursor: 'pointer', fontSize: 16, boxShadow: shadows.glowStrong, fontFamily: "'Inter', sans-serif" }}>Start Creating â€” It&apos;s Free</button>
       </section>
       <footer style={{ borderTop: '1px solid rgba(70,69,85,0.1)', padding: '48px 24px', maxWidth: 1100, margin: '0 auto' }}>
         <div className="footer-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 32, marginBottom: 40 }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
               <div style={{ width: 28, height: 28, borderRadius: radius.sm, background: gradients.cta, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="auto_awesome" size={14} style={{ color: '#fff' }} /></div>
-              <span style={{ fontWeight: 800 }}>ContentClip</span>
+              <span style={{ fontWeight: 800 }}>HookClip</span>
             </div>
             <p style={{ fontSize: 13, color: colors.onSurfaceVariant, lineHeight: 1.7 }}>AI-powered video clipping. Built by TechDuce Africa.</p>
           </div>
           {[{ t: 'Product', l: ['Features','Pricing','Changelog'] }, { t: 'Company', l: ['About','Blog','Contact'] }, { t: 'Legal', l: ['Privacy','Terms','Cookies'] }].map(c => <div key={c.t}><h4 style={{ fontSize: 13, fontWeight: 700, marginBottom: 16, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{c.t}</h4>{c.l.map(l => <a key={l} href="#" style={{ display: 'block', fontSize: 13, color: colors.onSurfaceVariant, textDecoration: 'none', marginBottom: 10 }}>{l}</a>)}</div>)}
         </div>
-        <div style={{ borderTop: '1px solid rgba(70,69,85,0.1)', paddingTop: 24, fontSize: 12, color: colors.onSurfaceVariant, textAlign: 'center' }}>© {new Date().getFullYear()} ContentClip by TechDuce Africa.</div>
+        <div style={{ borderTop: '1px solid rgba(70,69,85,0.1)', paddingTop: 24, fontSize: 12, color: colors.onSurfaceVariant, textAlign: 'center' }}>Â© {new Date().getFullYear()} HookClip by TechDuce Africa.</div>
       </footer>
       {showDemo && <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(12px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }} onClick={() => setShowDemo(false)}>
         <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 900, borderRadius: radius.xl, overflow: 'hidden', background: '#000', position: 'relative' }}>

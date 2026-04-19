@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import React from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Icon from './Icon';
@@ -28,7 +28,7 @@ export default function Sidebar() {
           <Icon name="movie_edit" size={22} style={{ color: '#000', fontWeight: 700 }} />
         </div>
         <div>
-          <h1 style={{ fontSize: '16px', fontWeight: 900, color: '#fff', letterSpacing: '-0.02em', lineHeight: 1.2 }}>ContentClip</h1>
+          <h1 style={{ fontSize: '16px', fontWeight: 900, color: '#fff', letterSpacing: '-0.02em', lineHeight: 1.2 }}>HookClip</h1>
           <p style={{ fontSize: '11px', color: colors.onSurfaceVariant, fontWeight: 500 }}>Creator Pro</p>
         </div>
       </div>

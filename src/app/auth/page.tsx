@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Icon from '@/components/Icon';
@@ -31,13 +31,13 @@ export default function AuthPage() {
     <main style={{ minHeight:'100vh',display:'flex',fontFamily:"'Inter',sans-serif" }}>
       <section className="auth-left" style={{ position:'relative',flex:'0 0 55%',overflow:'hidden',display:'flex',flexDirection:'column',justifyContent:'space-between',padding:48,background:'linear-gradient(135deg,'+colors.background+','+colors.surfaceContainer+',#430076)' }}>
         <div style={{ position:'absolute',inset:0,pointerEvents:'none',backgroundImage:'radial-gradient(at 0% 0%,#9c48ea 0px,transparent 50%),radial-gradient(at 100% 0%,#17a8ec 0px,transparent 50%),radial-gradient(at 100% 100%,#cc97ff 0px,transparent 50%)',filter:'blur(80px)',opacity:0.4 }} />
-        <div style={{ position:'relative',zIndex:10 }}><h1 onClick={()=>router.push('/')} style={{ fontSize:24,fontWeight:900,cursor:'pointer' }}>ContentClip</h1></div>
+        <div style={{ position:'relative',zIndex:10 }}><h1 onClick={()=>router.push('/')} style={{ fontSize:24,fontWeight:900,cursor:'pointer' }}>HookClip</h1></div>
         <div style={{ position:'relative',zIndex:10,maxWidth:520 }}>
           <Icon name="format_quote" filled size={40} style={{ color:colors.primary,marginBottom:24 }} />
-          <blockquote style={{ fontSize:'clamp(28px,3.5vw,44px)',fontWeight:700,lineHeight:1.15,marginBottom:32 }}>ContentClip turned my podcast into a TikTok growth machine.</blockquote>
+          <blockquote style={{ fontSize:'clamp(28px,3.5vw,44px)',fontWeight:700,lineHeight:1.15,marginBottom:32 }}>HookClip turned my podcast into a TikTok growth machine.</blockquote>
           <div style={{ display:'flex',alignItems:'center',gap:16 }}>
             <div style={{ width:48,height:48,borderRadius:'50%',background:gradients.cta,display:'flex',alignItems:'center',justifyContent:'center',fontSize:20,fontWeight:700,color:'#000' }}>A</div>
-            <div><p style={{ fontWeight:600,fontSize:14 }}>Alex Nguyen</p><p style={{ fontSize:12,color:colors.onSurfaceVariant }}>Creator · 2.1M followers</p></div>
+            <div><p style={{ fontWeight:600,fontSize:14 }}>Alex Nguyen</p><p style={{ fontSize:12,color:colors.onSurfaceVariant }}>Creator Â· 2.1M followers</p></div>
           </div>
         </div>
         <div />
@@ -57,7 +57,7 @@ export default function AuthPage() {
             <div>
               <label style={{ fontSize:12,fontWeight:600,color:colors.onSurfaceVariant,display:'block',marginBottom:6 }}>Password</label>
               <input type="password" value={password} onChange={e=>setPassword(e.target.value)} placeholder="Min 8 chars, uppercase, number, symbol" required style={inputField}/>
-              {password&&<div style={{ marginTop:8 }}><div style={{ display:'flex',gap:4,marginBottom:4 }}>{[1,2,3,4].map(i=><div key={i} style={{ flex:1,height:3,borderRadius:2,background:i<=str?strColor:colors.surfaceContainerHigh }}/>)}</div><p style={{ fontSize:11,color:strColor,fontWeight:600 }}>{strLabel}{str<3&&' — add uppercase, numbers, or symbols'}</p></div>}
+              {password&&<div style={{ marginTop:8 }}><div style={{ display:'flex',gap:4,marginBottom:4 }}>{[1,2,3,4].map(i=><div key={i} style={{ flex:1,height:3,borderRadius:2,background:i<=str?strColor:colors.surfaceContainerHigh }}/>)}</div><p style={{ fontSize:11,color:strColor,fontWeight:600 }}>{strLabel}{str<3&&' â€” add uppercase, numbers, or symbols'}</p></div>}
             </div>
             <button type="submit" disabled={loading} style={{ background:gradients.primary,color:'#FAF7FF',fontWeight:700,padding:14,borderRadius:radius.md,border:'none',cursor:'pointer',fontSize:14,opacity:loading?0.7:1,marginTop:8,fontFamily:"'Inter',sans-serif" }}>{loading?'Please wait...':isSignUp?'Create Account':'Sign In'}</button>
           </form>

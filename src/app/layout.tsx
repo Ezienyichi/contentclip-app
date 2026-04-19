@@ -1,6 +1,6 @@
-import type { Metadata } from 'next';
+﻿import type { Metadata } from 'next';
 import '@/styles/globals.css';
-export const metadata: Metadata = { title: 'ContentClip — AI Video Clipping Studio', description: 'Turn long-form videos into viral short-form clips with AI.' };
+export const metadata: Metadata = { title: 'HookClip â€” AI Video Clipping Studio', description: 'Turn long-form videos into viral short-form clips with AI.' };
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className="dark">
