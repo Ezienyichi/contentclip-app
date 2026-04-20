@@ -28,7 +28,7 @@ export default function Sidebar() {
           <Icon name="movie_edit" size={22} style={{ color: '#000', fontWeight: 700 }} />
         </div>
         <div>
-          <h1 style={{ fontSize: '16px', fontWeight: 900, color: '#fff', letterSpacing: '-0.02em', lineHeight: 1.2 }}>HookClip</h1>
+          <img src="/hookclip-logo.svg" alt="HookClip" style={{ height: 28, width: 'auto' }} />
           <p style={{ fontSize: '11px', color: colors.onSurfaceVariant, fontWeight: 500 }}>Creator Pro</p>
         </div>
       </div>

@@ -17,7 +17,7 @@ export default function LandingPage() {
       <nav style={{ position: 'sticky', top: 0, zIndex: 50, background: 'rgba(14,14,14,0.8)', backdropFilter: 'blur(12px)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 24px', borderBottom: '1px solid rgba(70,69,85,0.2)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }} onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
           <div style={{ width: 32, height: 32, borderRadius: radius.md, background: gradients.cta, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="auto_awesome" size={18} style={{ color: '#fff' }} /></div>
-          <span style={{ fontSize: '18px', fontWeight: 800, letterSpacing: '-0.02em' }}>HookClip</span>
+          <img src="/hookclip-logo.svg" alt="HookClip" style={{ height: 32, width: 'auto' }} />
         </div>
         <div className="nav-links" style={{ display: 'flex', alignItems: 'center', gap: '32px', fontSize: '14px', fontWeight: 500 }}>
           <a href="#features" style={{ color: colors.onSurfaceVariant, textDecoration: 'none' }}>Features</a>
@@ -142,7 +142,7 @@ export default function LandingPage() {
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
               <div style={{ width: 28, height: 28, borderRadius: radius.sm, background: gradients.cta, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="auto_awesome" size={14} style={{ color: '#fff' }} /></div>
-              <span style={{ fontWeight: 800 }}>HookClip</span>
+              <img src="/hookclip-logo.svg" alt="HookClip" style={{ height: 28, width: "auto", opacity: 0.7 }} />
             </div>
             <p style={{ fontSize: 13, color: colors.onSurfaceVariant, lineHeight: 1.7 }}>AI-powered video clipping. Built by TechDuce Africa.</p>
           </div>
