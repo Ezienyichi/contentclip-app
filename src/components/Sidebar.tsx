@@ -24,11 +24,8 @@ export default function Sidebar() {
   const content = (
     <>
       <div onClick={() => router.push('/')} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '8px', marginBottom: '24px', cursor: 'pointer' }}>
-        <div style={{ width: 40, height: 40, borderRadius: radius.lg, background: gradients.cta, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <Icon name="movie_edit" size={22} style={{ color: '#000', fontWeight: 700 }} />
-        </div>
         <div>
-          <img src="/hookclip-logo.svg" alt="HookClip" style={{ height: 28, width: 'auto' }} />
+          <img src="/hookclip-logo.svg" alt="HookClip" style={{ height: 44, width: 'auto' }} />
           <p style={{ fontSize: '11px', color: colors.onSurfaceVariant, fontWeight: 500 }}>Creator Pro</p>
         </div>
       </div>
