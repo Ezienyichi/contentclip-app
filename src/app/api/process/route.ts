@@ -10,43 +10,6 @@ function extractYouTubeId(url: string): string | null {
   return m ? m[1] : null;
 }
 
-// Get direct audio URL via Railway processor (uses yt-dlp android client)
-async function resolveAudioUrl(videoUrl: string): Promise<string> {
-  if (!PROCESSOR_URL) {
-    throw new Error('PROCESSOR_URL not configured');
-  }
-
-  const isYouTube = !!extractYouTubeId(videoUrl);
-
-  // For direct media URLs, return as-is
-  if (!isYouTube && videoUrl.match(/\.(mp4|mp3|m4a|wav|ogg|webm|flac)(\?|$)/i)) {
-    return videoUrl;
-  }
-
-  // Send to Railway processor to extract audio
-  console.log(`[Railway] Extracting audio for: ${videoUrl.substring(0, 60)}`);
-  const res = await fetch(`${PROCESSOR_URL}/api/extract-audio`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-processor-secret': PROCESSOR_SECRET,
-    },
-    body: JSON.stringify({ videoUrl }),
-    signal: AbortSignal.timeout(180000), // 3 min timeout
-  });
-
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`Audio extraction failed: ${err}`);
-  }
-
-  const data = await res.json();
-  if (!data.audioUrl) throw new Error('No audio URL returned from processor');
-
-  console.log(`[Railway] Got audio URL: ${data.audioUrl.substring(0, 60)}`);
-  return data.audioUrl;
-}
-
 // Transcribe with AssemblyAI
 async function transcribeAudio(audioUrl: string) {
   const submitRes = await fetch('https://api.assemblyai.com/v2/transcript', {
@@ -80,7 +43,7 @@ async function transcribeAudio(audioUrl: string) {
 }
 
 // Claude hook detection
-async function detectHooks(transcript: string, words: any[]) {
+async function detectHooks(transcript: string, words: any[], startTimeOffset: number = 0) {
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -95,11 +58,13 @@ async function detectHooks(transcript: string, words: any[]) {
         role: 'user',
         content: `You are a viral content expert. Analyze this transcript and find the best 5-15 clip segments for TikTok, Instagram Reels, and YouTube Shorts.
 
+IMPORTANT: The transcript starts at ${startTimeOffset} seconds into the original video. Add ${startTimeOffset} to all timestamps.
+
 For each clip provide a JSON object with:
 - title: catchy clip title (max 60 chars)
 - hook_text: the attention-grabbing opening line
-- start_time: start time in seconds (integer)
-- end_time: end time in seconds (integer)
+- start_time: start time in seconds from beginning of ORIGINAL video (add ${startTimeOffset})
+- end_time: end time in seconds from beginning of ORIGINAL video (add ${startTimeOffset})
 - virality_score: 1-100
 - suggested_caption: social media caption
 - hashtags: relevant hashtags
@@ -109,7 +74,6 @@ Rules:
 - Each clip 15-90 seconds long
 - Strong hooks in first 3 seconds
 - Complete thoughts, not cut mid-sentence
-- Rank by virality potential
 
 TRANSCRIPT:
 ${transcript}
@@ -137,19 +101,18 @@ export async function GET(request: NextRequest) {
   const url = request.nextUrl.searchParams.get('url');
   if (!url) return NextResponse.json({ error: 'url required' }, { status: 400 });
 
-  // Try Railway processor for video info
-  if (PROCESSOR_URL) {
-    try {
-      const res = await fetch(`${PROCESSOR_URL}/api/video-info?url=${encodeURIComponent(url)}`, {
-        headers: { 'x-processor-secret': PROCESSOR_SECRET },
-        signal: AbortSignal.timeout(15000),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.title) return NextResponse.json(data);
-      }
-    } catch {}
-  }
+  if (!PROCESSOR_URL) return NextResponse.json({ title: 'Video', duration: 0, thumbnail: null });
+
+  try {
+    const res = await fetch(`${PROCESSOR_URL}/api/video-info?url=${encodeURIComponent(url)}`, {
+      headers: { 'x-processor-secret': PROCESSOR_SECRET },
+      signal: AbortSignal.timeout(15000),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.title) return NextResponse.json(data);
+    }
+  } catch {}
 
   return NextResponse.json({ title: 'Video', duration: 0, thumbnail: null });
 }
@@ -159,22 +122,44 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const url = body.url || body.videoUrl;
+    const startTime = body.startTime || 0;
+    const endTime = body.endTime || 0;
+
     if (!url) return NextResponse.json({ error: 'URL is required' }, { status: 400 });
     if (!ASSEMBLYAI_KEY) return NextResponse.json({ error: 'ASSEMBLYAI_API_KEY not configured' }, { status: 500 });
     if (!ANTHROPIC_KEY) return NextResponse.json({ error: 'ANTHROPIC_API_KEY not configured' }, { status: 500 });
     if (!PROCESSOR_URL) return NextResponse.json({ error: 'PROCESSOR_URL not configured' }, { status: 500 });
 
-    console.log(`[Process] Starting: ${url}`);
+    console.log(`[Process] Starting: ${url} [${startTime}s - ${endTime}s]`);
 
-    // Step 0: Extract audio via Railway
-    const audioUrl = await resolveAudioUrl(url);
+    // Step 0: Extract ONLY the selected segment audio via Railway
+    // This is much faster than downloading the full video
+    const extractRes = await fetch(`${PROCESSOR_URL}/api/extract-segment`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-processor-secret': PROCESSOR_SECRET,
+      },
+      body: JSON.stringify({ videoUrl: url, startTime, endTime }),
+      signal: AbortSignal.timeout(300000), // 5 min
+    });
 
-    // Step 1+2: Transcribe
-    const transcript = await transcribeAudio(audioUrl);
+    if (!extractRes.ok) {
+      const err = await extractRes.text();
+      throw new Error(`Segment extraction failed: ${err}`);
+    }
+
+    const extractData = await extractRes.json();
+    if (!extractData.audioUrl) throw new Error('No audio URL from processor');
+
+    console.log(`[Process] Got segment audio: ${extractData.audioUrl.substring(0, 60)}`);
+
+    // Step 1+2: Transcribe the segment
+    const transcript = await transcribeAudio(extractData.audioUrl);
     console.log(`[Process] Transcribed: ${transcript.words.length} words`);
 
-    // Step 3: Detect hooks
-    const hooks = await detectHooks(transcript.text, transcript.words);
+    // Step 3: Detect hooks (pass startTime offset so timestamps are correct)
+    const hooks = await detectHooks(transcript.text, transcript.words, startTime);
     console.log(`[Process] Detected ${hooks.length} clips`);
 
     return NextResponse.json({
