@@ -18,60 +18,62 @@ function extractYouTubeId(url: string): string | null {
   return m ? m[1] : null;
 }
 
-// Get direct audio URL from YouTube via Piped.video (no cookies needed)
-async function resolveYouTubeAudio(videoUrl: string): Promise<string> {
+// Get direct audio URL — tries Piped first, then Railway processor
+async function resolveAudioUrl(videoUrl: string): Promise<string> {
   const videoId = extractYouTubeId(videoUrl);
-  if (!videoId) return videoUrl; // not YouTube — return as-is
+  if (!videoId) return videoUrl; // not YouTube — direct URL
 
+  // Try each Piped instance
   for (const base of PIPED_INSTANCES) {
     try {
       const res = await fetch(`${base}/streams/${videoId}`, {
-        signal: AbortSignal.timeout(10000),
+        signal: AbortSignal.timeout(8000),
       });
       if (!res.ok) continue;
       const data = await res.json();
       if (!data.audioStreams?.length) continue;
 
-      // Pick highest bitrate audio stream
       const stream = data.audioStreams
         .filter((s: any) => s.url && s.mimeType)
         .sort((a: any, b: any) => (b.bitrate || 0) - (a.bitrate || 0))[0];
 
       if (stream?.url) {
-        console.log(`[Piped] Got audio stream from ${base}`);
+        console.log(`[Piped] Audio stream from ${base}`);
         return stream.url;
       }
-    } catch (e) {
-      console.log(`[Piped] ${base} failed`);
+    } catch {
+      // try next instance
     }
   }
 
-  // If all Piped instances fail, try Railway processor
+  // Piped failed — use Railway processor to extract audio
   if (PROCESSOR_URL) {
     try {
-      const res = await fetch(`${PROCESSOR_URL}/api/video-info?url=${encodeURIComponent(videoUrl)}`, {
-        headers: { 'x-processor-secret': PROCESSOR_SECRET },
-        signal: AbortSignal.timeout(15000),
+      console.log('[Railway] Extracting audio via processor...');
+      const res = await fetch(`${PROCESSOR_URL}/api/extract-audio`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-processor-secret': PROCESSOR_SECRET,
+        },
+        body: JSON.stringify({ videoUrl }),
+        signal: AbortSignal.timeout(120000),
       });
       if (res.ok) {
-        // Railway processor resolved it — now get the audio via processor
-        const audioRes = await fetch(`${PROCESSOR_URL}/api/extract-audio`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'x-processor-secret': PROCESSOR_SECRET },
-          body: JSON.stringify({ videoUrl }),
-          signal: AbortSignal.timeout(120000),
-        });
-        if (audioRes.ok) {
-          const audioData = await audioRes.json();
-          if (audioData.audioUrl) return audioData.audioUrl;
+        const data = await res.json();
+        if (data.audioUrl) {
+          console.log('[Railway] Got audio URL from processor');
+          return data.audioUrl;
         }
       }
     } catch (e) {
-      console.log('[Processor] Railway fallback failed');
+      console.log('[Railway] Processor failed:', e);
     }
   }
 
-  return videoUrl; // last resort — let AssemblyAI try directly
+  // Last resort — return original URL and let AssemblyAI try
+  console.log('[Fallback] Returning original URL');
+  return videoUrl;
 }
 
 // Transcribe with AssemblyAI
@@ -159,7 +161,7 @@ Respond with ONLY a JSON array. No markdown, no backticks, no explanation.`
   }
 }
 
-// GET — fetch video info (title, duration, thumbnail) for import page preview
+// GET — video info for import page preview
 export async function GET(request: NextRequest) {
   const url = request.nextUrl.searchParams.get('url');
   if (!url) return NextResponse.json({ error: 'url required' }, { status: 400 });
@@ -171,20 +173,16 @@ export async function GET(request: NextRequest) {
         const res = await fetch(`${base}/streams/${videoId}`, { signal: AbortSignal.timeout(8000) });
         if (!res.ok) continue;
         const data = await res.json();
-        return NextResponse.json({ title: data.title, duration: data.duration, thumbnail: data.thumbnailUrl, uploader: data.uploader });
+        if (data.title) {
+          return NextResponse.json({
+            title: data.title,
+            duration: data.duration,
+            thumbnail: data.thumbnailUrl,
+            uploader: data.uploader,
+          });
+        }
       } catch {}
     }
-  }
-
-  // Fallback via Railway processor
-  if (PROCESSOR_URL) {
-    try {
-      const res = await fetch(`${PROCESSOR_URL}/api/video-info?url=${encodeURIComponent(url)}`, {
-        headers: { 'x-processor-secret': PROCESSOR_SECRET },
-        signal: AbortSignal.timeout(15000),
-      });
-      if (res.ok) return NextResponse.json(await res.json());
-    } catch {}
   }
 
   return NextResponse.json({ title: 'Video', duration: 0, thumbnail: null });
@@ -201,12 +199,12 @@ export async function POST(request: NextRequest) {
 
     console.log(`[Process] Starting: ${url}`);
 
-    // Step 0: Resolve YouTube URL to direct audio
-    const directUrl = await resolveYouTubeAudio(url);
-    console.log(`[Process] Resolved: ${directUrl.substring(0, 80)}...`);
+    // Step 0: Get direct audio URL
+    const audioUrl = await resolveAudioUrl(url);
+    console.log(`[Process] Audio URL: ${audioUrl.substring(0, 100)}`);
 
     // Step 1+2: Transcribe
-    const transcript = await transcribeAudio(directUrl);
+    const transcript = await transcribeAudio(audioUrl);
     console.log(`[Process] Transcribed: ${transcript.words.length} words`);
 
     // Step 3: Detect hooks
@@ -227,6 +225,3 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: err.message || 'Processing failed' }, { status: 500 });
   }
 }
-
-
-// rebuild-20260425170210
