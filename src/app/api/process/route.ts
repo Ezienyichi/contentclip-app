@@ -5,75 +5,46 @@ const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY || '';
 const PROCESSOR_URL = process.env.PROCESSOR_URL || '';
 const PROCESSOR_SECRET = process.env.PROCESSOR_SECRET || 'helpedit-secret-change-me';
 
-// Piped.video instances — cookie-free YouTube proxy
-const PIPED_INSTANCES = [
-  'https://pipedapi.kavin.rocks',
-  'https://pipedapi.adminforge.de',
-  'https://api.piped.projectsegfau.lt',
-  'https://piped-api.garudalinux.org',
-];
-
 function extractYouTubeId(url: string): string | null {
   const m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/);
   return m ? m[1] : null;
 }
 
-// Get direct audio URL — tries Piped first, then Railway processor
+// Get direct audio URL via Railway processor (uses yt-dlp android client)
 async function resolveAudioUrl(videoUrl: string): Promise<string> {
-  const videoId = extractYouTubeId(videoUrl);
-  if (!videoId) return videoUrl; // not YouTube — direct URL
-
-  // Try each Piped instance
-  for (const base of PIPED_INSTANCES) {
-    try {
-      const res = await fetch(`${base}/streams/${videoId}`, {
-        signal: AbortSignal.timeout(8000),
-      });
-      if (!res.ok) continue;
-      const data = await res.json();
-      if (!data.audioStreams?.length) continue;
-
-      const stream = data.audioStreams
-        .filter((s: any) => s.url && s.mimeType)
-        .sort((a: any, b: any) => (b.bitrate || 0) - (a.bitrate || 0))[0];
-
-      if (stream?.url) {
-        console.log(`[Piped] Audio stream from ${base}`);
-        return stream.url;
-      }
-    } catch {
-      // try next instance
-    }
+  if (!PROCESSOR_URL) {
+    throw new Error('PROCESSOR_URL not configured');
   }
 
-  // Piped failed — use Railway processor to extract audio
-  if (PROCESSOR_URL) {
-    try {
-      console.log('[Railway] Extracting audio via processor...');
-      const res = await fetch(`${PROCESSOR_URL}/api/extract-audio`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-processor-secret': PROCESSOR_SECRET,
-        },
-        body: JSON.stringify({ videoUrl }),
-        signal: AbortSignal.timeout(120000),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.audioUrl) {
-          console.log('[Railway] Got audio URL from processor');
-          return data.audioUrl;
-        }
-      }
-    } catch (e) {
-      console.log('[Railway] Processor failed:', e);
-    }
+  const isYouTube = !!extractYouTubeId(videoUrl);
+
+  // For direct media URLs, return as-is
+  if (!isYouTube && videoUrl.match(/\.(mp4|mp3|m4a|wav|ogg|webm|flac)(\?|$)/i)) {
+    return videoUrl;
   }
 
-  // Last resort — return original URL and let AssemblyAI try
-  console.log('[Fallback] Returning original URL');
-  return videoUrl;
+  // Send to Railway processor to extract audio
+  console.log(`[Railway] Extracting audio for: ${videoUrl.substring(0, 60)}`);
+  const res = await fetch(`${PROCESSOR_URL}/api/extract-audio`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-processor-secret': PROCESSOR_SECRET,
+    },
+    body: JSON.stringify({ videoUrl }),
+    signal: AbortSignal.timeout(180000), // 3 min timeout
+  });
+
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Audio extraction failed: ${err}`);
+  }
+
+  const data = await res.json();
+  if (!data.audioUrl) throw new Error('No audio URL returned from processor');
+
+  console.log(`[Railway] Got audio URL: ${data.audioUrl.substring(0, 60)}`);
+  return data.audioUrl;
 }
 
 // Transcribe with AssemblyAI
@@ -166,23 +137,18 @@ export async function GET(request: NextRequest) {
   const url = request.nextUrl.searchParams.get('url');
   if (!url) return NextResponse.json({ error: 'url required' }, { status: 400 });
 
-  const videoId = extractYouTubeId(url);
-  if (videoId) {
-    for (const base of PIPED_INSTANCES) {
-      try {
-        const res = await fetch(`${base}/streams/${videoId}`, { signal: AbortSignal.timeout(8000) });
-        if (!res.ok) continue;
+  // Try Railway processor for video info
+  if (PROCESSOR_URL) {
+    try {
+      const res = await fetch(`${PROCESSOR_URL}/api/video-info?url=${encodeURIComponent(url)}`, {
+        headers: { 'x-processor-secret': PROCESSOR_SECRET },
+        signal: AbortSignal.timeout(15000),
+      });
+      if (res.ok) {
         const data = await res.json();
-        if (data.title) {
-          return NextResponse.json({
-            title: data.title,
-            duration: data.duration,
-            thumbnail: data.thumbnailUrl,
-            uploader: data.uploader,
-          });
-        }
-      } catch {}
-    }
+        if (data.title) return NextResponse.json(data);
+      }
+    } catch {}
   }
 
   return NextResponse.json({ title: 'Video', duration: 0, thumbnail: null });
@@ -196,12 +162,12 @@ export async function POST(request: NextRequest) {
     if (!url) return NextResponse.json({ error: 'URL is required' }, { status: 400 });
     if (!ASSEMBLYAI_KEY) return NextResponse.json({ error: 'ASSEMBLYAI_API_KEY not configured' }, { status: 500 });
     if (!ANTHROPIC_KEY) return NextResponse.json({ error: 'ANTHROPIC_API_KEY not configured' }, { status: 500 });
+    if (!PROCESSOR_URL) return NextResponse.json({ error: 'PROCESSOR_URL not configured' }, { status: 500 });
 
     console.log(`[Process] Starting: ${url}`);
 
-    // Step 0: Get direct audio URL
+    // Step 0: Extract audio via Railway
     const audioUrl = await resolveAudioUrl(url);
-    console.log(`[Process] Audio URL: ${audioUrl.substring(0, 100)}`);
 
     // Step 1+2: Transcribe
     const transcript = await transcribeAudio(audioUrl);
