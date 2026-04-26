@@ -1,178 +1,259 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
 
-const ASSEMBLYAI_KEY = process.env.ASSEMBLYAI_API_KEY || '';
-const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY || '';
-const PROCESSOR_URL = process.env.PROCESSOR_URL || '';
-const PROCESSOR_SECRET = process.env.PROCESSOR_SECRET || 'helpedit-secret-change-me';
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
-function extractYouTubeId(url: string): string | null {
-  const m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/);
-  return m ? m[1] : null;
+const REKA_API_KEY = process.env.REKA_API_KEY!;
+const REKA_REELS_ENDPOINT = "https://vision-agent.api.reka.ai/v1/creator/reels";
+export interface RekaClip {
+  video_url: string;
+  title: string;
+  caption: string;
+  duration?: number;
+  thumbnail_url?: string;
 }
 
-// Transcribe with AssemblyAI
-async function transcribeAudio(audioUrl: string) {
-  const submitRes = await fetch('https://api.assemblyai.com/v2/transcript', {
-    method: 'POST',
-    headers: { Authorization: ASSEMBLYAI_KEY, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ audio_url: audioUrl, auto_highlights: true }),
-  });
-
-  if (!submitRes.ok) {
-    const err = await submitRes.text();
-    throw new Error(`AssemblyAI submit failed: ${err}`);
-  }
-
-  const { id: transcriptId } = await submitRes.json();
-
-  // Poll until complete (max 10 min)
-  for (let i = 0; i < 120; i++) {
-    await new Promise(r => setTimeout(r, 5000));
-    const pollRes = await fetch(`https://api.assemblyai.com/v2/transcript/${transcriptId}`, {
-      headers: { Authorization: ASSEMBLYAI_KEY },
-    });
-    const pollData = await pollRes.json();
-    if (pollData.status === 'completed') {
-      return { id: transcriptId, text: pollData.text, words: pollData.words || [], duration: pollData.audio_duration };
-    }
-    if (pollData.status === 'error') {
-      throw new Error(`Transcription failed: ${pollData.error}`);
-    }
-  }
-  throw new Error('Transcription timed out');
+export interface RekaResponse {
+  clips: RekaClip[];
+  job_id?: string;
+  status?: string;
 }
 
-// Claude hook detection
-async function detectHooks(transcript: string, words: any[], startTimeOffset: number = 0) {
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'x-api-key': ANTHROPIC_KEY,
-      'anthropic-version': '2023-06-01',
-      'content-type': 'application/json',
+export interface ProcessRequest {
+  videoUrl: string;
+  userId: string;
+  prompt?: string;
+  numClips?: number;
+  minDuration?: number;
+  maxDuration?: number;
+  aspectRatio?: "9:16" | "16:9" | "1:1";
+  subtitles?: boolean;
+  timeRange?: { start: number; end: number } | null;
+  template?: "moments" | "highlights" | "tutorial" | "promo";
+}
+
+async function callRekaAPI(params: ProcessRequest): Promise<RekaResponse> {
+  const {
+    videoUrl,
+    prompt = "Find the most engaging, hook-worthy moments with high energy and emotional impact. Prioritize viral-worthy clips.",
+    numClips = 3,
+    minDuration = 15,
+    maxDuration = 60,
+    aspectRatio = "9:16",
+    subtitles = true,
+    template = "moments",
+  } = params;
+
+  const body: Record<string, unknown> = {
+    video_urls: [videoUrl],
+    prompt,
+    generation_config: {
+      template,
+      num_generations: numClips,
+      min_duration_seconds: minDuration,
+      max_duration_seconds: maxDuration,
     },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 4096,
-      messages: [{
-        role: 'user',
-        content: `You are a viral content expert. Analyze this transcript and find the best 5-15 clip segments for TikTok, Instagram Reels, and YouTube Shorts.
+    rendering_config: {
+      subtitles,
+      aspect_ratio: aspectRatio,
+    },
+  };
 
-IMPORTANT: The transcript starts at ${startTimeOffset} seconds into the original video. Add ${startTimeOffset} to all timestamps.
-
-For each clip provide a JSON object with:
-- title: catchy clip title (max 60 chars)
-- hook_text: the attention-grabbing opening line
-- start_time: start time in seconds from beginning of ORIGINAL video (add ${startTimeOffset})
-- end_time: end time in seconds from beginning of ORIGINAL video (add ${startTimeOffset})
-- virality_score: 1-100
-- suggested_caption: social media caption
-- hashtags: relevant hashtags
-- platform: best platform (tiktok, youtube_shorts, instagram_reels)
-
-Rules:
-- Each clip 15-90 seconds long
-- Strong hooks in first 3 seconds
-- Complete thoughts, not cut mid-sentence
-
-TRANSCRIPT:
-${transcript}
-
-WORD TIMESTAMPS (first 300):
-${JSON.stringify(words.slice(0, 300))}
-
-Respond with ONLY a JSON array. No markdown, no backticks, no explanation.`
-      }],
-    }),
+  const response = await fetch(REKA_REELS_ENDPOINT, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Api-Key": REKA_API_KEY,
+    },
+    body: JSON.stringify(body),
   });
 
-  if (!res.ok) throw new Error(`Claude API failed: ${await res.text()}`);
-  const data = await res.json();
-  const text = data.content?.[0]?.text || '[]';
-  try {
-    return JSON.parse(text.replace(/```json|```/g, '').trim());
-  } catch {
-    return [];
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(
+      `Reka API error ${response.status}: ${errorText}`
+    );
   }
+
+  const data = await response.json();
+
+  // Normalise Reka response → internal RekaResponse shape
+  const clips: RekaClip[] = (data.clips ?? data.reels ?? data.results ?? []).map(
+    (clip: Record<string, unknown>) => ({
+      video_url: (clip.video_url ?? clip.url ?? "") as string,
+      title: (clip.title ?? clip.name ?? "Untitled Clip") as string,
+      caption: (clip.caption ?? clip.description ?? "") as string,
+      duration: clip.duration as number | undefined,
+      thumbnail_url: clip.thumbnail_url as string | undefined,
+    })
+  );
+
+  return { clips, job_id: data.job_id, status: data.status ?? "completed" };
 }
 
-// GET — video info for import page preview
-export async function GET(request: NextRequest) {
-  const url = request.nextUrl.searchParams.get('url');
-  if (!url) return NextResponse.json({ error: 'url required' }, { status: 400 });
+async function saveJobToSupabase(
+  userId: string,
+  videoUrl: string,
+  params: ProcessRequest,
+  result: RekaResponse
+) {
+  const { data: job, error: jobError } = await supabase
+    .from("clip_jobs")
+    .insert({
+      user_id: userId,
+      source_url: videoUrl,
+      status: "completed",
+      prompt: params.prompt,
+      num_clips: params.numClips ?? 3,
+      aspect_ratio: params.aspectRatio ?? "9:16",
+      subtitles: params.subtitles ?? true,
+      reka_job_id: result.job_id ?? null,
+      created_at: new Date().toISOString(),
+    })
+    .select()
+    .single();
 
-  if (!PROCESSOR_URL) return NextResponse.json({ title: 'Video', duration: 0, thumbnail: null });
+  if (jobError) throw new Error(`Supabase job insert: ${jobError.message}`);
 
-  try {
-    const res = await fetch(`${PROCESSOR_URL}/api/video-info?url=${encodeURIComponent(url)}`, {
-      headers: { 'x-processor-secret': PROCESSOR_SECRET },
-      signal: AbortSignal.timeout(15000),
-    });
-    if (res.ok) {
-      const data = await res.json();
-      if (data.title) return NextResponse.json(data);
-    }
-  } catch {}
+  const clipInserts = result.clips.map((clip, index) => ({
+    job_id: job.id,
+    user_id: userId,
+    clip_index: index,
+    video_url: clip.video_url,
+    title: clip.title,
+    caption: clip.caption,
+    duration: clip.duration ?? null,
+    thumbnail_url: clip.thumbnail_url ?? null,
+    status: "ready",
+    created_at: new Date().toISOString(),
+  }));
 
-  return NextResponse.json({ title: 'Video', duration: 0, thumbnail: null });
+  const { error: clipsError } = await supabase.from("clips").insert(clipInserts);
+  if (clipsError) throw new Error(`Supabase clips insert: ${clipsError.message}`);
+
+  return job;
 }
 
-// POST — full pipeline
-export async function POST(request: NextRequest) {
+export async function POST(req: NextRequest) {
   try {
-    const body = await request.json();
-    const url = body.url || body.videoUrl;
-    const startTime = body.startTime || 0;
-    const endTime = body.endTime || 0;
+    const body: ProcessRequest = await req.json();
+    const { videoUrl, userId } = body;
 
-    if (!url) return NextResponse.json({ error: 'URL is required' }, { status: 400 });
-    if (!ASSEMBLYAI_KEY) return NextResponse.json({ error: 'ASSEMBLYAI_API_KEY not configured' }, { status: 500 });
-    if (!ANTHROPIC_KEY) return NextResponse.json({ error: 'ANTHROPIC_API_KEY not configured' }, { status: 500 });
-    if (!PROCESSOR_URL) return NextResponse.json({ error: 'PROCESSOR_URL not configured' }, { status: 500 });
-
-    console.log(`[Process] Starting: ${url} [${startTime}s - ${endTime}s]`);
-
-    // Step 0: Extract ONLY the selected segment audio via Railway
-    // This is much faster than downloading the full video
-    const extractRes = await fetch(`${PROCESSOR_URL}/api/extract-segment`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-processor-secret': PROCESSOR_SECRET,
-      },
-      body: JSON.stringify({ videoUrl: url, startTime, endTime }),
-      signal: AbortSignal.timeout(300000), // 5 min
-    });
-
-    if (!extractRes.ok) {
-      const err = await extractRes.text();
-      throw new Error(`Segment extraction failed: ${err}`);
+    if (!videoUrl) {
+      return NextResponse.json({ error: "videoUrl is required" }, { status: 400 });
+    }
+    if (!userId) {
+      return NextResponse.json({ error: "userId is required" }, { status: 400 });
+    }
+    if (!REKA_API_KEY) {
+      return NextResponse.json(
+        { error: "REKA_API_KEY is not configured on this server" },
+        { status: 500 }
+      );
     }
 
-    const extractData = await extractRes.json();
-    if (!extractData.audioUrl) throw new Error('No audio URL from processor');
+    // Deduct credits BEFORE processing
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("credits, plan")
+      .eq("id", userId)
+      .single();
 
-    console.log(`[Process] Got segment audio: ${extractData.audioUrl.substring(0, 60)}`);
+    if (profileError || !profile) {
+      return NextResponse.json({ error: "User profile not found" }, { status: 404 });
+    }
 
-    // Step 1+2: Transcribe the segment
-    const transcript = await transcribeAudio(extractData.audioUrl);
-    console.log(`[Process] Transcribed: ${transcript.words.length} words`);
+    const creditCost = (body.numClips ?? 3) * 10; // 10 credits per clip
+    if (profile.credits < creditCost) {
+      return NextResponse.json(
+        {
+          error: "Insufficient credits",
+          required: creditCost,
+          available: profile.credits,
+          upgradeUrl: "/pricing",
+        },
+        { status: 402 }
+      );
+    }
 
-    // Step 3: Detect hooks (pass startTime offset so timestamps are correct)
-    const hooks = await detectHooks(transcript.text, transcript.words, startTime);
-    console.log(`[Process] Detected ${hooks.length} clips`);
+    // Deduct credits
+    const { error: deductError } = await supabase
+      .from("profiles")
+      .update({ credits: profile.credits - creditCost })
+      .eq("id", userId);
+
+    if (deductError) {
+      return NextResponse.json(
+        { error: "Failed to deduct credits" },
+        { status: 500 }
+      );
+    }
+
+    // Call Reka
+    const rekaResult = await callRekaAPI(body);
+
+    if (!rekaResult.clips || rekaResult.clips.length === 0) {
+      // Refund credits if no clips returned
+      await supabase
+        .from("profiles")
+        .update({ credits: profile.credits })
+        .eq("id", userId);
+
+      return NextResponse.json(
+        { error: "Reka returned no clips for this video" },
+        { status: 422 }
+      );
+    }
+
+    // Persist to Supabase
+    const job = await saveJobToSupabase(userId, videoUrl, body, rekaResult);
 
     return NextResponse.json({
       success: true,
-      transcript_id: transcript.id,
-      video_duration: transcript.duration,
-      clips: hooks.sort((a: any, b: any) => (b.virality_score || 0) - (a.virality_score || 0)),
-      total: hooks.length,
-      source_url: url,
+      jobId: job.id,
+      clips: rekaResult.clips,
+      creditsUsed: creditCost,
+      creditsRemaining: profile.credits - creditCost,
     });
-
-  } catch (err: any) {
-    console.error('[Process] Error:', err.message);
-    return NextResponse.json({ error: err.message || 'Processing failed' }, { status: 500 });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Unknown error";
+    console.error("[/api/process] Error:", message);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
+}
+
+// GET: poll job status or fetch previously generated clips
+export async function GET(req: NextRequest) {
+  const { searchParams } = new URL(req.url);
+  const jobId = searchParams.get("jobId");
+  const userId = searchParams.get("userId");
+
+  if (!jobId || !userId) {
+    return NextResponse.json(
+      { error: "jobId and userId are required" },
+      { status: 400 }
+    );
+  }
+
+  const { data: job, error: jobError } = await supabase
+    .from("clip_jobs")
+    .select("*")
+    .eq("id", jobId)
+    .eq("user_id", userId)
+    .single();
+
+  if (jobError || !job) {
+    return NextResponse.json({ error: "Job not found" }, { status: 404 });
+  }
+
+  const { data: clips } = await supabase
+    .from("clips")
+    .select("*")
+    .eq("job_id", jobId)
+    .order("clip_index");
+
+  return NextResponse.json({ job, clips: clips ?? [] });
 }
