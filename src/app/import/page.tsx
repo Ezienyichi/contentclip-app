@@ -240,14 +240,6 @@ function ClipCard({
             {clip.caption}
           </p>
         )}
-{clip.video_url && (           
-            href={clip.video_url}
-href={clip.video_url}            rel="noopener noreferrer"
-            style={{ fontSize: 11, color: "#00c896", wordBreak: "break-all" }}
-          >
-            View clip →
-          </a>
-        )}
       </div>
 
       <div

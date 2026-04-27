@@ -1,17 +1,7 @@
 const fs = require('fs');
 const lines = fs.readFileSync('src/app/import/page.tsx', 'utf8').split('\n');
-
-// Fix line 243 (index 242)
-lines[242] = '        {clip.video_url && (';
-
-// Fix line 244 (index 243)  
-lines[243] = '            href={clip.video_url}';
-
-// Fix line 245 (index 244)
-lines[244] = '            target="_blank"';
-
-fs.writeFileSync('src/app/import/page.tsx', lines.join('\n'));
-console.log('Fixed:');
-console.log(lines[242]);
-console.log(lines[243]);
-console.log(lines[244]);
+lines.splice(242, 8);
+fs.writeFileSync('src/app/import/page.tsx', lines. join('\n'));
+console.log('Done! Removed broken lines.');
+console.log('New line 242:', lines[242]);
+console.log('New line 243:', lines[243]);
