@@ -3,6 +3,8 @@
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@supabase/supabase-js";
+import DashboardLayout from "@/components/DashboardLayout";
+import { colors, gradients, radius } from "@/lib/tokens";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -52,10 +54,10 @@ function TimeRangeSelector({
   return (
     <div
       style={{
-        borderRadius: 12,
-        border: `1px solid ${enabled ? "#00c896" : "#1f2937"}`,
+        borderRadius: radius.lg,
+        border: `1px solid ${enabled ? colors.primary : colors.outlineVariant}`,
         padding: "16px 20px",
-        background: enabled ? "rgba(0,200,150,0.05)" : "#111118",
+        background: enabled ? `${colors.primaryContainer}18` : colors.surfaceContainerLow,
         transition: "all 0.2s",
       }}
     >
@@ -68,15 +70,15 @@ function TimeRangeSelector({
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <span style={{ fontSize: 14, fontWeight: 600, color: "#e5e7eb" }}>
+          <span style={{ fontSize: 14, fontWeight: 600, color: colors.onSurface }}>
             Time Range
           </span>
           <span
             style={{
               fontSize: 11,
-              color: "#6b7280",
-              background: "#1f2937",
-              borderRadius: 4,
+              color: colors.onSurfaceVariant,
+              background: colors.surfaceContainerHigh,
+              borderRadius: radius.sm,
               padding: "2px 8px",
             }}
           >
@@ -91,7 +93,7 @@ function TimeRangeSelector({
             borderRadius: 12,
             border: "none",
             cursor: "pointer",
-            background: enabled ? "#00c896" : "#374151",
+            background: enabled ? colors.primaryContainer : colors.surfaceContainerHighest,
             position: "relative",
             transition: "background 0.2s",
           }}
@@ -104,7 +106,7 @@ function TimeRangeSelector({
               width: 18,
               height: 18,
               borderRadius: "50%",
-              background: "#fff",
+              background: enabled ? colors.onPrimaryContainer : colors.onSurfaceVariant,
               transition: "left 0.2s",
             }}
           />
@@ -115,8 +117,16 @@ function TimeRangeSelector({
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           <div style={{ display: "flex", gap: 16 }}>
             <div style={{ flex: 1 }}>
-              <label style={{ fontSize: 12, color: "#6b7280", display: "block", marginBottom: 6 }}>
-                Start — <strong style={{ color: "#00c896" }}>{fmt(start)}</strong>
+              <label
+                style={{
+                  fontSize: 12,
+                  color: colors.onSurfaceVariant,
+                  display: "block",
+                  marginBottom: 6,
+                }}
+              >
+                Start —{" "}
+                <strong style={{ color: colors.primary }}>{fmt(start)}</strong>
               </label>
               <input
                 type="range"
@@ -124,12 +134,20 @@ function TimeRangeSelector({
                 max={end - 5}
                 value={start}
                 onChange={(e) => onStartChange(Number(e.target.value))}
-                style={{ width: "100%", accentColor: "#00c896" }}
+                style={{ width: "100%", accentColor: colors.primary }}
               />
             </div>
             <div style={{ flex: 1 }}>
-              <label style={{ fontSize: 12, color: "#6b7280", display: "block", marginBottom: 6 }}>
-                End — <strong style={{ color: "#00c896" }}>{fmt(end)}</strong>
+              <label
+                style={{
+                  fontSize: 12,
+                  color: colors.onSurfaceVariant,
+                  display: "block",
+                  marginBottom: 6,
+                }}
+              >
+                End —{" "}
+                <strong style={{ color: colors.primary }}>{fmt(end)}</strong>
               </label>
               <input
                 type="range"
@@ -137,15 +155,16 @@ function TimeRangeSelector({
                 max={600}
                 value={end}
                 onChange={(e) => onEndChange(Number(e.target.value))}
-                style={{ width: "100%", accentColor: "#00c896" }}
+                style={{ width: "100%", accentColor: colors.primary }}
               />
             </div>
           </div>
-          <p style={{ fontSize: 12, color: "#6b7280", margin: 0 }}>
-            Clips will be extracted from{" "}
-            <strong style={{ color: "#e5e7eb" }}>
+          <p style={{ fontSize: 12, color: colors.onSurfaceVariant, margin: 0 }}>
+            Clips from{" "}
+            <strong style={{ color: colors.onSurface }}>
               {fmt(start)} → {fmt(end)}
-            </strong>
+            </strong>{" "}
+            ({Math.round((end - start) / 60)} min window)
           </p>
         </div>
       )}
@@ -164,13 +183,16 @@ function ClipCard({
   onDownload: () => void;
   onPost: () => void;
 }) {
+  const videoUrl = clip.video_url;
+  const thumbUrl = clip.thumbnail_url;
+
   return (
     <div
       style={{
-        borderRadius: 16,
-        border: "1px solid #1f2937",
+        borderRadius: radius.xl,
+        border: `1px solid ${colors.outlineVariant}`,
         overflow: "hidden",
-        background: "#111118",
+        background: colors.surfaceContainerLow,
         display: "flex",
         flexDirection: "column",
       }}
@@ -179,7 +201,7 @@ function ClipCard({
         style={{
           aspectRatio: "9/16",
           maxHeight: 280,
-          background: "#1f2937",
+          background: colors.surfaceContainer,
           position: "relative",
           overflow: "hidden",
           display: "flex",
@@ -187,10 +209,10 @@ function ClipCard({
           justifyContent: "center",
         }}
       >
-        {clip.thumbnail_url ? (
+        {thumbUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={clip.thumbnail_url}
+            src={thumbUrl}
             alt={clip.title}
             style={{ width: "100%", height: "100%", objectFit: "cover" }}
           />
@@ -204,11 +226,11 @@ function ClipCard({
               alignItems: "center",
               justifyContent: "center",
               gap: 8,
-              background: "linear-gradient(135deg, #00c896, #00a8e8)",
+              background: gradients.primary,
             }}
           >
             <span style={{ fontSize: 32 }}>🎬</span>
-            <span style={{ color: "#fff", fontSize: 12, opacity: 0.8 }}>
+            <span style={{ color: colors.onPrimary, fontSize: 12, opacity: 0.8 }}>
               Clip {index + 1}
             </span>
           </div>
@@ -223,7 +245,7 @@ function ClipCard({
               color: "#fff",
               fontSize: 11,
               padding: "2px 8px",
-              borderRadius: 4,
+              borderRadius: radius.sm,
             }}
           >
             {clip.duration}s
@@ -231,14 +253,50 @@ function ClipCard({
         )}
       </div>
 
-      <div style={{ padding: 14, flex: 1, display: "flex", flexDirection: "column", gap: 6 }}>
-        <h4 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "#e5e7eb" }}>
+      <div
+        style={{
+          padding: 14,
+          flex: 1,
+          display: "flex",
+          flexDirection: "column",
+          gap: 6,
+        }}
+      >
+        <h4
+          style={{
+            margin: 0,
+            fontSize: 14,
+            fontWeight: 700,
+            color: colors.onSurface,
+          }}
+        >
           {clip.title}
         </h4>
         {clip.caption && (
-          <p style={{ margin: 0, fontSize: 12, color: "#6b7280", lineHeight: 1.5 }}>
+          <p
+            style={{
+              margin: 0,
+              fontSize: 12,
+              color: colors.onSurfaceVariant,
+              lineHeight: 1.5,
+            }}
+          >
             {clip.caption}
           </p>
+        )}
+        {videoUrl && (
+          <a
+            href={videoUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              fontSize: 11,
+              color: colors.primary,
+              wordBreak: "break-all",
+            }}
+          >
+            View clip →
+          </a>
         )}
       </div>
 
@@ -247,7 +305,7 @@ function ClipCard({
           padding: "10px 14px",
           display: "flex",
           gap: 8,
-          borderTop: "1px solid #1f2937",
+          borderTop: `1px solid ${colors.outlineVariant}`,
         }}
       >
         <button
@@ -255,10 +313,10 @@ function ClipCard({
           style={{
             flex: 1,
             height: 34,
-            borderRadius: 8,
-            border: "none",
-            background: "rgba(0,200,150,0.15)",
-            color: "#00c896",
+            borderRadius: radius.md,
+            border: `1px solid ${colors.outlineVariant}`,
+            background: "transparent",
+            color: colors.onSurface,
             fontSize: 12,
             fontWeight: 600,
             cursor: "pointer",
@@ -271,10 +329,10 @@ function ClipCard({
           style={{
             flex: 1,
             height: 34,
-            borderRadius: 8,
+            borderRadius: radius.md,
             border: "none",
-            background: "linear-gradient(135deg, #00c896, #00a8e8)",
-            color: "#fff",
+            background: gradients.primary,
+            color: colors.onPrimary,
             fontSize: 12,
             fontWeight: 600,
             cursor: "pointer",
@@ -308,7 +366,8 @@ export default function ImportPage() {
   const [result, setResult] = useState<ProcessResult | null>(null);
 
   const isValidUrl = videoUrl.startsWith("http");
-  const isYouTube = videoUrl.includes("youtube.com") || videoUrl.includes("youtu.be");
+  const isYouTube =
+    videoUrl.includes("youtube.com") || videoUrl.includes("youtu.be");
 
   const handleProcess = useCallback(async () => {
     if (!isValidUrl) return;
@@ -317,9 +376,13 @@ export default function ImportPage() {
     setResult(null);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
       if (!user) {
-        router.push("/auth/login");
+        setError("You must be logged in to generate clips. Please sign in.");
+        setLoading(false);
         return;
       }
 
@@ -336,7 +399,9 @@ export default function ImportPage() {
           aspectRatio,
           subtitles,
           template,
-          timeRange: timeRangeEnabled ? { start: timeStart, end: timeEnd } : null,
+          timeRange: timeRangeEnabled
+            ? { start: timeStart, end: timeEnd }
+            : null,
         }),
       });
 
@@ -344,7 +409,9 @@ export default function ImportPage() {
 
       if (!res.ok) {
         if (res.status === 402) {
-          setError(`Not enough credits. Need ${data.required}, have ${data.available}.`);
+          setError(
+            `Not enough credits. Need ${data.required}, have ${data.available}.`
+          );
         } else {
           setError(data.error ?? "Failed to process video");
         }
@@ -358,45 +425,72 @@ export default function ImportPage() {
       setLoading(false);
     }
   }, [
-    isValidUrl, videoUrl, prompt, numClips, minDuration, maxDuration,
-    aspectRatio, subtitles, template, timeRangeEnabled, timeStart, timeEnd, router,
+    isValidUrl,
+    videoUrl,
+    prompt,
+    numClips,
+    minDuration,
+    maxDuration,
+    aspectRatio,
+    subtitles,
+    template,
+    timeRangeEnabled,
+    timeStart,
+    timeEnd,
   ]);
 
   const handleDownload = (clip: RekaClip) => {
+    const clipUrl = clip.video_url;
     const a = document.createElement("a");
-    a.href = clip.video_url;
+    a.href = clipUrl;
     a.download = `${clip.title.replace(/\s+/g, "_")}.mp4`;
     a.click();
   };
 
   const handlePost = (clip: RekaClip) => {
+    const clipUrl = encodeURIComponent(clip.video_url);
+    const clipTitle = encodeURIComponent(clip.title);
+    const clipCaption = encodeURIComponent(clip.caption);
     router.push(
-      `/social/post?clipUrl=${encodeURIComponent(clip.video_url)}&title=${encodeURIComponent(clip.title)}&caption=${encodeURIComponent(clip.caption)}`
+      `/social/post?clipUrl=${clipUrl}&title=${clipTitle}&caption=${clipCaption}`
     );
   };
 
+  const inputStyle: React.CSSProperties = {
+    width: "100%",
+    height: 44,
+    borderRadius: radius.md,
+    border: `1px solid ${colors.outlineVariant}`,
+    background: colors.surfaceContainerLowest,
+    color: colors.onSurface,
+    fontSize: 14,
+    padding: "0 16px",
+    boxSizing: "border-box",
+    outline: "none",
+  };
+
   return (
-    <div style={{ minHeight: "100vh", background: "#0a0a0f", color: "#e5e7eb" }}>
-      <div style={{ maxWidth: 900, margin: "0 auto", padding: "32px 24px" }}>
-
-        {/* Header */}
-        <div style={{ marginBottom: 32 }}>
-          <h1 style={{ margin: 0, fontSize: 28, fontWeight: 800, color: "#fff", letterSpacing: "-0.5px" }}>
-            Import Video
-          </h1>
-          <p style={{ margin: "6px 0 0", color: "#6b7280", fontSize: 15 }}>
-            Paste a YouTube URL and Reka AI will extract your best moments.
-          </p>
-        </div>
-
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 320px", gap: 24 }}>
-
+    <DashboardLayout
+      title="Import Video"
+      subtitle="Paste a YouTube URL and Reka AI will extract your best moments."
+    >
+      <div style={{ maxWidth: 900 }}>
+        <div
+          style={{ display: "grid", gridTemplateColumns: "1fr 320px", gap: 24 }}
+        >
           {/* Left: Form */}
           <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-
             {/* URL */}
             <div>
-              <label style={{ fontSize: 13, fontWeight: 600, color: "#e5e7eb", display: "block", marginBottom: 8 }}>
+              <label
+                style={{
+                  fontSize: 13,
+                  fontWeight: 600,
+                  color: colors.onSurface,
+                  display: "block",
+                  marginBottom: 8,
+                }}
+              >
                 Video URL
               </label>
               <div style={{ position: "relative" }}>
@@ -405,25 +499,20 @@ export default function ImportPage() {
                   placeholder="https://youtube.com/watch?v=..."
                   value={videoUrl}
                   onChange={(e) => setVideoUrl(e.target.value)}
-                  style={{
-                    width: "100%",
-                    height: 44,
-                    borderRadius: 10,
-                    border: "1px solid #1f2937",
-                    background: "#111118",
-                    color: "#e5e7eb",
-                    fontSize: 14,
-                    padding: "0 16px",
-                    boxSizing: "border-box",
-                    outline: "none",
-                  }}
+                  style={inputStyle}
                 />
                 {isYouTube && (
-                  <span style={{
-                    position: "absolute", right: 12, top: "50%",
-                    transform: "translateY(-50%)", fontSize: 11,
-                    color: "#00c896", fontWeight: 600,
-                  }}>
+                  <span
+                    style={{
+                      position: "absolute",
+                      right: 12,
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      fontSize: 11,
+                      color: "#4ade80",
+                      fontWeight: 600,
+                    }}
+                  >
                     ✓ YouTube
                   </span>
                 )}
@@ -432,7 +521,15 @@ export default function ImportPage() {
 
             {/* Prompt */}
             <div>
-              <label style={{ fontSize: 13, fontWeight: 600, color: "#e5e7eb", display: "block", marginBottom: 8 }}>
+              <label
+                style={{
+                  fontSize: 13,
+                  fontWeight: 600,
+                  color: colors.onSurface,
+                  display: "block",
+                  marginBottom: 8,
+                }}
+              >
                 Clip Instruction
               </label>
               <textarea
@@ -440,16 +537,10 @@ export default function ImportPage() {
                 onChange={(e) => setPrompt(e.target.value)}
                 rows={3}
                 style={{
-                  width: "100%",
-                  borderRadius: 10,
-                  border: "1px solid #1f2937",
-                  background: "#111118",
-                  color: "#e5e7eb",
-                  fontSize: 14,
+                  ...inputStyle,
+                  height: "auto",
                   padding: "10px 16px",
-                  boxSizing: "border-box",
                   resize: "vertical",
-                  outline: "none",
                   lineHeight: 1.5,
                 }}
               />
@@ -457,20 +548,46 @@ export default function ImportPage() {
 
             {/* Template */}
             <div>
-              <label style={{ fontSize: 13, fontWeight: 600, color: "#e5e7eb", display: "block", marginBottom: 8 }}>
+              <label
+                style={{
+                  fontSize: 13,
+                  fontWeight: 600,
+                  color: colors.onSurface,
+                  display: "block",
+                  marginBottom: 8,
+                }}
+              >
                 Template
               </label>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8 }}>
-                {(["moments", "highlights", "tutorial", "promo"] as Template[]).map((t) => (
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(4, 1fr)",
+                  gap: 8,
+                }}
+              >
+                {(
+                  ["moments", "highlights", "tutorial", "promo"] as Template[]
+                ).map((t) => (
                   <button
                     key={t}
                     onClick={() => setTemplate(t)}
                     style={{
                       height: 38,
-                      borderRadius: 8,
-                      border: `1.5px solid ${template === t ? "#00c896" : "#1f2937"}`,
-                      background: template === t ? "rgba(0,200,150,0.15)" : "#111118",
-                      color: template === t ? "#00c896" : "#6b7280",
+                      borderRadius: radius.md,
+                      border: `1.5px solid ${
+                        template === t
+                          ? colors.primary
+                          : colors.outlineVariant
+                      }`,
+                      background:
+                        template === t
+                          ? `${colors.primaryContainer}30`
+                          : "transparent",
+                      color:
+                        template === t
+                          ? colors.primary
+                          : colors.onSurfaceVariant,
                       fontSize: 12,
                       fontWeight: 600,
                       cursor: "pointer",
@@ -495,14 +612,17 @@ export default function ImportPage() {
 
             {/* Error */}
             {error && (
-              <div style={{
-                padding: "14px 16px",
-                borderRadius: 10,
-                background: "rgba(239,68,68,0.1)",
-                border: "1px solid rgba(239,68,68,0.3)",
-                color: "#ef4444",
-                fontSize: 13,
-              }}>
+              <div
+                style={{
+                  padding: "14px 16px",
+                  borderRadius: radius.lg,
+                  background: `${colors.errorContainer}30`,
+                  border: `1px solid ${colors.error}40`,
+                  color: colors.error,
+                  fontSize: 13,
+                  lineHeight: 1.5,
+                }}
+              >
                 {error}
               </div>
             )}
@@ -513,12 +633,16 @@ export default function ImportPage() {
               disabled={!isValidUrl || loading}
               style={{
                 height: 52,
-                borderRadius: 12,
+                borderRadius: radius.lg,
                 border: "none",
-                background: !isValidUrl || loading
-                  ? "#1f2937"
-                  : "linear-gradient(135deg, #00c896, #00a8e8)",
-                color: !isValidUrl || loading ? "#6b7280" : "#fff",
+                background:
+                  !isValidUrl || loading
+                    ? colors.surfaceContainerHigh
+                    : gradients.primary,
+                color:
+                  !isValidUrl || loading
+                    ? colors.onSurfaceVariant
+                    : colors.onPrimary,
                 fontSize: 15,
                 fontWeight: 700,
                 cursor: !isValidUrl || loading ? "not-allowed" : "pointer",
@@ -531,14 +655,18 @@ export default function ImportPage() {
             >
               {loading ? (
                 <>
-                  <span style={{
-                    width: 18, height: 18, borderRadius: "50%",
-                    border: "2px solid rgba(255,255,255,0.3)",
-                    borderTopColor: "#fff",
-                    animation: "spin 0.7s linear infinite",
-                    display: "inline-block",
-                  }} />
-                  Generating with Reka AI…
+                  <span
+                    style={{
+                      width: 18,
+                      height: 18,
+                      borderRadius: "50%",
+                      border: `2px solid ${colors.onSurfaceVariant}`,
+                      borderTopColor: colors.primary,
+                      animation: "spin 0.7s linear infinite",
+                      display: "inline-block",
+                    }}
+                  />
+                  Generating with Reka AI… (may take 2-4 min)
                 </>
               ) : (
                 `⚡ Generate ${numClips} Clips`
@@ -547,23 +675,39 @@ export default function ImportPage() {
           </div>
 
           {/* Right: Settings */}
-          <div style={{
-            borderRadius: 16,
-            border: "1px solid #1f2937",
-            background: "#111118",
-            padding: 20,
-            height: "fit-content",
-            display: "flex",
-            flexDirection: "column",
-            gap: 20,
-          }}>
-            <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "#e5e7eb" }}>
+          <div
+            style={{
+              borderRadius: radius.xl,
+              border: `1px solid ${colors.outlineVariant}`,
+              background: colors.surfaceContainerLow,
+              padding: 20,
+              height: "fit-content",
+              display: "flex",
+              flexDirection: "column",
+              gap: 20,
+            }}
+          >
+            <h3
+              style={{
+                margin: 0,
+                fontSize: 14,
+                fontWeight: 700,
+                color: colors.onSurface,
+              }}
+            >
               Clip Settings
             </h3>
 
             {/* Aspect Ratio */}
             <div>
-              <label style={{ fontSize: 12, color: "#6b7280", display: "block", marginBottom: 8 }}>
+              <label
+                style={{
+                  fontSize: 12,
+                  color: colors.onSurfaceVariant,
+                  display: "block",
+                  marginBottom: 8,
+                }}
+              >
                 Aspect Ratio
               </label>
               <div style={{ display: "flex", gap: 8 }}>
@@ -572,11 +716,25 @@ export default function ImportPage() {
                     key={ar}
                     onClick={() => setAspectRatio(ar)}
                     style={{
-                      flex: 1, height: 36, borderRadius: 8,
-                      border: `1.5px solid ${aspectRatio === ar ? "#00c896" : "#1f2937"}`,
-                      background: aspectRatio === ar ? "rgba(0,200,150,0.15)" : "transparent",
-                      color: aspectRatio === ar ? "#00c896" : "#6b7280",
-                      fontSize: 11, fontWeight: 700, cursor: "pointer",
+                      flex: 1,
+                      height: 36,
+                      borderRadius: radius.md,
+                      border: `1.5px solid ${
+                        aspectRatio === ar
+                          ? colors.primary
+                          : colors.outlineVariant
+                      }`,
+                      background:
+                        aspectRatio === ar
+                          ? `${colors.primaryContainer}30`
+                          : "transparent",
+                      color:
+                        aspectRatio === ar
+                          ? colors.primary
+                          : colors.onSurfaceVariant,
+                      fontSize: 11,
+                      fontWeight: 700,
+                      cursor: "pointer",
                     }}
                   >
                     {ar}
@@ -587,79 +745,182 @@ export default function ImportPage() {
 
             {/* Num Clips */}
             <div>
-              <label style={{ fontSize: 12, color: "#6b7280", display: "block", marginBottom: 8 }}>
-                Number of Clips — <strong style={{ color: "#e5e7eb" }}>{numClips}</strong>
+              <label
+                style={{
+                  fontSize: 12,
+                  color: colors.onSurfaceVariant,
+                  display: "block",
+                  marginBottom: 8,
+                }}
+              >
+                Number of Clips —{" "}
+                <strong style={{ color: colors.onSurface }}>{numClips}</strong>
               </label>
               <input
-                type="range" min={1} max={10} value={numClips}
+                type="range"
+                min={1}
+                max={10}
+                value={numClips}
                 onChange={(e) => setNumClips(Number(e.target.value))}
-                style={{ width: "100%", accentColor: "#00c896" }}
+                style={{ width: "100%", accentColor: colors.primary }}
               />
             </div>
 
             {/* Duration */}
             <div>
-              <label style={{ fontSize: 12, color: "#6b7280", display: "block", marginBottom: 8 }}>
+              <label
+                style={{
+                  fontSize: 12,
+                  color: colors.onSurfaceVariant,
+                  display: "block",
+                  marginBottom: 8,
+                }}
+              >
                 Duration Range (seconds)
               </label>
-              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              <div
+                style={{ display: "flex", gap: 8, alignItems: "center" }}
+              >
                 <input
-                  type="number" min={5} value={minDuration}
+                  type="number"
+                  min={5}
+                  value={minDuration}
                   onChange={(e) => setMinDuration(Number(e.target.value))}
                   style={{
-                    width: "100%", height: 36, borderRadius: 8,
-                    border: "1px solid #1f2937", background: "#0a0a0f",
-                    color: "#e5e7eb", fontSize: 13, textAlign: "center", outline: "none",
+                    width: "100%",
+                    height: 36,
+                    borderRadius: radius.md,
+                    border: `1px solid ${colors.outlineVariant}`,
+                    background: colors.surfaceContainerLowest,
+                    color: colors.onSurface,
+                    fontSize: 13,
+                    textAlign: "center",
+                    outline: "none",
                   }}
                 />
-                <span style={{ color: "#6b7280", fontSize: 12 }}>to</span>
+                <span
+                  style={{ color: colors.onSurfaceVariant, fontSize: 12 }}
+                >
+                  to
+                </span>
                 <input
-                  type="number" max={180} value={maxDuration}
+                  type="number"
+                  max={180}
+                  value={maxDuration}
                   onChange={(e) => setMaxDuration(Number(e.target.value))}
                   style={{
-                    width: "100%", height: 36, borderRadius: 8,
-                    border: "1px solid #1f2937", background: "#0a0a0f",
-                    color: "#e5e7eb", fontSize: 13, textAlign: "center", outline: "none",
+                    width: "100%",
+                    height: 36,
+                    borderRadius: radius.md,
+                    border: `1px solid ${colors.outlineVariant}`,
+                    background: colors.surfaceContainerLowest,
+                    color: colors.onSurface,
+                    fontSize: 13,
+                    textAlign: "center",
+                    outline: "none",
                   }}
                 />
               </div>
             </div>
 
             {/* Subtitles */}
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
               <div>
-                <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: "#e5e7eb" }}>Subtitles</p>
-                <p style={{ margin: 0, fontSize: 11, color: "#6b7280" }}>Auto captions</p>
+                <p
+                  style={{
+                    margin: 0,
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: colors.onSurface,
+                  }}
+                >
+                  Subtitles
+                </p>
+                <p
+                  style={{
+                    margin: 0,
+                    fontSize: 11,
+                    color: colors.onSurfaceVariant,
+                  }}
+                >
+                  Auto captions
+                </p>
               </div>
               <button
                 onClick={() => setSubtitles((p) => !p)}
                 style={{
-                  width: 44, height: 24, borderRadius: 12, border: "none",
+                  width: 44,
+                  height: 24,
+                  borderRadius: 12,
+                  border: "none",
                   cursor: "pointer",
-                  background: subtitles ? "#00c896" : "#374151",
-                  position: "relative", transition: "background 0.2s",
+                  background: subtitles
+                    ? colors.primaryContainer
+                    : colors.surfaceContainerHighest,
+                  position: "relative",
+                  transition: "background 0.2s",
                 }}
               >
-                <span style={{
-                  position: "absolute", top: 3,
-                  left: subtitles ? 23 : 3,
-                  width: 18, height: 18, borderRadius: "50%",
-                  background: "#fff", transition: "left 0.2s",
-                }} />
+                <span
+                  style={{
+                    position: "absolute",
+                    top: 3,
+                    left: subtitles ? 23 : 3,
+                    width: 18,
+                    height: 18,
+                    borderRadius: "50%",
+                    background: subtitles
+                      ? colors.onPrimaryContainer
+                      : colors.onSurfaceVariant,
+                    transition: "left 0.2s",
+                  }}
+                />
               </button>
             </div>
 
             {/* Credit cost */}
-            <div style={{
-              borderRadius: 8,
-              background: "rgba(0,200,150,0.08)",
-              border: "1px solid rgba(0,200,150,0.2)",
-              padding: "10px 14px",
-            }}>
-              <p style={{ margin: 0, fontSize: 12, color: "#00c896", fontWeight: 600 }}>Cost estimate</p>
-              <p style={{ margin: "4px 0 0", fontSize: 20, fontWeight: 800, color: "#e5e7eb" }}>
+            <div
+              style={{
+                borderRadius: radius.md,
+                background: `${colors.primaryContainer}20`,
+                border: `1px solid ${colors.primary}30`,
+                padding: "10px 14px",
+              }}
+            >
+              <p
+                style={{
+                  margin: 0,
+                  fontSize: 12,
+                  color: colors.primary,
+                  fontWeight: 600,
+                }}
+              >
+                Cost estimate
+              </p>
+              <p
+                style={{
+                  margin: "4px 0 0",
+                  fontSize: 20,
+                  fontWeight: 800,
+                  color: colors.onSurface,
+                }}
+              >
                 {numClips * 10}{" "}
-                <span style={{ fontSize: 13, fontWeight: 500, color: "#6b7280" }}>credits</span>
+                <span
+                  style={{
+                    fontSize: 13,
+                    fontWeight: 500,
+                    color: colors.onSurfaceVariant,
+                  }}
+                >
+                  credits
+                </span>
               </p>
             </div>
           </div>
@@ -668,32 +929,67 @@ export default function ImportPage() {
         {/* Results */}
         {result && (
           <div style={{ marginTop: 40 }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginBottom: 20,
+              }}
+            >
               <div>
-                <h2 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: "#fff" }}>
+                <h2
+                  style={{
+                    margin: 0,
+                    fontSize: 20,
+                    fontWeight: 800,
+                    color: colors.onSurface,
+                  }}
+                >
                   {result.clips.length} Clips Ready ✓
                 </h2>
-                <p style={{ margin: "4px 0 0", fontSize: 13, color: "#6b7280" }}>
-                  Used {result.creditsUsed} credits · {result.creditsRemaining} remaining
+                <p
+                  style={{
+                    margin: "4px 0 0",
+                    fontSize: 13,
+                    color: colors.onSurfaceVariant,
+                  }}
+                >
+                  Used {result.creditsUsed} credits ·{" "}
+                  {result.creditsRemaining} remaining
                 </p>
               </div>
               <button
-                onClick={() => { setResult(null); setVideoUrl(""); }}
+                onClick={() => {
+                  setResult(null);
+                  setVideoUrl("");
+                }}
                 style={{
-                  height: 36, padding: "0 16px", borderRadius: 8,
-                  border: "1px solid #1f2937", background: "transparent",
-                  color: "#e5e7eb", fontSize: 13, fontWeight: 600, cursor: "pointer",
+                  height: 36,
+                  padding: "0 16px",
+                  borderRadius: radius.md,
+                  border: `1px solid ${colors.outlineVariant}`,
+                  background: "transparent",
+                  color: colors.onSurface,
+                  fontSize: 13,
+                  fontWeight: 600,
+                  cursor: "pointer",
                 }}
               >
                 New Import
               </button>
             </div>
 
-            <div style={{
-              display: "grid",
-              gridTemplateColumns: `repeat(${Math.min(result.clips.length, 3)}, 1fr)`,
-              gap: 16,
-            }}>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: `repeat(${Math.min(
+                  result.clips.length,
+                  3
+                )}, 1fr)`,
+                gap: 16,
+              }}
+            >
               {result.clips.map((clip, i) => (
                 <ClipCard
                   key={i}
@@ -709,6 +1005,6 @@ export default function ImportPage() {
       </div>
 
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-    </div>
+    </DashboardLayout>
   );
 }
