@@ -7,19 +7,14 @@ const supabase = createClient(
 );
 
 const REKA_API_KEY = process.env.REKA_API_KEY!;
-const REKA_REELS_ENDPOINT = "https://vision-agent.api.reka.ai/v1/creator/reels";
+const REKA_BASE = "https://vision-agent.api.reka.ai/v1/creator/reels";
+
 export interface RekaClip {
   video_url: string;
   title: string;
   caption: string;
   duration?: number;
   thumbnail_url?: string;
-}
-
-export interface RekaResponse {
-  clips: RekaClip[];
-  job_id?: string;
-  status?: string;
 }
 
 export interface ProcessRequest {
@@ -35,16 +30,18 @@ export interface ProcessRequest {
   template?: "moments" | "highlights" | "tutorial" | "promo";
 }
 
-async function callRekaAPI(params: ProcessRequest): Promise<RekaResponse> {
+// Submit job to Reka
+async function submitRekaJob(params: ProcessRequest): Promise<string> {
   const {
     videoUrl,
-    prompt = "Find the most engaging, hook-worthy moments with high energy and emotional impact. Prioritize viral-worthy clips.",
+    prompt = "Find the most engaging hook-worthy moments with high energy and emotional impact. Prioritize viral-worthy clips.",
     numClips = 3,
     minDuration = 15,
     maxDuration = 60,
     aspectRatio = "9:16",
     subtitles = true,
     template = "moments",
+    timeRange,
   } = params;
 
   const body: Record<string, unknown> = {
@@ -55,6 +52,12 @@ async function callRekaAPI(params: ProcessRequest): Promise<RekaResponse> {
       num_generations: numClips,
       min_duration_seconds: minDuration,
       max_duration_seconds: maxDuration,
+      ...(timeRange
+        ? {
+            source_start_time: timeRange.start,
+            source_end_time: timeRange.end,
+          }
+        : {}),
     },
     rendering_config: {
       subtitles,
@@ -62,7 +65,7 @@ async function callRekaAPI(params: ProcessRequest): Promise<RekaResponse> {
     },
   };
 
-  const response = await fetch(REKA_REELS_ENDPOINT, {
+  const response = await fetch(REKA_BASE, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -71,34 +74,82 @@ async function callRekaAPI(params: ProcessRequest): Promise<RekaResponse> {
     body: JSON.stringify(body),
   });
 
+  const data = await response.json();
+
   if (!response.ok) {
-    const errorText = await response.text();
     throw new Error(
-      `Reka API error ${response.status}: ${errorText}`
+      `Reka submit error ${response.status}: ${JSON.stringify(data)}`
     );
   }
 
-  const data = await response.json();
+  if (!data.id) {
+    throw new Error("Reka did not return a job ID");
+  }
 
-  // Normalise Reka response → internal RekaResponse shape
-  const clips: RekaClip[] = (data.clips ?? data.reels ?? data.results ?? []).map(
-    (clip: Record<string, unknown>) => ({
-      video_url: (clip.video_url ?? clip.url ?? "") as string,
-      title: (clip.title ?? clip.name ?? "Untitled Clip") as string,
-      caption: (clip.caption ?? clip.description ?? "") as string,
-      duration: clip.duration as number | undefined,
-      thumbnail_url: clip.thumbnail_url as string | undefined,
-    })
-  );
+  return data.id as string;
+}
 
-  return { clips, job_id: data.job_id, status: data.status ?? "completed" };
+// Poll Reka until completed or failed
+async function pollRekaJob(jobId: string): Promise<RekaClip[]> {
+  const maxAttempts = 40; // 40 x 15s = 10 minutes max
+  const intervalMs = 15000;
+
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    await new Promise((r) => setTimeout(r, attempt === 0 ? 5000 : intervalMs));
+
+    const res = await fetch(`${REKA_BASE}/${jobId}`, {
+      headers: { "X-Api-Key": REKA_API_KEY },
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(`Reka poll error ${res.status}: ${JSON.stringify(data)}`);
+    }
+
+    const status = data.status as string;
+
+    if (status === "failed") {
+      throw new Error(
+        `Reka job failed: ${data.error_message ?? "unknown error"}`
+      );
+    }
+
+    if (status === "completed") {
+      // Extract clips from output
+      const output = data.output ?? {};
+      const rawClips =
+        output.clips ??
+        output.reels ??
+        output.results ??
+        (Array.isArray(output) ? output : []);
+
+      const clips: RekaClip[] = rawClips.map(
+        (clip: Record<string, unknown>, index: number) => ({
+          video_url: (clip.video_url ?? clip.url ?? clip.download_url ?? "") as string,
+          title: (clip.title ?? clip.name ?? `Clip ${index + 1}`) as string,
+          caption: (clip.caption ?? clip.description ?? "") as string,
+          duration: clip.duration as number | undefined,
+          thumbnail_url: (clip.thumbnail_url ?? clip.thumbnail ?? "") as string,
+        })
+      );
+
+      return clips;
+    }
+
+    // Still queued or processing — continue polling
+    console.log(`[Reka] Job ${jobId} status: ${status} (attempt ${attempt + 1})`);
+  }
+
+  throw new Error("Reka job timed out after 10 minutes");
 }
 
 async function saveJobToSupabase(
   userId: string,
   videoUrl: string,
   params: ProcessRequest,
-  result: RekaResponse
+  clips: RekaClip[],
+  rekaJobId: string
 ) {
   const { data: job, error: jobError } = await supabase
     .from("clip_jobs")
@@ -107,10 +158,10 @@ async function saveJobToSupabase(
       source_url: videoUrl,
       status: "completed",
       prompt: params.prompt,
-      num_clips: params.numClips ?? 3,
+      num_clips: clips.length,
       aspect_ratio: params.aspectRatio ?? "9:16",
       subtitles: params.subtitles ?? true,
-      reka_job_id: result.job_id ?? null,
+      reka_job_id: rekaJobId,
       created_at: new Date().toISOString(),
     })
     .select()
@@ -118,7 +169,7 @@ async function saveJobToSupabase(
 
   if (jobError) throw new Error(`Supabase job insert: ${jobError.message}`);
 
-  const clipInserts = result.clips.map((clip, index) => ({
+  const clipInserts = clips.map((clip, index) => ({
     job_id: job.id,
     user_id: userId,
     clip_index: index,
@@ -131,7 +182,10 @@ async function saveJobToSupabase(
     created_at: new Date().toISOString(),
   }));
 
-  const { error: clipsError } = await supabase.from("clips").insert(clipInserts);
+  const { error: clipsError } = await supabase
+    .from("clips")
+    .insert(clipInserts);
+
   if (clipsError) throw new Error(`Supabase clips insert: ${clipsError.message}`);
 
   return job;
@@ -150,12 +204,12 @@ export async function POST(req: NextRequest) {
     }
     if (!REKA_API_KEY) {
       return NextResponse.json(
-        { error: "REKA_API_KEY is not configured on this server" },
+        { error: "REKA_API_KEY is not configured" },
         { status: 500 }
       );
     }
 
-    // Deduct credits BEFORE processing
+    // Get user profile
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
       .select("credits, plan")
@@ -166,7 +220,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "User profile not found" }, { status: 404 });
     }
 
-    const creditCost = (body.numClips ?? 3) * 10; // 10 credits per clip
+    const creditCost = (body.numClips ?? 3) * 10;
     if (profile.credits < creditCost) {
       return NextResponse.json(
         {
@@ -180,41 +234,55 @@ export async function POST(req: NextRequest) {
     }
 
     // Deduct credits
-    const { error: deductError } = await supabase
+    await supabase
       .from("profiles")
       .update({ credits: profile.credits - creditCost })
       .eq("id", userId);
 
-    if (deductError) {
-      return NextResponse.json(
-        { error: "Failed to deduct credits" },
-        { status: 500 }
-      );
-    }
-
-    // Call Reka
-    const rekaResult = await callRekaAPI(body);
-
-    if (!rekaResult.clips || rekaResult.clips.length === 0) {
-      // Refund credits if no clips returned
+    // Submit Reka job
+    let rekaJobId: string;
+    try {
+      rekaJobId = await submitRekaJob(body);
+    } catch (err) {
+      // Refund credits if submit failed
       await supabase
         .from("profiles")
         .update({ credits: profile.credits })
         .eq("id", userId);
+      throw err;
+    }
 
+    // Poll until done
+    let clips: RekaClip[];
+    try {
+      clips = await pollRekaJob(rekaJobId);
+    } catch (err) {
+      // Refund credits if processing failed
+      await supabase
+        .from("profiles")
+        .update({ credits: profile.credits })
+        .eq("id", userId);
+      throw err;
+    }
+
+    if (!clips || clips.length === 0) {
+      await supabase
+        .from("profiles")
+        .update({ credits: profile.credits })
+        .eq("id", userId);
       return NextResponse.json(
-        { error: "Reka returned no clips for this video" },
+        { error: "Reka completed but returned no clips for this video" },
         { status: 422 }
       );
     }
 
-    // Persist to Supabase
-    const job = await saveJobToSupabase(userId, videoUrl, body, rekaResult);
+    // Save to Supabase
+    const job = await saveJobToSupabase(userId, videoUrl, body, clips, rekaJobId);
 
     return NextResponse.json({
       success: true,
       jobId: job.id,
-      clips: rekaResult.clips,
+      clips,
       creditsUsed: creditCost,
       creditsRemaining: profile.credits - creditCost,
     });
@@ -225,7 +293,7 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// GET: poll job status or fetch previously generated clips
+// GET: fetch previously generated clips
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const jobId = searchParams.get("jobId");
