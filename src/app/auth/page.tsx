@@ -22,6 +22,7 @@ export default function AuthPage() {
   const [error, setError] = useState('');
   const [resendLoading, setResendLoading] = useState(false);
   const [resendDone, setResendDone] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const getStrength = (p: string) => {
     let s = 0;
@@ -287,7 +288,12 @@ export default function AuthPage() {
                   </button>
                 )}
               </div>
-              <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder={isSignUp ? 'Min 8 chars, uppercase, number, symbol' : 'Your password'} required style={inputStyle} />
+              <div style={{ position: 'relative' }}>
+              <input type={showPassword ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} placeholder={isSignUp ? 'Min 8 chars, uppercase, number, symbol' : 'Your password'} required style={{ ...inputStyle, paddingRight: 44 }} />
+              <button type="button" onClick={() => setShowPassword(p => !p)} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: colors.onSurfaceVariant, fontSize: 18, padding: 0, display: 'flex', alignItems: 'center' }}>
+                {showPassword ? '🙈' : '👁️'}
+              </button>
+            </div>
               {isSignUp && password && (
                 <div style={{ marginTop: 8 }}>
                   <div style={{ display: 'flex', gap: 4, marginBottom: 4 }}>
