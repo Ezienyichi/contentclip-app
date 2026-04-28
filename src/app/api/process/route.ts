@@ -7,12 +7,15 @@ const supabase = createClient(
 );
 
 const REKA_API_KEY = process.env.REKA_API_KEY!;
-const REKA_BASE = "https://vision-agent.api.reka.ai/v1/creator/reels";
+// CORRECT endpoint per official Reka docs: https://docs.reka.ai/vision/highlight-clip-generation
+const REKA_BASE = "https://vision-agent.api.reka.ai/v1/clips";
 
 export interface RekaClip {
   video_url: string;
   title: string;
   caption: string;
+  hashtags?: string[];
+  ai_score?: number;
   duration?: number;
   thumbnail_url?: string;
 }
@@ -24,18 +27,18 @@ export interface ProcessRequest {
   numClips?: number;
   minDuration?: number;
   maxDuration?: number;
-  aspectRatio?: "9:16" | "16:9" | "1:1";
+  aspectRatio?: "9:16" | "16:9" | "4:5" | "1:1";
   subtitles?: boolean;
   timeRange?: { start: number; end: number } | null;
-  template?: "moments" | "highlights" | "tutorial" | "promo";
+  template?: "moments" | "compilation";
 }
 
 async function submitRekaJob(params: ProcessRequest): Promise<string> {
   const {
     videoUrl,
-    prompt = "Find the most engaging hook-worthy moments with high energy and emotional impact. Prioritize viral-worthy clips.",
+    prompt = "Create an engaging short video highlighting the best moments",
     numClips = 3,
-    minDuration = 15,
+    minDuration = 0,
     maxDuration = 60,
     aspectRatio = "9:16",
     subtitles = true,
@@ -43,12 +46,15 @@ async function submitRekaJob(params: ProcessRequest): Promise<string> {
     timeRange,
   } = params;
 
+  // Add timestamp to prompt to avoid 409 duplicate detection
+  const uniquePrompt = `${prompt} [${Date.now()}]`;
+
   const body: Record<string, unknown> = {
     video_urls: [videoUrl],
-    prompt,
+    prompt: uniquePrompt,
     generation_config: {
       template,
-      num_generations: numClips,
+      num_generations: Math.min(numClips, 3), // max 3 per docs
       min_duration_seconds: minDuration,
       max_duration_seconds: maxDuration,
       ...(timeRange
@@ -61,6 +67,16 @@ async function submitRekaJob(params: ProcessRequest): Promise<string> {
     rendering_config: {
       subtitles,
       aspect_ratio: aspectRatio,
+      resolution: 720,
+      caption_style: {
+        desired_font_size: 120,
+        text_transform: "uppercase",
+        text_color: "#FFFFFF",
+        highlight_color: "#C0C1FF",
+        stroke_color: "#000000",
+        position: "bottom",
+        font_family: "BebasNeue",
+      },
     },
   };
 
@@ -76,9 +92,8 @@ async function submitRekaJob(params: ProcessRequest): Promise<string> {
   const data = await response.json();
 
   if (!response.ok) {
-    throw new Error(
-      `Reka submit error ${response.status}: ${JSON.stringify(data)}`
-    );
+    const errMsg = data?.error?.message ?? JSON.stringify(data);
+    throw new Error(`Reka submit error ${response.status}: ${errMsg}`);
   }
 
   if (!data.id) {
@@ -88,8 +103,7 @@ async function submitRekaJob(params: ProcessRequest): Promise<string> {
   return data.id as string;
 }
 
-// POST: submit job to Reka, return rekaJobId immediately
-// Client polls GET /api/poll?rekaJobId=xxx to get results
+// POST: submit job, return rekaJobId immediately for client polling
 export async function POST(req: NextRequest) {
   try {
     const body: ProcessRequest = await req.json();
@@ -118,7 +132,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "User profile not found" }, { status: 404 });
     }
 
-    const creditCost = (body.numClips ?? 3) * 10;
+    const numClips = Math.min(body.numClips ?? 3, 3);
+    const creditCost = numClips * 10;
+
     if (profile.credits < creditCost) {
       return NextResponse.json(
         {
@@ -137,10 +153,10 @@ export async function POST(req: NextRequest) {
       .update({ credits: profile.credits - creditCost })
       .eq("id", userId);
 
-    // Submit to Reka — returns immediately with a job ID
+    // Submit to Reka
     let rekaJobId: string;
     try {
-      rekaJobId = await submitRekaJob(body);
+      rekaJobId = await submitRekaJob({ ...body, numClips });
     } catch (err) {
       // Refund credits if submit failed
       await supabase
@@ -150,20 +166,19 @@ export async function POST(req: NextRequest) {
       throw err;
     }
 
-    // Save pending job to Supabase so we can track it
+    // Save pending job to Supabase
     await supabase.from("clip_jobs").insert({
       user_id: userId,
       source_url: videoUrl,
       status: "processing",
       prompt: body.prompt,
-      num_clips: body.numClips ?? 3,
+      num_clips: numClips,
       aspect_ratio: body.aspectRatio ?? "9:16",
       subtitles: body.subtitles ?? true,
       reka_job_id: rekaJobId,
       created_at: new Date().toISOString(),
     });
 
-    // Return job ID to client — client will poll /api/poll
     return NextResponse.json({
       success: true,
       polling: true,
@@ -178,7 +193,7 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// GET: fetch previously completed clips for a job
+// GET: fetch completed clips for a saved job
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const jobId = searchParams.get("jobId");
