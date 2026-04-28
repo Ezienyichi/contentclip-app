@@ -126,7 +126,7 @@ async function pollRekaJob(jobId: string): Promise<RekaClip[]> {
 
       const clips: RekaClip[] = rawClips.map(
         (clip: Record<string, unknown>, index: number) => ({
-          video_url: (clip.video_url ?? clip.url ?? clip.download_url ?? "") as string,
+          video_url: (clip.video_url ?? clip.url ?? clip.signed_s3_video_url ?? clip.signed_s3_video_url ?? clip.download_url ?? "") as string,
           title: (clip.title ?? clip.name ?? `Clip ${index + 1}`) as string,
           caption: (clip.caption ?? clip.description ?? "") as string,
           duration: clip.duration as number | undefined,
