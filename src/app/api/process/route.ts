@@ -30,7 +30,6 @@ export interface ProcessRequest {
   template?: "moments" | "highlights" | "tutorial" | "promo";
 }
 
-// Submit job to Reka
 async function submitRekaJob(params: ProcessRequest): Promise<string> {
   const {
     videoUrl,
@@ -89,108 +88,8 @@ async function submitRekaJob(params: ProcessRequest): Promise<string> {
   return data.id as string;
 }
 
-// Poll Reka until completed or failed
-async function pollRekaJob(jobId: string): Promise<RekaClip[]> {
-  const maxAttempts = 40; // 40 x 15s = 10 minutes max
-  const intervalMs = 15000;
-
-  for (let attempt = 0; attempt < maxAttempts; attempt++) {
-    await new Promise((r) => setTimeout(r, attempt === 0 ? 5000 : intervalMs));
-
-    const res = await fetch(`${REKA_BASE}/${jobId}`, {
-      headers: { "X-Api-Key": REKA_API_KEY },
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      throw new Error(`Reka poll error ${res.status}: ${JSON.stringify(data)}`);
-    }
-
-    const status = data.status as string;
-
-    if (status === "failed") {
-      throw new Error(
-        `Reka job failed: ${data.error_message ?? "unknown error"}`
-      );
-    }
-
-    if (status === "completed") {
-      // Extract clips from output
-      const output = data.output ?? {};
-      const rawClips =
-        output.clips ??
-        output.reels ??
-        output.results ??
-        (Array.isArray(output) ? output : []);
-
-      const clips: RekaClip[] = rawClips.map(
-        (clip: Record<string, unknown>, index: number) => ({
-          video_url: (clip.video_url ?? clip.url ?? clip.signed_s3_video_url ?? clip.signed_s3_video_url ?? clip.download_url ?? "") as string,
-          title: (clip.title ?? clip.name ?? `Clip ${index + 1}`) as string,
-          caption: (clip.caption ?? clip.description ?? "") as string,
-          duration: clip.duration as number | undefined,
-          thumbnail_url: (clip.thumbnail_url ?? clip.thumbnail ?? "") as string,
-        })
-      );
-
-      return clips;
-    }
-
-    // Still queued or processing — continue polling
-    console.log(`[Reka] Job ${jobId} status: ${status} (attempt ${attempt + 1})`);
-  }
-
-  throw new Error("Reka job timed out after 10 minutes");
-}
-
-async function saveJobToSupabase(
-  userId: string,
-  videoUrl: string,
-  params: ProcessRequest,
-  clips: RekaClip[],
-  rekaJobId: string
-) {
-  const { data: job, error: jobError } = await supabase
-    .from("clip_jobs")
-    .insert({
-      user_id: userId,
-      source_url: videoUrl,
-      status: "completed",
-      prompt: params.prompt,
-      num_clips: clips.length,
-      aspect_ratio: params.aspectRatio ?? "9:16",
-      subtitles: params.subtitles ?? true,
-      reka_job_id: rekaJobId,
-      created_at: new Date().toISOString(),
-    })
-    .select()
-    .single();
-
-  if (jobError) throw new Error(`Supabase job insert: ${jobError.message}`);
-
-  const clipInserts = clips.map((clip, index) => ({
-    job_id: job.id,
-    user_id: userId,
-    clip_index: index,
-    video_url: clip.video_url,
-    title: clip.title,
-    caption: clip.caption,
-    duration: clip.duration ?? null,
-    thumbnail_url: clip.thumbnail_url ?? null,
-    status: "ready",
-    created_at: new Date().toISOString(),
-  }));
-
-  const { error: clipsError } = await supabase
-    .from("clips")
-    .insert(clipInserts);
-
-  if (clipsError) throw new Error(`Supabase clips insert: ${clipsError.message}`);
-
-  return job;
-}
-
+// POST: submit job to Reka, return rekaJobId immediately
+// Client polls GET /api/poll?rekaJobId=xxx to get results
 export async function POST(req: NextRequest) {
   try {
     const body: ProcessRequest = await req.json();
@@ -209,7 +108,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Get user profile
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
       .select("credits, plan")
@@ -233,13 +131,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Deduct credits
+    // Deduct credits upfront
     await supabase
       .from("profiles")
       .update({ credits: profile.credits - creditCost })
       .eq("id", userId);
 
-    // Submit Reka job
+    // Submit to Reka — returns immediately with a job ID
     let rekaJobId: string;
     try {
       rekaJobId = await submitRekaJob(body);
@@ -252,37 +150,24 @@ export async function POST(req: NextRequest) {
       throw err;
     }
 
-    // Poll until done
-    let clips: RekaClip[];
-    try {
-      clips = await pollRekaJob(rekaJobId);
-    } catch (err) {
-      // Refund credits if processing failed
-      await supabase
-        .from("profiles")
-        .update({ credits: profile.credits })
-        .eq("id", userId);
-      throw err;
-    }
+    // Save pending job to Supabase so we can track it
+    await supabase.from("clip_jobs").insert({
+      user_id: userId,
+      source_url: videoUrl,
+      status: "processing",
+      prompt: body.prompt,
+      num_clips: body.numClips ?? 3,
+      aspect_ratio: body.aspectRatio ?? "9:16",
+      subtitles: body.subtitles ?? true,
+      reka_job_id: rekaJobId,
+      created_at: new Date().toISOString(),
+    });
 
-    if (!clips || clips.length === 0) {
-      await supabase
-        .from("profiles")
-        .update({ credits: profile.credits })
-        .eq("id", userId);
-      return NextResponse.json(
-        { error: "Reka completed but returned no clips for this video" },
-        { status: 422 }
-      );
-    }
-
-    // Save to Supabase
-    const job = await saveJobToSupabase(userId, videoUrl, body, clips, rekaJobId);
-
+    // Return job ID to client — client will poll /api/poll
     return NextResponse.json({
       success: true,
-      jobId: job.id,
-      clips,
+      polling: true,
+      rekaJobId,
       creditsUsed: creditCost,
       creditsRemaining: profile.credits - creditCost,
     });
@@ -293,7 +178,7 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// GET: fetch previously generated clips
+// GET: fetch previously completed clips for a job
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const jobId = searchParams.get("jobId");
