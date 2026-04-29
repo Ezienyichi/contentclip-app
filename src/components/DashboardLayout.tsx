@@ -20,7 +20,7 @@ export default function DashboardLayout({ children, title, subtitle, actions }: 
       </main>
       <style>{`
         @media (min-width: 769px) { .dashboard-main { margin-left: 256px; } }
-        @media (max-width: 768px) { .dashboard-main { margin-left: 0; } .dashboard-main header { padding: 16px 16px 0 !important; } .dashboard-main > div:last-child { padding: 16px !important; } }
+        @media (max-width: 768px) { .dashboard-main { margin-left: 0; } .dashboard-main header { padding: 16px 16px 0 !important; } .dashboard-main > div:last-child { padding: 16px !important; padding-bottom: 90px !important; } }
       `}</style>
     </div>
   );
