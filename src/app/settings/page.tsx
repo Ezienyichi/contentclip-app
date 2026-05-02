@@ -39,9 +39,9 @@ export default function SettingsPage(){
     {name:'Instagram',icon:'photo_camera',connected:false,color:'#E1306C',info:'Connect Instagram to publish Reels. Requires a Professional Instagram account linked to a Facebook Business page.'},
     {name:'Google Drive',icon:'cloud',connected:true,color:'#4285F4',info:'Back up your exported clips to Google Drive automatically. Files are saved to a HookClip folder.'},
   ];
-  return(
-    {toast&&<div style={{position:"fixed",bottom:90,left:"50%",transform:"translateX(-50%)",background:toast.ok?"#1a3a2a":"#3a1a1a",border:`1px solid ${toast.ok?"#4ade80":colors.error}`,color:toast.ok?"#4ade80":colors.error,padding:"12px 24px",borderRadius:radius.lg,fontSize:14,fontWeight:600,zIndex:999,whiteSpace:"nowrap",boxShadow:"0 8px 32px rgba(0,0,0,0.4)"}}>{toast.ok?"✓ ":"✗ "}{toast.msg}</div>}
-      {toast&&<div style={{position:"fixed",bottom:90,left:"50%",transform:"translateX(-50%)",background:toast.ok?"#1a3a2a":"#3a1a1a",border:`1px solid ${toast.ok?"#4ade80":colors.error}`,color:toast.ok?"#4ade80":colors.error,padding:"12px 24px",borderRadius:radius.lg,fontSize:14,fontWeight:600,zIndex:999,whiteSpace:"nowrap",boxShadow:"0 8px 32px rgba(0,0,0,0.4)"}}>{toast.ok?"✓ ":"✗ "}{toast.msg}</div>}
+  return(<>
+
+
       <DashboardLayout title="Account Settings" subtitle="Manage your profile, billing, and preferences.">
       <div style={{display:'flex',gap:'4px',marginBottom:'28px',background:colors.surfaceContainerHigh,borderRadius:radius.lg,padding:'4px',overflowX:'auto',WebkitOverflowScrolling:'touch',maxWidth:'100%',boxSizing:'border-box'}}>
         {tabs.map(t=><button key={t.id} onClick={()=>setTab(t.id)} style={{padding:'10px 20px',borderRadius:radius.md,background:tab===t.id?colors.surfaceContainerHighest:'transparent',color:tab===t.id?colors.onSurface:colors.onSurfaceVariant,border:'none',fontWeight:600,fontSize:'13px',cursor:'pointer',display:'flex',alignItems:'center',gap:'6px',fontFamily:"'Inter',sans-serif"}}><Icon name={t.icon} size={16}/>{t.label}</button>)}
@@ -167,5 +167,8 @@ export default function SettingsPage(){
         </div>
       </div>}
     </DashboardLayout>
+  </>
   );
 }
+
+
