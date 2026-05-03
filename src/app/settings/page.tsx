@@ -9,7 +9,7 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
-const PLANS=[{n:'Solo Creator',p:9,f:['20 clips/mo','1080p','No watermark']},{n:'Professional',p:24,f:['100 clips/mo','4K','Full adjustments','Calendar']},{n:'Big Agency',p:79,f:['Unlimited','4K+ProRes','API','Team']}];
+const PLANS=[{n:'Starter',p:29,id:'starter',f:['2000 credits/mo','20 clip jobs','1080p','No watermark']},{n:'Creator',p:59,id:'creator',f:['5000 credits/mo','50 clip jobs','1080p','Priority queue']},{n:'Business',p:99,id:'business',f:['15000 credits/mo','150 clip jobs','4K','API access']}];
 export default function SettingsPage(){
   const router=useRouter();
   const[tab,setTab]=useState('profile');
@@ -134,7 +134,7 @@ export default function SettingsPage(){
       {showUpgrade&&<div style={{position:'fixed',inset:0,zIndex:100,background:'rgba(0,0,0,0.7)',backdropFilter:'blur(8px)',display:'flex',alignItems:'center',justifyContent:'center',padding:'24px'}} onClick={()=>setShowUpgrade(false)}>
         <div onClick={e=>e.stopPropagation()} style={{background:colors.surfaceContainerHigh,borderRadius:radius.xl,padding:'32px',width:'100%',maxWidth:'500px'}}>
           <h3 style={{fontSize:'20px',fontWeight:700,marginBottom:'20px'}}>Upgrade Your Plan</h3>
-          {PLANS.map(p=><button key={p.n} onClick={async()=>{setSaving(true);const planId=p.n==='Solo Creator'?'starter':p.n==='Professional'?'creator':'business';const res=await fetch('/api/payments',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({userId,plan:planId})});const data=await res.json();if(data.paymentLink){window.location.href=data.paymentLink;}else{showToast(data.error??'Payment failed',false);}setSaving(false);}} style={{width:'100%',padding:'16px 20px',borderRadius:radius.lg,background:colors.surfaceContainer,border:'1px solid '+colors.outlineVariant,color:colors.onSurface,cursor:'pointer',marginBottom:'8px',display:'flex',justifyContent:'space-between',alignItems:'center',fontFamily:"'Inter',sans-serif"}}>
+          {PLANS.map(p=><button key={p.n} onClick={async()=>{setSaving(true);const planId=p.id||'starter';const res=await fetch('/api/payments',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({userId,plan:planId})});const data=await res.json();if(data.paymentLink){window.location.href=data.paymentLink;}else{showToast(data.error??'Payment failed',false);}setSaving(false);}} style={{width:'100%',padding:'16px 20px',borderRadius:radius.lg,background:colors.surfaceContainer,border:'1px solid '+colors.outlineVariant,color:colors.onSurface,cursor:'pointer',marginBottom:'8px',display:'flex',justifyContent:'space-between',alignItems:'center',fontFamily:"'Inter',sans-serif"}}>
             <div style={{textAlign:'left'}}><p style={{fontSize:'15px',fontWeight:700}}>{p.n}</p><p style={{fontSize:'11px',color:colors.onSurfaceVariant}}>{p.f.join(' Â· ')}</p></div>
             <span style={{fontSize:'20px',fontWeight:800}}>${p.p}<span style={{fontSize:'12px',color:colors.onSurfaceVariant,fontWeight:500}}>/mo</span></span>
           </button>)}
