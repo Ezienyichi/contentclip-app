@@ -66,7 +66,7 @@ export default function Sidebar() {
     <>
       <aside className="sidebar-desktop" style={{ position: 'fixed', left: 0, top: 0, width: '256px', height: '100vh', background: colors.surfaceContainerLowest, borderRight: '1px solid rgba(70,69,85,0.15)', display: 'flex', flexDirection: 'column', padding: '16px', zIndex: 40, overflowY: 'auto' }}>{content}</aside>
       <nav className="sidebar-mobile" style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: colors.surfaceContainerLowest, borderTop: '1px solid rgba(70,69,85,0.15)', display: 'none', justifyContent: 'space-around', padding: '8px 4px', paddingBottom: 'env(safe-area-inset-bottom, 8px)', zIndex: 40 }}>
-        {[...NAV.slice(0,4),NAV[6]].map((item) => {
+        {[NAV[0],NAV[1],NAV[2],NAV[5],NAV[6]].map((item) => {
           const a = isActive(item.href);
           return (
             <button key={item.href} onClick={() => go(item.href)} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', background: 'none', border: 'none', cursor: 'pointer', color: a ? '#cc97ff' : colors.onSurfaceVariant, fontSize: '10px', fontWeight: a ? 600 : 400, fontFamily: "'Inter', sans-serif", padding: '4px 8px' }}>
