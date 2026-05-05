@@ -6,7 +6,7 @@ export default function DashboardLayout({ children, title, subtitle, actions }: 
   return (
     <div style={{ minHeight: '100vh', background: colors.background }}>
       <Sidebar />
-      <main className="dashboard-main" style={{ minHeight: '100vh' }}>
+      <main className="dashboard-main" style={{ minHeight: '100vh', position: 'relative', overflowX: 'hidden' }}>
         {title && (
           <header style={{ padding: '24px 32px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
             <div>

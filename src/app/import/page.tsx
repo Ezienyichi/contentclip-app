@@ -338,7 +338,7 @@ function ClipCard({
             cursor: "pointer",
           }}
         >
-          → Post
+          → Save to Clips
         </button>
       </div>
     </div>
@@ -468,20 +468,32 @@ export default function ImportPage() {
   ]);
 
   const handleDownload = (clip: RekaClip) => {
-    const clipUrl = clip.video_url;
-    const a = document.createElement("a");
-    a.href = clipUrl;
-    a.download = `${clip.title.replace(/\s+/g, "_")}.mp4`;
+    const a = document.createElement('a');
+    a.href = clip.video_url;
+    a.target = '_blank';
+    a.download = clip.title.replace(/\s+/g, '_') + '.mp4';
+    document.body.appendChild(a);
     a.click();
+    document.body.removeChild(a);
   };
 
-  const handlePost = (clip: RekaClip) => {
-    const clipUrl = encodeURIComponent(clip.video_url);
-    const clipTitle = encodeURIComponent(clip.title);
-    const clipCaption = encodeURIComponent(clip.caption);
-    router.push(
-      `/social/post?clipUrl=${clipUrl}&title=${clipTitle}&caption=${clipCaption}`
-    );
+  const handlePost = (clip: RekaClip, index: number) => {
+    // Save all clips to sessionStorage for clips page
+    const clipsToSave = result?.clips.map((c, i) => ({
+      title: c.title,
+      hook_text: c.caption,
+      start_time: 0,
+      end_time: c.duration ?? 60,
+      virality_score: 85,
+      suggested_caption: c.caption,
+      hashtags: '',
+      platform: 'tiktok',
+      clip_url: c.video_url,
+      duration: c.duration ?? 60,
+      status: 'ready',
+    })) ?? [];
+    sessionStorage.setItem('hookclip_clips', JSON.stringify(clipsToSave));
+    router.push('/clips');
   };
 
   const inputStyle: React.CSSProperties = {
@@ -504,7 +516,7 @@ export default function ImportPage() {
     >
       <div style={{ maxWidth: 900 }}>
         <div
-          style={{ display: "grid", gridTemplateColumns: "1fr 320px", gap: 24 }}
+          style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr)", gap: 20 }}
         >
           {/* Left: Form */}
           <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
@@ -537,7 +549,7 @@ export default function ImportPage() {
                       top: "50%",
                       transform: "translateY(-50%)",
                       fontSize: 11,
-                      color: "#4ade80",
+                      color: colors.primary,
                       fontWeight: 600,
                     }}
                   >
@@ -1024,7 +1036,7 @@ export default function ImportPage() {
                   clip={clip}
                   index={i}
                   onDownload={() => handleDownload(clip)}
-                  onPost={() => handlePost(clip)}
+                  onPost={() => handlePost(clip, i)}
                 />
               ))}
             </div>
@@ -1032,7 +1044,7 @@ export default function ImportPage() {
         )}
       </div>
 
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } } @media (max-width: 768px) { .import-settings-panel { display: none !important; } }`}</style>
     </DashboardLayout>
   );
 }

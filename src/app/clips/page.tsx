@@ -20,6 +20,7 @@ export default function ClipsPage() {
   const [sort, setSort] = useState('Most Viral');
   const [plat, setPlat] = useState('All');
   const [preview, setPreview] = useState<number|null>(null);
+  const [playingUrl, setPlayingUrl] = useState<string|null>(null);
   const [showDl, setShowDl] = useState<number|null>(null);
   const [scheduleClip, setScheduleClip] = useState<Clip|null>(null);
   const [schedDate, setSchedDate] = useState('');
@@ -40,12 +41,8 @@ export default function ClipsPage() {
         }
       }
     } catch {}
-    // Fallback demo clips if no real data
-    setClips([
-      { title:'The shocking truth about AI replacing jobs', hook_text:'Everyone is wrong about AI taking your job', start_time:45, end_time:102, virality_score:92, suggested_caption:'', hashtags:'#ai #jobs', platform:'tiktok', duration:57 },
-      { title:'Why most startups fail in year one', hook_text:'The real reason is not what you think', start_time:180, end_time:245, virality_score:87, suggested_caption:'', hashtags:'#startup', platform:'shorts', duration:65 },
-      { title:'Morning routine that changed my life', hook_text:'I stopped doing this one thing', start_time:320, end_time:378, virality_score:84, suggested_caption:'', hashtags:'#routine', platform:'reels', duration:58 },
-    ]);
+    // No demo clips - show empty state for new users
+    setClips([]);
   }, []);
 
   const formatDuration = (s: number) => `${Math.floor(s/60)}:${(s%60).toString().padStart(2,'0')}`;
@@ -119,7 +116,7 @@ export default function ClipsPage() {
         {filtered.map((clip, idx) => (
           <div key={idx} style={{ background:colors.surfaceContainerHigh, borderRadius:radius.lg, overflow:'hidden' }}>
             {/* Thumbnail */}
-            <div onClick={() => setPreview(idx)} style={{ aspectRatio:'9/12', background:colors.surfaceContainer, position:'relative', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer' }}>
+            <div onClick={() => clip.clip_url ? setPlayingUrl(clip.clip_url) : setPreview(idx)} style={{ aspectRatio:'9/12', background:colors.surfaceContainer, position:'relative', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer' }}>
               <div style={{ position:'absolute', top:12, left:12, background:'rgba(0,0,0,0.7)', backdropFilter:'blur(8px)', padding:'4px 10px', borderRadius:radius.full, display:'flex', alignItems:'center', gap:'4px' }}>
                 <Icon name="local_fire_department" size={14} style={{ color:sc(clip.virality_score) }} filled/>
                 <span style={{ fontSize:'12px', fontWeight:700, color:sc(clip.virality_score) }}>{clip.virality_score}</span>
@@ -156,6 +153,16 @@ export default function ClipsPage() {
           </div>
         ))}
       </div>
+
+      {/* Video player modal */}
+      {playingUrl && (
+        <div onClick={() => setPlayingUrl(null)} style={{ position:'fixed', inset:0, zIndex:100, background:'rgba(0,0,0,0.9)', display:'flex', alignItems:'center', justifyContent:'center', padding:20 }}>
+          <div onClick={e => e.stopPropagation()} style={{ width:'100%', maxWidth:400, aspectRatio:'9/16', borderRadius:radius.lg, overflow:'hidden', position:'relative' }}>
+            <video src={playingUrl} controls autoPlay style={{ width:'100%', height:'100%', objectFit:'cover' }} />
+            <button onClick={() => setPlayingUrl(null)} style={{ position:'absolute', top:12, right:12, background:'rgba(0,0,0,0.7)', border:'none', color:'#fff', borderRadius:'50%', width:32, height:32, cursor:'pointer', fontSize:18, display:'flex', alignItems:'center', justifyContent:'center' }}>×</button>
+          </div>
+        </div>
+      )}
 
       {/* Empty state */}
       {filtered.length === 0 && (
