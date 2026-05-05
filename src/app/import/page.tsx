@@ -706,7 +706,7 @@ export default function ImportPage() {
                       display: "inline-block",
                     }}
                   />
-                  Generating with Reka AI… (may take 2-4 min)
+                  ⏳ Processing... this takes 2-4 minutes. Please wait.
                 </>
               ) : (
                 `⚡ Generate ${numClips} Clips`
