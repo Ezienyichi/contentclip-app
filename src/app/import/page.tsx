@@ -1,10 +1,17 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@supabase/supabase-js";
 import DashboardLayout from "@/components/DashboardLayout";
 import { colors, gradients, radius } from "@/lib/tokens";
+
+const PLAN_LIMITS: Record<string, number> = {
+  free: 180,        // 3 min
+  solo: 600,        // 10 min
+  professional: 1800, // 30 min
+  agency: 3600,     // 60 min
+};
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -39,6 +46,8 @@ function TimeRangeSelector({
   end,
   onStartChange,
   onEndChange,
+  maxAllowed,
+  upgradeable,
 }: {
   enabled: boolean;
   onToggle: () => void;
@@ -46,12 +55,16 @@ function TimeRangeSelector({
   end: number;
   onStartChange: (v: number) => void;
   onEndChange: (v: number) => void;
+  maxAllowed: number;
+  upgradeable: boolean;
 }) {
   const fmt = (s: number) => {
     const m = Math.floor(s / 60);
     const sec = s % 60;
     return `${m}:${sec.toString().padStart(2, "0")}`;
   };
+
+  const atLimit = end >= maxAllowed;
 
   return (
     <div
@@ -78,13 +91,14 @@ function TimeRangeSelector({
           <span
             style={{
               fontSize: 11,
-              color: colors.onSurfaceVariant,
-              background: colors.surfaceContainerHigh,
+              color: colors.primary,
+              background: `${colors.primary}18`,
               borderRadius: radius.sm,
               padding: "2px 8px",
+              fontWeight: 600,
             }}
           >
-            Optional
+            {Math.floor(maxAllowed / 60)} min max
           </span>
         </div>
         <button
@@ -116,7 +130,7 @@ function TimeRangeSelector({
       </div>
 
       {enabled && (
-        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           <div style={{ display: "flex", gap: 16 }}>
             <div style={{ flex: 1 }}>
               <label
@@ -143,24 +157,36 @@ function TimeRangeSelector({
               <label
                 style={{
                   fontSize: 12,
-                  color: colors.onSurfaceVariant,
+                  color: atLimit ? colors.onSurfaceVariant : colors.onSurfaceVariant,
                   display: "block",
                   marginBottom: 6,
                 }}
               >
                 End —{" "}
-                <strong style={{ color: colors.primary }}>{fmt(end)}</strong>
+                <strong style={{ color: atLimit ? "#FF9500" : colors.primary }}>
+                  {fmt(end)}
+                </strong>
+                {atLimit && (
+                  <span style={{ fontSize: 10, color: "#FF9500", marginLeft: 6 }}>
+                    (plan limit)
+                  </span>
+                )}
               </label>
               <input
                 type="range"
                 min={start + 5}
-                max={600}
+                max={maxAllowed}
                 value={end}
                 onChange={(e) => onEndChange(Number(e.target.value))}
-                style={{ width: "100%", accentColor: colors.primary }}
+                style={{
+                  width: "100%",
+                  accentColor: atLimit ? "#FF9500" : colors.primary,
+                  opacity: atLimit ? 0.7 : 1,
+                }}
               />
             </div>
           </div>
+
           <p style={{ fontSize: 12, color: colors.onSurfaceVariant, margin: 0 }}>
             Clips from{" "}
             <strong style={{ color: colors.onSurface }}>
@@ -168,6 +194,43 @@ function TimeRangeSelector({
             </strong>{" "}
             ({Math.round((end - start) / 60)} min window)
           </p>
+
+          {/* Helper text */}
+          <p style={{ fontSize: 11, color: colors.onSurfaceVariant, margin: 0, opacity: 0.8 }}>
+            ⚡ Shorter range = faster clips. 5 mins ≈ 25 seconds.
+          </p>
+
+          {/* Upgrade nudge */}
+          {atLimit && upgradeable && (
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                padding: "8px 12px",
+                borderRadius: radius.md,
+                background: "rgba(255,149,0,0.08)",
+                border: "1px solid rgba(255,149,0,0.25)",
+              }}
+            >
+              <span style={{ fontSize: 12, color: "#FF9500", fontWeight: 600 }}>
+                🔒 Upgrade to Pro for longer video windows
+              </span>
+              <a
+                href="/pricing"
+                style={{
+                  fontSize: 11,
+                  color: colors.primary,
+                  fontWeight: 700,
+                  marginLeft: "auto",
+                  textDecoration: "none",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                View plans →
+              </a>
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -395,7 +458,8 @@ export default function ImportPage() {
   const [aspectRatio, setAspectRatio] = useState<AspectRatio>("9:16");
   const [subtitles, setSubtitles] = useState(true);
   const [template, setTemplate] = useState<Template>("moments");
-  const [timeRangeEnabled, setTimeRangeEnabled] = useState(false);
+  const [userPlan, setUserPlan] = useState<string>("free");
+  const [timeRangeEnabled, setTimeRangeEnabled] = useState(true);
   const [timeStart, setTimeStart] = useState(0);
   const [timeEnd, setTimeEnd] = useState(300);
   const [loading, setLoading] = useState(false);
@@ -403,12 +467,45 @@ export default function ImportPage() {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<ProcessResult | null>(null);
 
+  const planLimit = PLAN_LIMITS[userPlan] ?? 180;
+
+  // Fetch user's plan on mount and cap the end-time slider accordingly
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return;
+      supabase
+        .from("profiles")
+        .select("plan")
+        .eq("id", user.id)
+        .single()
+        .then(({ data }) => {
+          if (data?.plan) {
+            setUserPlan(data.plan);
+            const limit = PLAN_LIMITS[data.plan] ?? 180;
+            setTimeEnd((prev) => Math.min(prev, limit));
+          }
+        });
+    });
+  }, []);
+
   const isValidUrl = videoUrl.startsWith("http");
   const isYouTube =
     videoUrl.includes("youtube.com") || videoUrl.includes("youtu.be");
 
   const handleProcess = useCallback(async () => {
     if (!isValidUrl) return;
+
+    // Client-side plan window check
+    if (timeRangeEnabled) {
+      const window = timeEnd - timeStart;
+      if (window > planLimit) {
+        setError(
+          `Your ${userPlan} plan allows a maximum ${Math.floor(planLimit / 60)}-minute window. Upgrade to process longer segments.`
+        );
+        return;
+      }
+    }
+
     setLoading(true);
     setRekaStatus("queued");
     setError(null);
@@ -506,6 +603,18 @@ export default function ImportPage() {
                 creditsRemaining,
               });
               setLoading(false);
+              // Fire in-app notification (non-blocking)
+              fetch("/api/notifications", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  userId: user.id,
+                  title: "🎬 Clips Ready!",
+                  body: `${clips.length} clip${clips.length !== 1 ? "s" : ""} generated successfully.`,
+                  type: "clip_ready",
+                  link: "/clips",
+                }),
+              }).catch(() => {});
             } else if (event.status === "failed") {
               setError((event.error_message as string) ?? "Reka job failed");
               setLoading(false);
@@ -532,6 +641,8 @@ export default function ImportPage() {
     timeRangeEnabled,
     timeStart,
     timeEnd,
+    planLimit,
+    userPlan,
   ]);
 
   const handleDownload = (clip: RekaClip) => {
@@ -715,6 +826,8 @@ export default function ImportPage() {
               end={timeEnd}
               onStartChange={setTimeStart}
               onEndChange={setTimeEnd}
+              maxAllowed={planLimit}
+              upgradeable={userPlan !== "agency"}
             />
 
             {/* Error */}

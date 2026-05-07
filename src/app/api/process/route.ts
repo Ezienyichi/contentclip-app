@@ -10,6 +10,13 @@ const REKA_API_KEY = process.env.REKA_API_KEY!;
 // CORRECT endpoint per official Reka docs: https://docs.reka.ai/vision/highlight-clip-generation
 const REKA_BASE = "https://vision-agent.api.reka.ai/v1/clips";
 
+const PLAN_WINDOW_LIMITS: Record<string, number> = {
+  free: 180,
+  solo: 600,
+  professional: 1800,
+  agency: 3600,
+};
+
 export interface RekaClip {
   video_url: string;
   title: string;
@@ -60,6 +67,23 @@ export async function POST(req: NextRequest) {
 
     if (profileError || !profile) {
       return NextResponse.json({ error: "User profile not found" }, { status: 404 });
+    }
+
+    // Enforce plan-based video window limit server-side
+    if (body.timeRange) {
+      const windowSeconds = body.timeRange.end - body.timeRange.start;
+      const planLimit = PLAN_WINDOW_LIMITS[profile.plan] ?? 180;
+      if (windowSeconds > planLimit) {
+        return NextResponse.json(
+          {
+            error: "Video window exceeds your plan limit. Please upgrade.",
+            planLimit,
+            windowSeconds,
+            upgradeUrl: "/pricing",
+          },
+          { status: 403 }
+        );
+      }
     }
 
     const numClips = Math.min(body.numClips ?? 3, 3);
