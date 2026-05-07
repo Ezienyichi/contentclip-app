@@ -1,14 +1,11 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from '@/lib/supabase-browser';
 import Icon from '@/components/Icon';
 import { colors, gradients, radius, inputField } from '@/lib/tokens';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+const supabase = createClient();
 
 type View = 'signin' | 'signup' | 'verify' | 'forgot' | 'forgot_sent';
 
@@ -23,6 +20,14 @@ export default function AuthPage() {
   const [resendLoading, setResendLoading] = useState(false);
   const [resendDone, setResendDone] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  // Show error if the OAuth callback redirected back with ?error=
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('error')) {
+      setError('Google sign-in failed. Please try again or use email/password.');
+    }
+  }, []);
 
   const getStrength = (p: string) => {
     let s = 0;
@@ -104,11 +109,24 @@ export default function AuthPage() {
     setResendDone(true);
   };
 
+  // SUPABASE DASHBOARD SETUP REQUIRED:
+  // 1. Authentication → URL Configuration → Redirect URLs → add:
+  //    http://localhost:3000/api/auth/callback
+  //    https://hookclip-app-w2hf.vercel.app/api/auth/callback
+  // 2. Authentication → Providers → Google → enable with valid Client ID & Secret
   const handleGoogle = async () => {
-    await supabase.auth.signInWithOAuth({
+    setLoading(true);
+    setError('');
+    const { error: err } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: `${window.location.origin}/dashboard` },
+      options: {
+        redirectTo: `${window.location.origin}/api/auth/callback`,
+      },
     });
+    if (err) {
+      setError(err.message);
+      setLoading(false);
+    }
   };
 
   const inputStyle: React.CSSProperties = {
