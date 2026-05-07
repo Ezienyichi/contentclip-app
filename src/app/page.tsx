@@ -114,19 +114,26 @@ export default function LandingPage() {
             <button onClick={() => setAnnual(true)} style={{ padding: '8px 20px', borderRadius: radius.full, border: 'none', cursor: 'pointer', background: annual ? colors.primary : 'transparent', color: annual ? '#000' : colors.onSurfaceVariant, fontWeight: 600, fontSize: 13, fontFamily: "'Inter', sans-serif" }}>Annual <span style={{ color: annual ? '#000' : '#4ade80', fontSize: 11 }}>-25%</span></button>
           </div>
         </div>
+        {/* Credits explainer */}
+        <div style={{ maxWidth: 600, margin: '0 auto 32px', padding: '14px 20px', borderRadius: radius.lg, background: colors.surfaceContainerHigh, border: '1px solid ' + colors.outlineVariant, fontSize: 13, color: colors.onSurfaceVariant, lineHeight: 1.6, textAlign: 'left' }}>
+          <strong style={{ color: colors.onSurface }}>How credits work:</strong> paste a 30-minute video → uses 30 credits. Credits reset monthly. Unused credits do not roll over.
+        </div>
         <div className="pricing-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16 }}>
-          {[{ n: 'Free', p: 0, d: 'Try it out', f: ['3 watermarked clips/mo','720p MP4','Basic captions','1 project'], pop: false },
-            { n: 'Solo Creator', p: 9, d: 'Individual creators', f: ['20 clips/mo','1080p MP4','Custom captions','5 projects','No watermark'], pop: false },
-            { n: 'Professional', p: 24, d: 'Serious creators', f: ['100 clips/mo','2K & 4K export','Animated captions','Unlimited projects','Full adjustments','Calendar + Analytics'], pop: true },
-            { n: 'Big Agency', p: 79, d: 'Teams & agencies', f: ['Unlimited clips','4K + ProRes','All features','Team collab','Priority processing','API + White-label'], pop: false }
+          {[
+            { n: 'Free', p: 0, cr: 30, d: 'Try it out', f: ['30 credits/month', '5 min video window', '720p exports', 'Watermark on clips', 'Basic captions', '1 project'], badge: null },
+            { n: 'Starter', p: 12, cr: 300, d: 'Growing creators', f: ['300 credits/month', '15 min video window', '1080p exports', 'No watermark', 'Custom captions', '5 projects'], badge: 'Most Popular' },
+            { n: 'Pro', p: 29, cr: 1000, d: 'Serious creators', f: ['1,000 credits/month', '45 min video window', '4K exports', 'No watermark', 'Animated captions', 'Unlimited projects'], badge: 'Best Value' },
+            { n: 'Agency', p: 89, cr: 5000, d: 'Teams & agencies', f: ['5,000 credits/month', '90 min video window', '4K + ProRes', 'No watermark', 'All caption styles', 'Unlimited projects', 'Priority processing', 'API access'], badge: null },
           ].map(plan => {
             const dp = annual ? Math.round(plan.p * 0.75) : plan.p;
-            return <div key={plan.n} style={{ background: plan.pop ? colors.surfaceContainerHigh : colors.surfaceContainerLow, borderRadius: radius.xl, padding: 32, border: plan.pop ? '1px solid '+colors.primary+'40' : '1px solid transparent', position: 'relative', boxShadow: plan.pop ? shadows.glow : 'none' }}>
-              {plan.pop && <div style={{ position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)', background: gradients.primary, color: '#000', fontSize: 11, fontWeight: 700, padding: '4px 16px', borderRadius: radius.full }}>Most Popular</div>}
+            const hi = plan.badge !== null;
+            return <div key={plan.n} style={{ background: hi ? colors.surfaceContainerHigh : colors.surfaceContainerLow, borderRadius: radius.xl, padding: 32, border: hi ? '1px solid '+colors.primary+'40' : '1px solid transparent', position: 'relative', boxShadow: hi ? shadows.glow : 'none' }}>
+              {plan.badge && <div style={{ position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)', background: gradients.primary, color: '#000', fontSize: 11, fontWeight: 700, padding: '4px 16px', borderRadius: radius.full, whiteSpace: 'nowrap' }}>{plan.badge}</div>}
               <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 4 }}>{plan.n}</h3>
-              <p style={{ fontSize: 12, color: colors.onSurfaceVariant, marginBottom: 20 }}>{plan.d}</p>
-              <div style={{ marginBottom: 24 }}><span style={{ fontSize: 40, fontWeight: 800 }}>${dp}</span><span style={{ fontSize: 14, color: colors.onSurfaceVariant }}>/mo</span></div>
-              <button onClick={() => router.push('/auth')} style={{ width: '100%', background: plan.pop ? gradients.primary : colors.surfaceContainer, color: plan.pop ? '#FAF7FF' : colors.onSurface, border: plan.pop ? 'none' : '1px solid '+colors.outlineVariant, padding: 12, borderRadius: radius.md, fontWeight: 700, fontSize: 13, cursor: 'pointer', marginBottom: 24, fontFamily: "'Inter', sans-serif" }}>{plan.p === 0 ? 'Get Started' : 'Start Trial'}</button>
+              <p style={{ fontSize: 12, color: colors.onSurfaceVariant, marginBottom: 16 }}>{plan.d}</p>
+              <div style={{ marginBottom: plan.p > 0 ? 4 : 24 }}><span style={{ fontSize: 40, fontWeight: 800 }}>${dp}</span><span style={{ fontSize: 14, color: colors.onSurfaceVariant }}>/mo</span></div>
+              {plan.p > 0 && <p style={{ fontSize: 11, color: colors.onSurfaceVariant, margin: '0 0 20px', opacity: 0.7 }}>1 credit = 1 minute of video processed</p>}
+              <button onClick={() => router.push('/auth')} style={{ width: '100%', background: hi ? gradients.primary : colors.surfaceContainer, color: hi ? '#FAF7FF' : colors.onSurface, border: hi ? 'none' : '1px solid '+colors.outlineVariant, padding: 12, borderRadius: radius.md, fontWeight: 700, fontSize: 13, cursor: 'pointer', marginBottom: 24, fontFamily: "'Inter', sans-serif" }}>{plan.p === 0 ? 'Get Started' : 'Start Trial'}</button>
               <ul style={{ listStyle: 'none', padding: 0 }}>{plan.f.map(f => <li key={f} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: colors.onSurfaceVariant, marginBottom: 10 }}><Icon name="check_circle" size={16} style={{ color: colors.primary }} filled /> {f}</li>)}</ul>
             </div>;
           })}

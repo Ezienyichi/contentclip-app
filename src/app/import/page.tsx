@@ -7,10 +7,12 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { colors, gradients, radius } from "@/lib/tokens";
 
 const PLAN_LIMITS: Record<string, number> = {
-  free: 180,        // 3 min
-  solo: 600,        // 10 min
-  professional: 1800, // 30 min
-  agency: 3600,     // 60 min
+  free: 300,          // 5 min
+  starter: 900,       // 15 min
+  solo: 900,          // legacy DB name → same as starter
+  pro: 2700,          // 45 min
+  professional: 2700, // legacy DB name → same as pro
+  agency: 5400,       // 90 min
 };
 
 const supabase = createClient(
@@ -197,7 +199,7 @@ function TimeRangeSelector({
 
           {/* Helper text */}
           <p style={{ fontSize: 11, color: colors.onSurfaceVariant, margin: 0, opacity: 0.8 }}>
-            ⚡ Shorter range = faster clips. 5 mins ≈ 25 seconds.
+            5 min window ≈ 25 seconds processing · extend range for more clips
           </p>
 
           {/* Upgrade nudge */}
@@ -459,6 +461,7 @@ export default function ImportPage() {
   const [subtitles, setSubtitles] = useState(true);
   const [template, setTemplate] = useState<Template>("moments");
   const [userPlan, setUserPlan] = useState<string>("free");
+  const [userCredits, setUserCredits] = useState<number>(0);
   const [timeRangeEnabled, setTimeRangeEnabled] = useState(true);
   const [timeStart, setTimeStart] = useState(0);
   const [timeEnd, setTimeEnd] = useState(300);
@@ -467,22 +470,27 @@ export default function ImportPage() {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<ProcessResult | null>(null);
 
-  const planLimit = PLAN_LIMITS[userPlan] ?? 180;
+  const planLimit = PLAN_LIMITS[userPlan] ?? 300;
+  const creditCost = timeRangeEnabled ? Math.ceil((timeEnd - timeStart) / 60) : numClips * 10;
+  const insufficientCredits = userCredits > 0 && userCredits < creditCost;
 
-  // Fetch user's plan on mount and cap the end-time slider accordingly
+  // Fetch user's plan and credits on mount
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user) return;
       supabase
         .from("profiles")
-        .select("plan")
+        .select("plan, credits")
         .eq("id", user.id)
         .single()
         .then(({ data }) => {
           if (data?.plan) {
             setUserPlan(data.plan);
-            const limit = PLAN_LIMITS[data.plan] ?? 180;
+            const limit = PLAN_LIMITS[data.plan] ?? 300;
             setTimeEnd((prev) => Math.min(prev, limit));
+          }
+          if (typeof data?.credits === "number") {
+            setUserCredits(data.credits);
           }
         });
     });
@@ -1115,8 +1123,8 @@ export default function ImportPage() {
             <div
               style={{
                 borderRadius: radius.md,
-                background: `${colors.primaryContainer}20`,
-                border: `1px solid ${colors.primary}30`,
+                background: insufficientCredits ? `${colors.error}10` : `${colors.primaryContainer}20`,
+                border: `1px solid ${insufficientCredits ? colors.error : colors.primary}30`,
                 padding: "10px 14px",
               }}
             >
@@ -1124,7 +1132,7 @@ export default function ImportPage() {
                 style={{
                   margin: 0,
                   fontSize: 12,
-                  color: colors.primary,
+                  color: insufficientCredits ? colors.error : colors.primary,
                   fontWeight: 600,
                 }}
               >
@@ -1138,7 +1146,7 @@ export default function ImportPage() {
                   color: colors.onSurface,
                 }}
               >
-                {numClips * 10}{" "}
+                {creditCost}{" "}
                 <span
                   style={{
                     fontSize: 13,
@@ -1149,6 +1157,13 @@ export default function ImportPage() {
                   credits
                 </span>
               </p>
+              {userCredits > 0 && (
+                <p style={{ margin: "6px 0 0", fontSize: 11, color: insufficientCredits ? colors.error : colors.onSurfaceVariant }}>
+                  {insufficientCredits
+                    ? <><span>Not enough credits — </span><a href="/pricing" style={{ color: colors.primary, fontWeight: 700 }}>upgrade to continue</a></>
+                    : `This will use ${creditCost} credits — you have ${userCredits} remaining this month`}
+                </p>
+              )}
             </div>
           </div>
         </div>

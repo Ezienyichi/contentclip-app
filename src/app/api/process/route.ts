@@ -11,10 +11,12 @@ const REKA_API_KEY = process.env.REKA_API_KEY!;
 const REKA_BASE = "https://vision-agent.api.reka.ai/v1/clips";
 
 const PLAN_WINDOW_LIMITS: Record<string, number> = {
-  free: 180,
-  solo: 600,
-  professional: 1800,
-  agency: 3600,
+  free: 300,
+  starter: 900,
+  solo: 900,
+  pro: 2700,
+  professional: 2700,
+  agency: 5400,
 };
 
 export interface RekaClip {
