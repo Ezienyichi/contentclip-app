@@ -15,6 +15,8 @@ interface RekaClip {
   video_url: string;
   title: string;
   caption: string;
+  hashtags?: string[];
+  ai_score?: number;
   duration?: number;
   thumbnail_url?: string;
 }
@@ -284,6 +286,41 @@ function ClipCard({
             {clip.caption}
           </p>
         )}
+        {clip.hashtags && clip.hashtags.length > 0 && (
+          <p
+            style={{
+              margin: 0,
+              fontSize: 11,
+              color: colors.primary,
+              lineHeight: 1.5,
+              wordBreak: "break-word",
+            }}
+          >
+            {clip.hashtags.map((h) => (h.startsWith("#") ? h : `#${h}`)).join(" ")}
+          </p>
+        )}
+        {clip.ai_score !== undefined && (
+          <div
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 4,
+              background: `${colors.primaryContainer}30`,
+              border: `1px solid ${colors.primary}40`,
+              borderRadius: 6,
+              padding: "2px 8px",
+              width: "fit-content",
+            }}
+          >
+            <span style={{ fontSize: 10, color: colors.primary, fontWeight: 700 }}>
+              AI Score
+            </span>
+            <span style={{ fontSize: 13, fontWeight: 800, color: colors.onSurface }}>
+              {clip.ai_score}
+            </span>
+            <span style={{ fontSize: 10, color: colors.onSurfaceVariant }}>/100</span>
+          </div>
+        )}
         {videoUrl && (
           <a
             href={videoUrl}
@@ -362,6 +399,7 @@ export default function ImportPage() {
   const [timeStart, setTimeStart] = useState(0);
   const [timeEnd, setTimeEnd] = useState(300);
   const [loading, setLoading] = useState(false);
+  const [rekaStatus, setRekaStatus] = useState<string>("idle");
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<ProcessResult | null>(null);
 
@@ -372,6 +410,7 @@ export default function ImportPage() {
   const handleProcess = useCallback(async () => {
     if (!isValidUrl) return;
     setLoading(true);
+    setRekaStatus("queued");
     setError(null);
     setResult(null);
 
@@ -405,9 +444,9 @@ export default function ImportPage() {
         }),
       });
 
-      const data = await res.json();
-
+      // Non-2xx = JSON error (credit check failed, auth error, etc.)
       if (!res.ok) {
+        const data = await res.json();
         if (res.status === 402) {
           setError(
             `Not enough credits. Need ${data.required}, have ${data.available}.`
@@ -415,41 +454,69 @@ export default function ImportPage() {
         } else {
           setError(data.error ?? "Failed to process video");
         }
+        setLoading(false);
         return;
       }
 
-      if (data.polling && data.rekaJobId) {
-        const interval = setInterval(async () => {
+      // 2xx = SSE stream — read live status events
+      const reader = res.body!.getReader();
+      const decoder = new TextDecoder();
+      let sseBuffer = "";
+      let creditsUsed = numClips * 10;
+      let creditsRemaining = 0;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        sseBuffer += decoder.decode(value, { stream: true });
+        const lines = sseBuffer.split("\n");
+        sseBuffer = lines.pop() ?? "";
+
+        for (const line of lines) {
+          if (!line.startsWith("data: ")) continue;
           try {
-            const pollRes = await fetch(
-              `/api/poll?rekaJobId=${data.rekaJobId}&userId=${user.id}`
-            );
-            const pollData = await pollRes.json();
-            if (pollData.status === 'completed' && pollData.clips) {
-              clearInterval(interval);
+            const event = JSON.parse(line.slice(6)) as Record<string, unknown>;
+
+            // Capture credit info from the initial "queued" event
+            if (typeof event.creditsUsed === "number") {
+              creditsUsed = event.creditsUsed;
+              creditsRemaining = (event.creditsRemaining as number) ?? 0;
+            }
+
+            if (event.status) setRekaStatus(event.status as string);
+
+            if (event.status === "completed" && Array.isArray(event.output)) {
+              const clips: RekaClip[] = (
+                event.output as Record<string, unknown>[]
+              ).map((c, i) => ({
+                video_url: (c.video_url ?? "") as string,
+                title: (c.title ?? `Clip ${i + 1}`) as string,
+                caption: (c.caption ?? "") as string,
+                hashtags: c.hashtags as string[] | undefined,
+                ai_score: c.ai_score as number | undefined,
+                duration: c.duration as number | undefined,
+                thumbnail_url: c.thumbnail_url as string | undefined,
+              }));
               setResult({
                 success: true,
-                jobId: data.rekaJobId,
-                clips: pollData.clips,
-                creditsUsed: data.creditsUsed,
-                creditsRemaining: data.creditsRemaining,
+                jobId: "",
+                clips,
+                creditsUsed,
+                creditsRemaining,
               });
               setLoading(false);
-            } else if (pollData.error) {
-              clearInterval(interval);
-              setError(pollData.error);
+            } else if (event.status === "failed") {
+              setError((event.error_message as string) ?? "Reka job failed");
               setLoading(false);
             }
-          } catch (e) {
-            console.error('Poll error:', e);
+          } catch {
+            // Skip malformed SSE lines
           }
-        }, 15000);
-        return;
+        }
       }
-      setResult(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Network error");
-    } finally {
       setLoading(false);
     }
   }, [
@@ -484,9 +551,9 @@ export default function ImportPage() {
       hook_text: c.caption,
       start_time: 0,
       end_time: c.duration ?? 60,
-      virality_score: 85,
+      virality_score: c.ai_score ?? 85,
       suggested_caption: c.caption,
-      hashtags: '',
+      hashtags: c.hashtags?.join(' ') ?? '',
       platform: 'tiktok',
       clip_url: c.video_url,
       duration: c.duration ?? 60,
@@ -704,9 +771,16 @@ export default function ImportPage() {
                       borderTopColor: colors.primary,
                       animation: "spin 0.7s linear infinite",
                       display: "inline-block",
+                      flexShrink: 0,
                     }}
                   />
-                  ⏳ Processing... this takes 2-4 minutes. Please wait.
+                  {rekaStatus === "preprocessing"
+                    ? "⚡ Downloading and analysing your video..."
+                    : rekaStatus === "processing"
+                    ? "🎬 Finding the best moments..."
+                    : rekaStatus === "completed"
+                    ? "✅ Your clips are ready!"
+                    : "⏳ Processing... this takes 2-4 minutes. Please wait."}
                 </>
               ) : (
                 `⚡ Generate ${numClips} Clips`

@@ -33,77 +33,7 @@ export interface ProcessRequest {
   template?: "moments" | "compilation";
 }
 
-async function submitRekaJob(params: ProcessRequest): Promise<string> {
-  const {
-    videoUrl,
-    prompt = "Create an engaging short video highlighting the best moments",
-    numClips = 3,
-    minDuration = 0,
-    maxDuration = 60,
-    aspectRatio = "9:16",
-    subtitles = true,
-    template = "moments",
-    timeRange,
-  } = params;
-
-  // Add timestamp to prompt to avoid 409 duplicate detection
-  const uniquePrompt = `${prompt} [${Date.now()}]`;
-
-  const body: Record<string, unknown> = {
-    video_urls: [videoUrl],
-    prompt: uniquePrompt,
-    generation_config: {
-      template,
-      num_generations: Math.min(numClips, 3), // max 3 per docs
-      min_duration_seconds: minDuration,
-      max_duration_seconds: maxDuration,
-      ...(timeRange
-        ? {
-            source_start_time: timeRange.start,
-            source_end_time: timeRange.end,
-          }
-        : {}),
-    },
-    rendering_config: {
-      subtitles,
-      aspect_ratio: aspectRatio,
-      resolution: 720,
-      caption_style: {
-        desired_font_size: 120,
-        text_transform: "uppercase",
-        text_color: "#FFFFFF",
-        highlight_color: "#C0C1FF",
-        stroke_color: "#000000",
-        position: "bottom",
-        font_family: "BebasNeue",
-      },
-    },
-  };
-
-  const response = await fetch(REKA_BASE, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Api-Key": REKA_API_KEY,
-    },
-    body: JSON.stringify(body),
-  });
-
-  const data = await response.json();
-
-  if (!response.ok) {
-    const errMsg = data?.error?.message ?? JSON.stringify(data);
-    throw new Error(`Reka submit error ${response.status}: ${errMsg}`);
-  }
-
-  if (!data.id) {
-    throw new Error("Reka did not return a job ID");
-  }
-
-  return data.id as string;
-}
-
-// POST: submit job, return rekaJobId immediately for client polling
+// POST: stream Reka SSE directly to client with live status updates
 export async function POST(req: NextRequest) {
   try {
     const body: ProcessRequest = await req.json();
@@ -153,38 +83,175 @@ export async function POST(req: NextRequest) {
       .update({ credits: profile.credits - creditCost })
       .eq("id", userId);
 
-    // Submit to Reka
-    let rekaJobId: string;
-    try {
-      rekaJobId = await submitRekaJob({ ...body, numClips });
-    } catch (err) {
-      // Refund credits if submit failed
+    // Build Reka request body with stream: true
+    const uniquePrompt = `${body.prompt ?? "Create an engaging short video highlighting the best moments"} [${Date.now()}]`;
+
+    const rekaBody: Record<string, unknown> = {
+      video_urls: [videoUrl],
+      prompt: uniquePrompt,
+      generation_config: {
+        template: body.template ?? "moments",
+        num_generations: numClips,
+        min_duration_seconds: body.minDuration ?? 0,
+        max_duration_seconds: body.maxDuration ?? 60,
+        ...(body.timeRange
+          ? {
+              source_start_time: body.timeRange.start,
+              source_end_time: body.timeRange.end,
+            }
+          : {}),
+      },
+      rendering_config: {
+        subtitles: body.subtitles ?? true,
+        aspect_ratio: body.aspectRatio ?? "9:16",
+        resolution: 720,
+        caption_style: {
+          desired_font_size: 120,
+          text_transform: "uppercase",
+          text_color: "#FFFFFF",
+          highlight_color: "#C0C1FF",
+          stroke_color: "#000000",
+          position: "bottom",
+          font_family: "BebasNeue",
+        },
+      },
+      stream: true,
+    };
+
+    const rekaResponse = await fetch(REKA_BASE, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Api-Key": REKA_API_KEY,
+      },
+      body: JSON.stringify(rekaBody),
+    });
+
+    if (!rekaResponse.ok) {
+      // Refund credits on Reka submission failure
       await supabase
         .from("profiles")
         .update({ credits: profile.credits })
         .eq("id", userId);
-      throw err;
+      const errData = await rekaResponse.json().catch(() => ({}));
+      const errMsg = (errData as Record<string, Record<string, string>>)?.error?.message ?? rekaResponse.statusText;
+      return NextResponse.json(
+        { error: `Reka error: ${errMsg}` },
+        { status: 500 }
+      );
     }
 
-    // Save pending job to Supabase
-    await supabase.from("clip_jobs").insert({
-      user_id: userId,
-      source_url: videoUrl,
-      status: "processing",
-      prompt: body.prompt,
-      num_clips: numClips,
-      aspect_ratio: body.aspectRatio ?? "9:16",
-      subtitles: body.subtitles ?? true,
-      reka_job_id: rekaJobId,
-      created_at: new Date().toISOString(),
+    // Save initial job record (no reka_job_id in streaming mode)
+    const { data: clipJob } = await supabase
+      .from("clip_jobs")
+      .insert({
+        user_id: userId,
+        source_url: videoUrl,
+        status: "processing",
+        prompt: body.prompt,
+        num_clips: numClips,
+        aspect_ratio: body.aspectRatio ?? "9:16",
+        subtitles: body.subtitles ?? true,
+        reka_job_id: null,
+        created_at: new Date().toISOString(),
+      })
+      .select()
+      .single();
+
+    const decoder = new TextDecoder();
+    const encoder = new TextEncoder();
+    const reader = rekaResponse.body!.getReader();
+    const creditsRemaining = profile.credits - creditCost;
+    let buffer = "";
+
+    const stream = new ReadableStream({
+      async start(controller) {
+        // Emit a "started" event so the client knows credits used and can show initial status
+        const startedEvent = `data: ${JSON.stringify({
+          status: "queued",
+          creditsUsed: creditCost,
+          creditsRemaining,
+        })}\n\n`;
+        controller.enqueue(encoder.encode(startedEvent));
+
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split("\n");
+            buffer = lines.pop() ?? "";
+
+            let output = "";
+            for (const line of lines) {
+              if (line.startsWith("data: ")) {
+                try {
+                  const event = JSON.parse(line.slice(6)) as Record<string, unknown>;
+
+                  if (event.status === "completed" && Array.isArray(event.output)) {
+                    if (clipJob) {
+                      await supabase
+                        .from("clip_jobs")
+                        .update({ status: "completed" })
+                        .eq("id", clipJob.id);
+                      const clipInserts = (event.output as Record<string, unknown>[]).map(
+                        (clip, index) => ({
+                          job_id: clipJob.id,
+                          user_id: userId,
+                          clip_index: index,
+                          video_url: clip.video_url,
+                          title: clip.title ?? `Clip ${index + 1}`,
+                          caption: clip.caption ?? "",
+                          duration: null,
+                          thumbnail_url: null,
+                          status: "ready",
+                          created_at: new Date().toISOString(),
+                        })
+                      );
+                      await supabase.from("clips").insert(clipInserts);
+                    }
+                  } else if (event.status === "failed") {
+                    // Refund credits on job failure
+                    await supabase
+                      .from("profiles")
+                      .update({ credits: profile.credits })
+                      .eq("id", userId);
+                    if (clipJob) {
+                      await supabase
+                        .from("clip_jobs")
+                        .update({ status: "failed" })
+                        .eq("id", clipJob.id);
+                    }
+                  }
+                } catch {
+                  // Skip malformed JSON in SSE line
+                }
+              }
+              output += line + "\n";
+            }
+
+            if (output) {
+              controller.enqueue(encoder.encode(output));
+            }
+          }
+        } catch (err) {
+          controller.error(err);
+        } finally {
+          controller.close();
+        }
+      },
+      cancel() {
+        reader.cancel();
+      },
     });
 
-    return NextResponse.json({
-      success: true,
-      polling: true,
-      rekaJobId,
-      creditsUsed: creditCost,
-      creditsRemaining: profile.credits - creditCost,
+    return new Response(stream, {
+      headers: {
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache",
+        "Connection": "keep-alive",
+      },
     });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Unknown error";

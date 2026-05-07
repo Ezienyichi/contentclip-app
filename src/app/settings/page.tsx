@@ -37,7 +37,7 @@ export default function SettingsPage(){
     {name:'YouTube',icon:'smart_display',connected:true,color:'#FF0000',info:'Connect your YouTube channel to publish Shorts directly from HookClip. You\'ll need to authorize with your Google account.'},
     {name:'TikTok',icon:'music_note',connected:false,color:'#fff',info:'Link your TikTok account to schedule and auto-publish clips. Requires a TikTok Business or Creator account.'},
     {name:'Instagram',icon:'photo_camera',connected:false,color:'#E1306C',info:'Connect Instagram to publish Reels. Requires a Professional Instagram account linked to a Facebook Business page.'},
-    {name:'Google Drive',icon:'cloud',connected:true,color:'#4285F4',info:'Back up your exported clips to Google Drive automatically. Files are saved to a HookClip folder.'},
+    {name:'LinkedIn',icon:'',connected:false,color:'#0A66C2',info:'Connect LinkedIn to share clips as posts or native video directly to your professional network. Requires a LinkedIn Business or Creator account.'},
   ];
   return(<>
 
@@ -118,7 +118,12 @@ export default function SettingsPage(){
           {integrations.map(int=><div key={int.name} style={{background:colors.surfaceContainerHigh,borderRadius:radius.lg,padding:'20px'}}>
             <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'12px'}}>
               <div style={{display:'flex',alignItems:'center',gap:'14px'}}>
-                <div style={{width:44,height:44,borderRadius:radius.md,background:int.color+'15',display:'flex',alignItems:'center',justifyContent:'center'}}><Icon name={int.icon} size={22} style={{color:int.color}}/></div>
+                <div style={{width:44,height:44,borderRadius:radius.md,background:int.color+'15',display:'flex',alignItems:'center',justifyContent:'center'}}>
+                  {int.name==='LinkedIn'
+                    ?<svg viewBox="0 0 24 24" width="22" height="22" fill={int.color}><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+                    :<Icon name={int.icon} size={22} style={{color:int.color}}/>
+                  }
+                </div>
                 <div><p style={{fontSize:'14px',fontWeight:600}}>{int.name}</p><p style={{fontSize:'12px',color:int.connected?'#4ade80':colors.onSurfaceVariant}}>{int.connected?'Connected':'Not connected'}</p></div>
               </div>
               <button onClick={()=>alert(int.connected?int.name+' disconnected':int.name+' connection started â€” you will be redirected to authorize.')} style={{padding:'8px 18px',borderRadius:radius.md,background:int.connected?'transparent':gradients.primary,color:int.connected?colors.onSurfaceVariant:'#FAF7FF',border:int.connected?'1px solid '+colors.outlineVariant:'none',fontWeight:600,fontSize:'12px',cursor:'pointer',fontFamily:"'Inter',sans-serif"}}>{int.connected?'Disconnect':'Connect'}</button>
