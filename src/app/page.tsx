@@ -232,23 +232,41 @@ export default function LandingPage() {
       </section>
 
       {/* FOOTER */}
-      <footer style={{ borderTop: '1px solid rgba(70,69,85,0.1)', padding: '48px 24px', maxWidth: 1100, margin: '0 auto' }}>
-        <div className="footer-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 32, marginBottom: 40 }}>
-          <div>
-            <div style={{ marginBottom: 16 }}>
-              <span style={{ fontSize: '20px', fontWeight: 800, color: '#ffffff', fontFamily: 'Arial Black, Arial, sans-serif' }}>Vangel<span style={{ color: '#7C3AED' }}>Clip</span></span>
-            </div>
-            <p style={{ fontSize: 12, color: colors.onSurfaceVariant, opacity: 0.5, marginBottom: 8 }}>Clip. Spread. Transform.</p>
-            <p style={{ fontSize: 13, color: colors.onSurfaceVariant, lineHeight: 1.7 }}>Africa&apos;s AI clip platform for gospel creators, educators, and inspirational voices.</p>
-          </div>
-          {[{ t: 'Product', l: ['Features','Pricing','Changelog'] }, { t: 'Company', l: ['About','Blog','Contact'] }, { t: 'Legal', l: ['Privacy','Terms','Cookies'] }].map(c => (
-            <div key={c.t}>
-              <h4 style={{ fontSize: 13, fontWeight: 700, marginBottom: 16, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{c.t}</h4>
-              {c.l.map(l => <a key={l} href="#" style={{ display: 'block', fontSize: 13, color: colors.onSurfaceVariant, textDecoration: 'none', marginBottom: 10 }}>{l}</a>)}
-            </div>
-          ))}
+      <footer style={{ position: 'relative', overflow: 'hidden', borderTop: '1px solid rgba(124,58,237,0.3)' }}>
+        {/* YouTube video background */}
+        <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '177.78vh', minWidth: '100%', height: '56.25vw', minHeight: '100%', zIndex: 0, pointerEvents: 'none', overflow: 'hidden' }}>
+          <iframe
+            src="https://www.youtube.com/embed/ifIR8cdrbkY?autoplay=1&mute=1&loop=1&playlist=ifIR8cdrbkY&controls=0&showinfo=0&rel=0&modestbranding=1&playsinline=1&iv_load_policy=3&disablekb=1"
+            style={{ position: 'absolute', top: '-80px', left: 0, width: '100%', height: 'calc(100% + 160px)', border: 'none', pointerEvents: 'none' }}
+            allow="autoplay; encrypted-media"
+            title="Footer background video"
+          />
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '80px', background: '#0a0014', zIndex: 2, pointerEvents: 'none' }} />
+          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '80px', background: '#0a0014', zIndex: 2, pointerEvents: 'none' }} />
         </div>
-        <div style={{ borderTop: '1px solid rgba(70,69,85,0.1)', paddingTop: 24, fontSize: 12, color: colors.onSurfaceVariant, textAlign: 'center' }}>&copy; 2026 VangelClip. All rights reserved.</div>
+        {/* Dark overlay — heavier than hero so text is readable */}
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(5,0,20,0.92) 0%, rgba(10,0,40,0.96) 60%, rgba(5,0,15,0.98) 100%)', zIndex: 1 }} />
+        {/* Purple glow top center */}
+        <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: '60%', height: '200px', background: 'radial-gradient(ellipse at center top, rgba(124,58,237,0.18) 0%, transparent 70%)', zIndex: 1, pointerEvents: 'none' }} />
+        {/* Footer content */}
+        <div style={{ position: 'relative', zIndex: 2, maxWidth: 1100, margin: '0 auto', padding: '48px 24px' }}>
+          <div className="footer-grid" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', gap: 40, marginBottom: 40 }}>
+            <div>
+              <div style={{ marginBottom: 16 }}>
+                <span style={{ fontSize: '20px', fontWeight: 800, color: '#ffffff', fontFamily: 'Arial Black, Arial, sans-serif' }}>Vangel<span style={{ color: '#7C3AED' }}>Clip</span></span>
+              </div>
+              <p style={{ fontSize: 12, color: colors.onSurfaceVariant, opacity: 0.5, marginBottom: 8 }}>Clip. Spread. Transform.</p>
+              <p style={{ fontSize: 13, color: colors.onSurfaceVariant, lineHeight: 1.7 }}>Africa&apos;s AI clip platform for gospel creators, educators, and inspirational voices.</p>
+            </div>
+            {[{ t: 'Product', l: ['Features','Pricing','Changelog'] }, { t: 'Company', l: ['About','Blog','Contact'] }, { t: 'Legal', l: ['Privacy','Terms','Cookies'] }].map(c => (
+              <div key={c.t}>
+                <h4 style={{ fontSize: 13, fontWeight: 700, marginBottom: 16, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{c.t}</h4>
+                {c.l.map(l => <a key={l} href="#" style={{ display: 'block', fontSize: 13, color: colors.onSurfaceVariant, textDecoration: 'none', marginBottom: 10 }}>{l}</a>)}
+              </div>
+            ))}
+          </div>
+          <div style={{ borderTop: '1px solid rgba(70,69,85,0.1)', paddingTop: 24, fontSize: 12, color: colors.onSurfaceVariant, textAlign: 'center' }}>&copy; 2026 VangelClip. All rights reserved.</div>
+        </div>
       </footer>
 
       {/* DEMO MODAL */}
@@ -309,6 +327,13 @@ export default function LandingPage() {
           margin-bottom: 60px;
         }
 
+        /* ─── FOOTER GRID ────────────────────────── */
+        .footer-grid {
+          display: grid;
+          grid-template-columns: 2fr 1fr 1fr 1fr;
+          gap: 40px;
+        }
+
         /* ─── NAV ────────────────────────────────── */
         .nav-links { display: flex; }
 
@@ -341,7 +366,7 @@ export default function LandingPage() {
             max-width: 100% !important;
           }
           .testimonials-grid { grid-template-columns: repeat(2,1fr) !important; }
-          .footer-grid       { grid-template-columns: repeat(2,1fr) !important; }
+          .footer-grid       { grid-template-columns: 1fr !important; gap: 32px !important; }
         }
 
         /* ─── MOBILE 600px ───────────────────────── */
@@ -351,7 +376,6 @@ export default function LandingPage() {
           .pricing-grid     { grid-template-columns: 1fr !important; }
           .reel-grid        { grid-template-columns: repeat(2,1fr) !important; }
           .testimonials-grid { grid-template-columns: 1fr !important; }
-          .footer-grid      { grid-template-columns: 1fr !important; }
         }
 
         /* ─── MOBILE 480px ───────────────────────── */
