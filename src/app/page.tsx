@@ -85,15 +85,77 @@ export default function LandingPage() {
       </section>
 
       {/* SOCIAL PROOF */}
-      <section style={{ maxWidth: 1100, margin: '0 auto', padding: '40px 24px', textAlign: 'center' }}>
-        <p style={{ fontSize: 12, fontWeight: 600, color: colors.onSurfaceVariant, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 24 }}>Trusted by creators at</p>
-        <div style={{ display: 'flex', justifyContent: 'center', gap: 48, flexWrap: 'wrap', opacity: 0.4 }}>
-          {['Google','Adobe','Spotify','Netflix','Shopify'].map(l => <span key={l} style={{ fontSize: 20, fontWeight: 800, color: colors.onSurfaceVariant }}>{l}</span>)}
+      <section className="deco-section" style={{ maxWidth: 1100, margin: '0 auto', padding: '40px 24px', textAlign: 'center' }}>
+        {/* Left edge — vertical film strip */}
+        <div className="deco-corner" style={{ top: 0, left: 0, height: '100%', width: '40px' }}>
+          <svg width="40" height="100%" viewBox="0 0 40 120" preserveAspectRatio="xMidYMid slice" fill="none">
+            <rect x="2" y="0" width="36" height="120" rx="0" fill="none" stroke="rgba(124,58,237,0.15)" strokeWidth="0.5"/>
+            <rect x="6" y="8" width="28" height="18" rx="2" fill="rgba(124,58,237,0.08)"/>
+            <rect x="6" y="34" width="28" height="18" rx="2" fill="rgba(124,58,237,0.08)"/>
+            <rect x="6" y="60" width="28" height="18" rx="2" fill="rgba(124,58,237,0.08)"/>
+            <rect x="6" y="86" width="28" height="18" rx="2" fill="rgba(124,58,237,0.08)"/>
+          </svg>
+        </div>
+        {/* Right edge — vertical film strip */}
+        <div className="deco-corner" style={{ top: 0, right: 0, height: '100%', width: '40px' }}>
+          <svg width="40" height="100%" viewBox="0 0 40 120" preserveAspectRatio="xMidYMid slice" fill="none">
+            <rect x="2" y="0" width="36" height="120" rx="0" fill="none" stroke="rgba(124,58,237,0.15)" strokeWidth="0.5"/>
+            <rect x="6" y="8" width="28" height="18" rx="2" fill="rgba(6,182,212,0.08)"/>
+            <rect x="6" y="34" width="28" height="18" rx="2" fill="rgba(6,182,212,0.08)"/>
+            <rect x="6" y="60" width="28" height="18" rx="2" fill="rgba(6,182,212,0.08)"/>
+            <rect x="6" y="86" width="28" height="18" rx="2" fill="rgba(6,182,212,0.08)"/>
+          </svg>
+        </div>
+        <p style={{ fontSize: 12, fontWeight: 600, color: colors.onSurfaceVariant, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 24 }}>Used by creators across Africa</p>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: 48, flexWrap: 'wrap' }}>
+          {['Preach It','DSTV','TBN Africa','Spotify','YouTube'].map(l => <span key={l} style={{ fontSize: 20, fontWeight: 800, color: '#ffffff' }}>{l}</span>)}
         </div>
       </section>
 
       {/* WORKFLOW */}
-      <section id="workflow" style={{ maxWidth: 1100, margin: '0 auto', padding: '80px 24px', borderTop: '1px solid rgba(70,69,85,0.1)' }}>
+      <section id="workflow" className="deco-section" style={{ maxWidth: 1100, margin: '0 auto', padding: '80px 24px', borderTop: '1px solid rgba(70,69,85,0.1)' }}>
+        {/* Top left corner decoration */}
+        <div className="deco-corner" style={{ top: 0, left: 0, width: '200px', height: '200px' }}>
+          <svg width="200" height="200" viewBox="0 0 200 200" fill="none">
+            <rect x="0" y="0" width="28" height="180" rx="4" fill="none" stroke="rgba(124,58,237,0.25)" strokeWidth="1"/>
+            <rect x="4" y="12" width="20" height="14" rx="2" fill="rgba(124,58,237,0.12)"/>
+            <rect x="4" y="34" width="20" height="14" rx="2" fill="rgba(124,58,237,0.12)"/>
+            <rect x="4" y="56" width="20" height="14" rx="2" fill="rgba(124,58,237,0.12)"/>
+            <rect x="4" y="78" width="20" height="14" rx="2" fill="rgba(124,58,237,0.12)"/>
+            <rect x="4" y="100" width="20" height="14" rx="2" fill="rgba(124,58,237,0.12)"/>
+            <rect x="4" y="122" width="20" height="14" rx="2" fill="rgba(124,58,237,0.12)"/>
+            <rect x="4" y="144" width="20" height="14" rx="2" fill="rgba(124,58,237,0.12)"/>
+            <rect x="50" y="20" width="40" height="28" rx="6" fill="none" stroke="rgba(124,58,237,0.2)" strokeWidth="1" transform="rotate(-12 70 34)"/>
+            <rect x="90" y="60" width="32" height="22" rx="4" fill="rgba(6,182,212,0.08)" stroke="rgba(6,182,212,0.2)" strokeWidth="1" transform="rotate(8 106 71)"/>
+            <circle cx="140" cy="30" r="8" fill="none" stroke="rgba(124,58,237,0.18)" strokeWidth="1"/>
+            <circle cx="170" cy="80" r="4" fill="rgba(124,58,237,0.2)"/>
+          </svg>
+        </div>
+        {/* Top right corner decoration */}
+        <div className="deco-corner" style={{ top: 0, right: 0, width: '200px', height: '200px' }}>
+          <svg width="200" height="200" viewBox="0 0 200 200" fill="none">
+            <rect x="172" y="0" width="28" height="180" rx="4" fill="none" stroke="rgba(124,58,237,0.25)" strokeWidth="1"/>
+            <rect x="176" y="12" width="20" height="14" rx="2" fill="rgba(124,58,237,0.12)"/>
+            <rect x="176" y="34" width="20" height="14" rx="2" fill="rgba(124,58,237,0.12)"/>
+            <rect x="176" y="56" width="20" height="14" rx="2" fill="rgba(124,58,237,0.12)"/>
+            <rect x="176" y="78" width="20" height="14" rx="2" fill="rgba(124,58,237,0.12)"/>
+            <rect x="176" y="100" width="20" height="14" rx="2" fill="rgba(124,58,237,0.12)"/>
+            <rect x="100" y="30" width="44" height="30" rx="6" fill="none" stroke="rgba(236,72,153,0.2)" strokeWidth="1" transform="rotate(15 122 45)"/>
+            <rect x="50" y="70" width="36" height="24" rx="4" fill="rgba(124,58,237,0.06)" stroke="rgba(124,58,237,0.18)" strokeWidth="1" transform="rotate(-8 68 82)"/>
+            <circle cx="30" cy="30" r="10" fill="none" stroke="rgba(6,182,212,0.2)" strokeWidth="1"/>
+            <circle cx="10" cy="90" r="5" fill="rgba(6,182,212,0.15)"/>
+          </svg>
+        </div>
+        {/* Bottom decorative line */}
+        <div className="deco-corner" style={{ bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', height: '60px' }}>
+          <svg width="100%" height="60" viewBox="0 0 1200 60" preserveAspectRatio="xMidYMid meet" fill="none">
+            <line x1="0" y1="30" x2="480" y2="30" stroke="rgba(124,58,237,0.15)" strokeWidth="1" strokeDasharray="4 8"/>
+            <circle cx="490" cy="30" r="3" fill="rgba(124,58,237,0.3)"/>
+            <circle cx="600" cy="30" r="5" fill="rgba(124,58,237,0.2)" stroke="rgba(124,58,237,0.4)" strokeWidth="1"/>
+            <circle cx="710" cy="30" r="3" fill="rgba(124,58,237,0.3)"/>
+            <line x1="720" y1="30" x2="1200" y2="30" stroke="rgba(124,58,237,0.15)" strokeWidth="1" strokeDasharray="4 8"/>
+          </svg>
+        </div>
         <div style={{ textAlign: 'center', marginBottom: 64 }}>
           <h2 style={{ fontSize: 'clamp(28px,5vw,36px)', fontWeight: 800, marginBottom: 12 }}>Three Steps to Viral Content</h2>
           <p style={{ color: colors.onSurfaceVariant }}>From long-form video to viral clips in under 5 minutes.</p>
@@ -336,6 +398,11 @@ export default function LandingPage() {
 
         /* ─── NAV ────────────────────────────────── */
         .nav-links { display: flex; }
+
+        /* ─── DECORATIVE SECTIONS ────────────────── */
+        .deco-section { position: relative; overflow: hidden; }
+        .deco-corner { position: absolute; pointer-events: none; z-index: 0; }
+        .deco-section > *:not(.deco-corner) { position: relative; z-index: 1; }
 
         /* ─── REEL CARD HOVER ────────────────────── */
         .reel-card { transition: transform 0.25s ease, box-shadow 0.25s ease; }
