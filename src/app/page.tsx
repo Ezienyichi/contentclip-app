@@ -6,9 +6,9 @@ import Icon from '@/components/Icon';
 import { colors, gradients, radius, shadows } from '@/lib/tokens';
 const HeroAnimation = dynamic(() => import('@/components/HeroAnimation'), { ssr: false });
 const TESTIMONIALS = [
-  { name: 'Sarah Chen', role: 'Creator Â· 1.2M followers', text: 'HookClip cut my editing time from 8 hours to 20 minutes.', avatar: 'S' },
-  { name: 'Marcus Johnson', role: 'Podcast Host Â· Top 50', text: 'I paste my episode link and get 10 viral clips back.', avatar: 'M' },
-  { name: 'Priya Sharma', role: 'Agency Â· 40+ clients', text: 'Handles what used to take a 5-person team.', avatar: 'P' },
+  { name: 'Sarah Chen', role: 'Creator · 1.2M followers', text: 'VangelClip cut my editing time from 8 hours to 20 minutes.', avatar: 'S' },
+  { name: 'Marcus Johnson', role: 'Podcast Host · Top 50', text: 'I paste my episode link and get 10 viral clips back.', avatar: 'M' },
+  { name: 'Priya Sharma', role: 'Agency · 40+ clients', text: 'Handles what used to take a 5-person team.', avatar: 'P' },
 ];
 export default function LandingPage() {
   const router = useRouter();
@@ -19,7 +19,7 @@ export default function LandingPage() {
       <nav style={{ position: 'sticky', top: 0, zIndex: 50, background: 'rgba(14,14,14,0.8)', backdropFilter: 'blur(12px)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 24px', borderBottom: '1px solid rgba(70,69,85,0.2)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }} onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
           <div style={{ width: 32, height: 32, borderRadius: radius.md, background: gradients.cta, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="auto_awesome" size={18} style={{ color: '#fff' }} /></div>
-          <img src="/hookclip-logo.svg" alt="HookClip" style={{ height: 32, width: 'auto' }} />
+          <img src="/vangelclip-logo.svg" alt="VangelClip" style={{ height: 32, width: 'auto' }} />
         </div>
         <div className="nav-links" style={{ display: 'flex', alignItems: 'center', gap: '32px', fontSize: '14px', fontWeight: 500 }}>
           <a href="#features" style={{ color: colors.onSurfaceVariant, textDecoration: 'none' }}>Features</a>
@@ -37,11 +37,12 @@ export default function LandingPage() {
           <Icon name="verified" size={14} /> New: AI Reframe for Shorts
         </div>
         <h1 style={{ fontSize: 'clamp(36px,6vw,72px)', fontWeight: 800, letterSpacing: '-0.03em', lineHeight: 1.08, marginBottom: 28, maxWidth: 900, marginLeft: 'auto', marginRight: 'auto', position: 'relative' }}>
-          Turn Long Videos Into <span style={{ color: colors.primary }}>High-Performing</span> Short Clips in Minutes
+          Spread the Gospel. <span style={{ color: colors.primary }}>One Clip</span> at a Time.
         </h1>
-        <p style={{ fontSize: 18, color: colors.onSurfaceVariant, maxWidth: 640, margin: '0 auto 48px', lineHeight: 1.7, position: 'relative' }}>HookClip automatically finds the best moments in your long-form content and formats them perfectly for TikTok, Reels, and YouTube Shorts.</p>
+        <p style={{ fontSize: 18, color: colors.onSurfaceVariant, maxWidth: 640, margin: '0 auto 20px', lineHeight: 1.7, position: 'relative' }}>VangelClip uses AI to turn your sermons, songs, teachings, and talks into viral short clips for TikTok, Reels, and YouTube Shorts. Built for African creators. Made for the world.</p>
+        <p style={{ fontSize: 14, color: colors.onSurfaceVariant, opacity: 0.55, maxWidth: 480, margin: '0 auto 40px', letterSpacing: '0.04em', position: 'relative' }}>Gospel &middot; Education &middot; Inspiration &middot; African-First &middot; World-Class</p>
         <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 48, position: 'relative' }}>
-          <button onClick={() => router.push('/auth')} style={{ background: gradients.primary, color: '#FAF7FF', fontWeight: 700, padding: '16px 32px', borderRadius: radius.xl, border: 'none', cursor: 'pointer', fontSize: 15, boxShadow: shadows.glowStrong, fontFamily: "'Inter', sans-serif" }}>Create My First Clip</button>
+          <button onClick={() => router.push('/auth')} style={{ background: gradients.primary, color: '#FAF7FF', fontWeight: 700, padding: '16px 32px', borderRadius: radius.xl, border: 'none', cursor: 'pointer', fontSize: 15, boxShadow: shadows.glowStrong, fontFamily: "'Inter', sans-serif" }}>Start Clipping Free</button>
           <button onClick={() => setShowDemo(true)} style={{ background: colors.surfaceContainer, color: colors.onSurface, border: '1px solid ' + colors.outlineVariant, fontWeight: 700, padding: '16px 32px', borderRadius: radius.xl, cursor: 'pointer', fontSize: 15, display: 'flex', alignItems: 'center', gap: 8, fontFamily: "'Inter', sans-serif" }}><Icon name="play_circle" filled size={20} /> View Demo</button>
         </div>
         <div style={{ display: 'flex', justifyContent: 'center', gap: 48, marginBottom: 60, flexWrap: 'wrap', position: 'relative' }}>
@@ -95,6 +96,32 @@ export default function LandingPage() {
             <h3 style={{ fontSize: 20, fontWeight: 700, marginBottom: 10 }}>{f.t}</h3>
             <p style={{ color: colors.onSurfaceVariant, fontSize: 14, lineHeight: 1.7 }}>{f.d}</p>
           </div>)}
+        </div>
+      </section>
+      <section style={{ maxWidth: 1100, margin: '0 auto', padding: '80px 24px', borderTop: '1px solid rgba(70,69,85,0.1)' }}>
+        <div style={{ textAlign: 'center', marginBottom: 48 }}>
+          <h2 style={{ fontSize: 36, fontWeight: 800, marginBottom: 12 }}>Creator Highlights</h2>
+          <p style={{ color: colors.onSurfaceVariant }}>Gospel voices reaching millions across Africa and beyond.</p>
+        </div>
+        <div className="reel-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 16 }}>
+          {[
+            { name: 'Pastor Emeka', location: 'Lagos, Nigeria', type: 'Sermon', flag: '🇳🇬', color: '#7c3aed' },
+            { name: 'Sis Abena', location: 'Accra, Ghana', type: 'Worship', flag: '🇬🇭', color: '#ec4899' },
+            { name: 'Dr. Amara', location: 'Nairobi, Kenya', type: 'Teaching', flag: '🇰🇪', color: '#06b6d4' },
+            { name: 'Bro Tunde', location: 'Ibadan, Nigeria', type: 'Inspiration', flag: '🇳🇬', color: '#10b981' },
+            { name: 'Mama Zola', location: 'Durban, S. Africa', type: 'Gospel Music', flag: '🇿🇦', color: '#ff6b35' },
+          ].map(c => (
+            <div key={c.name} className="reel-card" style={{ aspectRatio: '9/16', borderRadius: radius.xl, position: 'relative', overflow: 'hidden', cursor: 'pointer', background: 'linear-gradient(160deg, #0d0721 0%, #1a0a3a 60%, #0a0a1a 100%)', border: '1px solid ' + c.color + '30' }}>
+              <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: 44, height: 44, borderRadius: '50%', background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(4px)', border: '1px solid rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Icon name="play_arrow" size={24} style={{ color: '#fff' }} filled />
+              </div>
+              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '20px 14px', background: 'linear-gradient(0deg, rgba(0,0,0,0.9) 0%, transparent 100%)' }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: c.color, background: c.color + '20', padding: '3px 10px', borderRadius: radius.full, display: 'inline-block', marginBottom: 8 }}>{c.type}</div>
+                <p style={{ fontSize: 13, fontWeight: 700, color: '#fff', marginBottom: 2 }}>{c.flag} {c.name}</p>
+                <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)' }}>{c.location}</p>
+              </div>
+            </div>
+          ))}
         </div>
       </section>
       <section id="testimonials" style={{ maxWidth: 1100, margin: '0 auto', padding: '80px 24px' }}>
@@ -154,13 +181,14 @@ export default function LandingPage() {
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
               <div style={{ width: 28, height: 28, borderRadius: radius.sm, background: gradients.cta, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="auto_awesome" size={14} style={{ color: '#fff' }} /></div>
-              <img src="/hookclip-logo.svg" alt="HookClip" style={{ height: 28, width: "auto", opacity: 0.7 }} />
+              <img src="/vangelclip-logo.svg" alt="VangelClip" style={{ height: 28, width: "auto", opacity: 0.7 }} />
             </div>
-            <p style={{ fontSize: 13, color: colors.onSurfaceVariant, lineHeight: 1.7 }}>AI-powered video clipping. Built by TechDuce Africa.</p>
+            <p style={{ fontSize: 12, color: colors.onSurfaceVariant, opacity: 0.5, marginBottom: 8 }}>Clip. Spread. Transform.</p>
+            <p style={{ fontSize: 13, color: colors.onSurfaceVariant, lineHeight: 1.7 }}>Africa&apos;s AI clip platform for gospel creators, educators, and inspirational voices.</p>
           </div>
           {[{ t: 'Product', l: ['Features','Pricing','Changelog'] }, { t: 'Company', l: ['About','Blog','Contact'] }, { t: 'Legal', l: ['Privacy','Terms','Cookies'] }].map(c => <div key={c.t}><h4 style={{ fontSize: 13, fontWeight: 700, marginBottom: 16, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{c.t}</h4>{c.l.map(l => <a key={l} href="#" style={{ display: 'block', fontSize: 13, color: colors.onSurfaceVariant, textDecoration: 'none', marginBottom: 10 }}>{l}</a>)}</div>)}
         </div>
-        <div style={{ borderTop: '1px solid rgba(70,69,85,0.1)', paddingTop: 24, fontSize: 12, color: colors.onSurfaceVariant, textAlign: 'center' }}>Â© {new Date().getFullYear()} HookClip by TechDuce Africa.</div>
+        <div style={{ borderTop: '1px solid rgba(70,69,85,0.1)', paddingTop: 24, fontSize: 12, color: colors.onSurfaceVariant, textAlign: 'center' }}>&copy; 2026 VangelClip. All rights reserved.</div>
       </footer>
       {showDemo && <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(12px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }} onClick={() => setShowDemo(false)}>
         <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 900, borderRadius: radius.xl, overflow: 'hidden', background: '#000', position: 'relative' }}>
@@ -168,7 +196,7 @@ export default function LandingPage() {
           <div style={{ aspectRatio: '16/9' }}><iframe width="100%" height="100%" src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1&rel=0" title="Demo" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen style={{ border: 'none' }} /></div>
         </div>
       </div>}
-      <style>{'@media (max-width: 768px) { .nav-links { display: none !important; } .workflow-grid, .features-grid, .pricing-grid, .testimonials-grid { grid-template-columns: 1fr !important; } .footer-grid { grid-template-columns: repeat(2, 1fr) !important; } }'}</style>
+      <style>{'@media (max-width: 768px) { .nav-links { display: none !important; } .workflow-grid, .features-grid, .pricing-grid, .testimonials-grid { grid-template-columns: 1fr !important; } .reel-grid { grid-template-columns: repeat(2,1fr) !important; } .footer-grid { grid-template-columns: repeat(2, 1fr) !important; } } .reel-card { transition: transform 0.25s ease, box-shadow 0.25s ease; } .reel-card:hover { transform: translateY(-6px) scale(1.02); }'}</style>
     </div>
   );
 }

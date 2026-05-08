@@ -34,7 +34,7 @@ export default function SettingsPage(){
   const toggleNotif=async(key:keyof typeof notifs)=>{const v=!notifs[key];setNotifs(p=>({...p,[key]:v}));if(userId){await supabase.from('profiles').update({clip_ready_notify:key==='clips'?v:notifs.clips,weekly_digest:key==='weekly'?v:notifs.weekly}).eq('id',userId);showToast('Preference saved');}}
   const tabs=[{id:'profile',label:'Profile',icon:'person'},{id:'billing',label:'Billing',icon:'credit_card'},{id:'notifications',label:'Notifications',icon:'notifications'},{id:'integrations',label:'Integrations',icon:'extension'}];
   const integrations=[
-    {name:'YouTube',icon:'smart_display',connected:true,color:'#FF0000',info:'Connect your YouTube channel to publish Shorts directly from HookClip. You\'ll need to authorize with your Google account.'},
+    {name:'YouTube',icon:'smart_display',connected:true,color:'#FF0000',info:'Connect your YouTube channel to publish Shorts directly from VangelClip. You\'ll need to authorize with your Google account.'},
     {name:'TikTok',icon:'music_note',connected:false,color:'#fff',info:'Link your TikTok account to schedule and auto-publish clips. Requires a TikTok Business or Creator account.'},
     {name:'Instagram',icon:'photo_camera',connected:false,color:'#E1306C',info:'Connect Instagram to publish Reels. Requires a Professional Instagram account linked to a Facebook Business page.'},
     {name:'LinkedIn',icon:'',connected:false,color:'#0A66C2',info:'Connect LinkedIn to share clips as posts or native video directly to your professional network. Requires a LinkedIn Business or Creator account.'},

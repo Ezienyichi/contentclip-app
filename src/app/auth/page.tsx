@@ -233,12 +233,12 @@ export default function AuthPage() {
       <section className="auth-left" style={{ position: 'relative', flex: '0 0 55%', overflow: 'hidden', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: 48, background: `linear-gradient(135deg,${colors.background},${colors.surfaceContainer},#430076)` }}>
         <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', backgroundImage: 'radial-gradient(at 0% 0%,#9c48ea 0px,transparent 50%),radial-gradient(at 100% 0%,#17a8ec 0px,transparent 50%),radial-gradient(at 100% 100%,#cc97ff 0px,transparent 50%)', filter: 'blur(80px)', opacity: 0.4 }} />
         <div style={{ position: 'relative', zIndex: 10 }}>
-          <h1 onClick={() => router.push('/')} style={{ fontSize: 24, fontWeight: 900, cursor: 'pointer', color: colors.onSurface }}>HookClip</h1>
+          <h1 onClick={() => router.push('/')} style={{ fontSize: 24, fontWeight: 900, cursor: 'pointer', color: colors.onSurface }}>VangelClip</h1>
         </div>
         <div style={{ position: 'relative', zIndex: 10, maxWidth: 520 }}>
           <Icon name="format_quote" filled size={40} style={{ color: colors.primary, marginBottom: 24 }} />
           <blockquote style={{ fontSize: 'clamp(28px,3.5vw,44px)', fontWeight: 700, lineHeight: 1.15, marginBottom: 32, color: colors.onSurface }}>
-            HookClip turned my podcast into a TikTok growth machine.
+            VangelClip turned my ministry reach from weeks to minutes.
           </blockquote>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
             <div style={{ width: 48, height: 48, borderRadius: '50%', background: gradients.cta, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, fontWeight: 700, color: '#000' }}>A</div>

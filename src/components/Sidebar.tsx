@@ -25,7 +25,7 @@ export default function Sidebar() {
     <>
       <div onClick={() => router.push('/')} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '8px', marginBottom: '24px', cursor: 'pointer' }}>
         <div>
-          <img src="/hookclip-logo.svg" alt="HookClip" style={{ height: 44, width: 'auto' }} />
+          <img src="/vangelclip-logo.svg" alt="VangelClip" style={{ height: 44, width: 'auto' }} />
           <p style={{ fontSize: '11px', color: colors.onSurfaceVariant, fontWeight: 500 }}>Creator Pro</p>
         </div>
       </div>

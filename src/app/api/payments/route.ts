@@ -12,19 +12,19 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://contentclip-app-w2hf
 
 export const PLANS = {
   starter: {
-    name: "HookClip Starter",
+    name: "VangelClip Starter",
     amount: 29,
     credits: 2000,
     currency: "USD",
   },
   creator: {
-    name: "HookClip Creator",
+    name: "VangelClip Creator",
     amount: 59,
     credits: 5000,
     currency: "USD",
   },
   business: {
-    name: "HookClip Business",
+    name: "VangelClip Business",
     amount: 99,
     credits: 15000,
     currency: "USD",
@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
     }
 
     const planDetails = PLANS[plan as PlanKey];
-    const reference = `hookclip-${userId}-${Date.now()}`;
+    const reference = `vangelclip-${userId}-${Date.now()}`;
 
     // Paystack uses kobo (multiply USD by 100 for cents, then convert)
     // For simplicity charge in NGN or USD — Paystack supports both

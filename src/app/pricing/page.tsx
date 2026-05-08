@@ -18,7 +18,7 @@ export default function PricingPage(){
       <nav style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'16px 24px',maxWidth:1200,margin:'0 auto'}}>
         <div onClick={()=>router.push('/')} style={{display:'flex',alignItems:'center',gap:'10px',cursor:'pointer'}}>
           <div style={{width:32,height:32,borderRadius:radius.md,background:gradients.cta,display:'flex',alignItems:'center',justifyContent:'center'}}><Icon name="auto_awesome" size={18} style={{color:'#fff'}}/></div>
-          <span style={{fontSize:'18px',fontWeight:800}}>HookClip</span>
+          <span style={{fontSize:'18px',fontWeight:800}}>VangelClip</span>
         </div>
         <button onClick={()=>router.push('/auth')} style={{background:'#fff',color:'#000',fontSize:'13px',fontWeight:700,padding:'8px 18px',borderRadius:radius.md,border:'none',cursor:'pointer'}}>Get Started</button>
       </nav>
