@@ -13,3 +13,6 @@ body { font-family: 'Inter', sans-serif; background: #0E0E0E; color: #E5E2E1; li
 @keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
 input:focus, textarea:focus, select:focus { outline: none; border-color: rgba(192,193,255,0.4) !important; }
+img, video, iframe { max-width: 100%; }
+.container { width: 100%; max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+@media (max-width: 600px) { .container { padding: 0 16px; } }

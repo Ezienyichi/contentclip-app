@@ -14,6 +14,8 @@ export default function LandingPage() {
   const [showDemo, setShowDemo] = useState(false);
   return (
     <div style={{ background: colors.background, color: colors.onSurface, fontFamily: "'Inter', sans-serif" }}>
+
+      {/* NAV */}
       <nav style={{ position: 'sticky', top: 0, zIndex: 50, background: 'rgba(14,14,14,0.8)', backdropFilter: 'blur(12px)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 24px', borderBottom: '1px solid rgba(70,69,85,0.2)' }}>
         <div style={{ cursor: 'pointer' }} onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
           <span style={{ fontSize: '22px', fontWeight: 800, color: '#ffffff', letterSpacing: '-0.5px', fontFamily: 'Arial Black, Arial, sans-serif' }}>Vangel<span style={{ color: '#7C3AED' }}>Clip</span></span>
@@ -29,7 +31,10 @@ export default function LandingPage() {
           <button onClick={() => router.push('/auth')} style={{ background: '#fff', color: '#000', fontSize: '13px', fontWeight: 700, padding: '8px 18px', borderRadius: radius.md, border: 'none', cursor: 'pointer' }}>Start Free</button>
         </div>
       </nav>
-      <section style={{ position: 'relative', width: '100%', minHeight: '100vh', display: 'flex', alignItems: 'center', overflow: 'hidden' }}>
+
+      {/* HERO — video bg, overflow hidden, dark fallback */}
+      <section style={{ position: 'relative', width: '100%', minHeight: '100vh', display: 'flex', alignItems: 'center', overflow: 'hidden', background: '#0a0014' }}>
+        {/* YouTube background — contained inside section via overflow:hidden */}
         <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '177.78vh', minWidth: '100%', height: '56.25vw', minHeight: '100%', zIndex: 0, pointerEvents: 'none' }}>
           <iframe
             src="https://www.youtube.com/embed/ifIR8cdrbkY?autoplay=1&mute=1&loop=1&playlist=ifIR8cdrbkY&controls=0&showinfo=0&rel=0&modestbranding=1&playsinline=1"
@@ -38,68 +43,92 @@ export default function LandingPage() {
             title="Hero background video"
           />
         </div>
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, rgba(5,0,20,0.92) 0%, rgba(10,0,40,0.85) 40%, rgba(10,0,40,0.45) 70%, rgba(0,0,0,0.15) 100%)', zIndex: 1 }} />
+        {/* Overlay — stronger on mobile via CSS class */}
+        <div className="hero-overlay" style={{ position: 'absolute', inset: 0, zIndex: 1 }} />
+        {/* Purple glow bottom-left */}
         <div style={{ position: 'absolute', bottom: 0, left: 0, width: '50%', height: '300px', background: 'radial-gradient(ellipse at left bottom, rgba(124,58,237,0.25) 0%, transparent 70%)', zIndex: 1 }} />
-        <div style={{ position: 'relative', zIndex: 2, maxWidth: '620px', padding: '120px 24px 120px 80px', textAlign: 'left' }}>
+        {/* Hero text content */}
+        <div className="hero-content" style={{ position: 'relative', zIndex: 2 }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '4px 14px', borderRadius: radius.full, background: colors.surfaceContainerHighest, border: '1px solid ' + colors.outlineVariant, color: colors.primary, fontSize: 12, fontWeight: 600, marginBottom: 32 }}>
             <Icon name="verified" size={14} /> New: AI Reframe for Shorts
           </div>
-          <h1 style={{ fontSize: 'clamp(36px,6vw,72px)', fontWeight: 800, letterSpacing: '-0.03em', lineHeight: 1.08, marginBottom: 28 }}>
+          <h1 className="hero-headline">
             Your Message. <span style={{ color: colors.primary }}>One Clip</span> at a Time.
           </h1>
-          <p style={{ fontSize: 18, color: colors.onSurfaceVariant, maxWidth: 560, marginBottom: 20, lineHeight: 1.7 }}>VangelClip uses AI to turn your sermons, songs, teachings, and talks into viral short clips for TikTok, Reels, and YouTube Shorts. Gospel. Education. Inspiration. Built for African creators. Made for the world.</p>
-          <p style={{ fontSize: 14, color: colors.onSurfaceVariant, opacity: 0.55, marginBottom: 40, letterSpacing: '0.04em' }}>Gospel &middot; Education &middot; Inspiration &middot; African-First &middot; World-Class</p>
-          <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 48 }}>
+          <p className="hero-subheadline">VangelClip uses AI to turn your sermons, songs, teachings, and talks into viral short clips for TikTok, Reels, and YouTube Shorts. Gospel. Education. Inspiration. Built for African creators. Made for the world.</p>
+          <p className="hero-tags">Gospel &middot; Education &middot; Inspiration &middot; African-First &middot; World-Class</p>
+          <div className="hero-buttons">
             <button onClick={() => router.push('/auth')} style={{ background: gradients.primary, color: '#FAF7FF', fontWeight: 700, padding: '16px 32px', borderRadius: radius.xl, border: 'none', cursor: 'pointer', fontSize: 15, boxShadow: shadows.glowStrong, fontFamily: "'Inter', sans-serif" }}>Start Clipping Free</button>
             <button onClick={() => setShowDemo(true)} style={{ background: colors.surfaceContainer, color: colors.onSurface, border: '1px solid ' + colors.outlineVariant, fontWeight: 700, padding: '16px 32px', borderRadius: radius.xl, cursor: 'pointer', fontSize: 15, display: 'flex', alignItems: 'center', gap: 8, fontFamily: "'Inter', sans-serif" }}><Icon name="play_circle" filled size={20} /> View Demo</button>
           </div>
-          <div style={{ display: 'flex', gap: 48, marginBottom: 60, flexWrap: 'wrap' }}>
-            {[{ v: '50K+', l: 'Creators' }, { v: '2M+', l: 'Clips' }, { v: '8.2B', l: 'Views' }, { v: '94%', l: 'Satisfaction' }].map(s => <div key={s.l}><p style={{ fontSize: 28, fontWeight: 800, color: '#fff' }}>{s.v}</p><p style={{ fontSize: 12, color: colors.onSurfaceVariant }}>{s.l}</p></div>)}
+          <div className="stats-grid">
+            {[{ v: '50K+', l: 'Creators' }, { v: '2M+', l: 'Clips' }, { v: '8.2B', l: 'Views' }, { v: '94%', l: 'Satisfaction' }].map(s => (
+              <div key={s.l}><p style={{ fontSize: 28, fontWeight: 800, color: '#fff' }}>{s.v}</p><p style={{ fontSize: 12, color: colors.onSurfaceVariant }}>{s.l}</p></div>
+            ))}
           </div>
         </div>
       </section>
+
+      {/* SOCIAL PROOF */}
       <section style={{ maxWidth: 1100, margin: '0 auto', padding: '40px 24px', textAlign: 'center' }}>
         <p style={{ fontSize: 12, fontWeight: 600, color: colors.onSurfaceVariant, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 24 }}>Trusted by creators at</p>
         <div style={{ display: 'flex', justifyContent: 'center', gap: 48, flexWrap: 'wrap', opacity: 0.4 }}>
           {['Google','Adobe','Spotify','Netflix','Shopify'].map(l => <span key={l} style={{ fontSize: 20, fontWeight: 800, color: colors.onSurfaceVariant }}>{l}</span>)}
         </div>
       </section>
+
+      {/* WORKFLOW */}
       <section id="workflow" style={{ maxWidth: 1100, margin: '0 auto', padding: '80px 24px', borderTop: '1px solid rgba(70,69,85,0.1)' }}>
-        <div style={{ textAlign: 'center', marginBottom: 64 }}><h2 style={{ fontSize: 36, fontWeight: 800, marginBottom: 12 }}>Three Steps to Viral Content</h2><p style={{ color: colors.onSurfaceVariant }}>From long-form video to viral clips in under 5 minutes.</p></div>
+        <div style={{ textAlign: 'center', marginBottom: 64 }}>
+          <h2 style={{ fontSize: 'clamp(28px,5vw,36px)', fontWeight: 800, marginBottom: 12 }}>Three Steps to Viral Content</h2>
+          <p style={{ color: colors.onSurfaceVariant }}>From long-form video to viral clips in under 5 minutes.</p>
+        </div>
         <div className="workflow-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 32 }}>
-          {[{ icon: 'link', n: '01', t: 'Paste a Link', d: 'Drop a YouTube, Vimeo, or TikTok URL. Zero uploads, zero storage costs.', c: colors.primary },
+          {[
+            { icon: 'link', n: '01', t: 'Paste a Link', d: 'Drop a YouTube, Vimeo, or TikTok URL. Zero uploads, zero storage costs.', c: colors.primary },
             { icon: 'auto_awesome', n: '02', t: 'AI Does the Work', d: 'Transcribes, detects hooks, cuts clips, adds captions, reframes to 9:16.', c: colors.tertiary },
-            { icon: 'rocket_launch', n: '03', t: 'Publish & Grow', d: 'Review clips ranked by virality. Edit, schedule, and export everywhere.', c: '#4ade80' }
-          ].map(s => <div key={s.n} style={{ background: colors.surfaceContainerHigh, borderRadius: radius.xl, padding: 36, position: 'relative', overflow: 'hidden' }}>
-            <span style={{ position: 'absolute', top: 16, right: 20, fontSize: 64, fontWeight: 900, color: 'rgba(255,255,255,0.03)' }}>{s.n}</span>
-            <div style={{ width: 56, height: 56, borderRadius: radius.lg, background: s.c+'10', border: '1px solid '+s.c+'20', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}><Icon name={s.icon} size={26} style={{ color: s.c }} /></div>
-            <h3 style={{ fontSize: 20, fontWeight: 700, marginBottom: 10 }}>{s.t}</h3>
-            <p style={{ color: colors.onSurfaceVariant, fontSize: 14, lineHeight: 1.7 }}>{s.d}</p>
-          </div>)}
+            { icon: 'rocket_launch', n: '03', t: 'Publish & Grow', d: 'Review clips ranked by virality. Edit, schedule, and export everywhere.', c: '#4ade80' },
+          ].map(s => (
+            <div key={s.n} style={{ background: colors.surfaceContainerHigh, borderRadius: radius.xl, padding: 36, position: 'relative', overflow: 'hidden' }}>
+              <span style={{ position: 'absolute', top: 16, right: 20, fontSize: 64, fontWeight: 900, color: 'rgba(255,255,255,0.03)' }}>{s.n}</span>
+              <div style={{ width: 56, height: 56, borderRadius: radius.lg, background: s.c+'10', border: '1px solid '+s.c+'20', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}><Icon name={s.icon} size={26} style={{ color: s.c }} /></div>
+              <h3 style={{ fontSize: 20, fontWeight: 700, marginBottom: 10 }}>{s.t}</h3>
+              <p style={{ color: colors.onSurfaceVariant, fontSize: 14, lineHeight: 1.7 }}>{s.d}</p>
+            </div>
+          ))}
         </div>
       </section>
+
+      {/* FEATURES */}
       <section id="features" style={{ maxWidth: 1100, margin: '0 auto', padding: '80px 24px' }}>
-        <div style={{ textAlign: 'center', marginBottom: 48 }}><h2 style={{ fontSize: 36, fontWeight: 800, marginBottom: 12 }}>Everything You Need to Go Viral</h2></div>
-        <div className="features-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 20 }}>
-          {[{ i: 'auto_awesome_motion', c: colors.primary, t: 'AI Hook Detection', d: 'Claude AI finds scroll-stopping moments with 94% accuracy.', s: '94% accuracy' },
+        <div style={{ textAlign: 'center', marginBottom: 48 }}>
+          <h2 style={{ fontSize: 'clamp(28px,5vw,36px)', fontWeight: 800, marginBottom: 12 }}>Everything You Need to Go Viral</h2>
+        </div>
+        <div className="features-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 20 }}>
+          {[
+            { i: 'auto_awesome_motion', c: colors.primary, t: 'AI Hook Detection', d: 'Claude AI finds scroll-stopping moments with 94% accuracy.', s: '94% accuracy' },
             { i: 'closed_caption', c: colors.tertiary, t: 'Animated Captions', d: 'Word-by-word animation. +40% watch time.', s: '+40% watch time' },
             { i: 'aspect_ratio', c: colors.secondary, t: '9:16 Reframe', d: 'Speaker-tracking keeps faces centered for vertical.', s: 'Auto reframe' },
             { i: 'schedule_send', c: '#ff97b5', t: 'Multi-Platform Publish', d: 'Schedule to Shorts, TikTok, and Reels from one place.', s: '3 platforms' },
             { i: 'tune', c: '#fbbf24', t: 'Pro Adjustments', d: 'Color, brightness, contrast, stabilization, noise reduction.', s: '20+ tools' },
-            { i: 'translate', c: '#4ade80', t: 'Multi-Language', d: 'Transcribe and caption in 50+ languages.', s: '50+ languages' }
-          ].map(f => <div key={f.t} style={{ background: colors.surfaceContainerHigh, borderRadius: radius.xl, padding: 36 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
-              <div style={{ width: 48, height: 48, borderRadius: radius.lg, background: f.c+'10', border: '1px solid '+f.c+'20', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name={f.i} size={24} style={{ color: f.c }} /></div>
-              <span style={{ fontSize: 11, fontWeight: 700, color: f.c, background: f.c+'10', padding: '4px 10px', borderRadius: radius.full }}>{f.s}</span>
+            { i: 'translate', c: '#4ade80', t: 'Multi-Language', d: 'Transcribe and caption in 50+ languages.', s: '50+ languages' },
+          ].map(f => (
+            <div key={f.t} style={{ background: colors.surfaceContainerHigh, borderRadius: radius.xl, padding: 36 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
+                <div style={{ width: 48, height: 48, borderRadius: radius.lg, background: f.c+'10', border: '1px solid '+f.c+'20', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name={f.i} size={24} style={{ color: f.c }} /></div>
+                <span style={{ fontSize: 11, fontWeight: 700, color: f.c, background: f.c+'10', padding: '4px 10px', borderRadius: radius.full }}>{f.s}</span>
+              </div>
+              <h3 style={{ fontSize: 20, fontWeight: 700, marginBottom: 10 }}>{f.t}</h3>
+              <p style={{ color: colors.onSurfaceVariant, fontSize: 14, lineHeight: 1.7 }}>{f.d}</p>
             </div>
-            <h3 style={{ fontSize: 20, fontWeight: 700, marginBottom: 10 }}>{f.t}</h3>
-            <p style={{ color: colors.onSurfaceVariant, fontSize: 14, lineHeight: 1.7 }}>{f.d}</p>
-          </div>)}
+          ))}
         </div>
       </section>
+
+      {/* CREATOR HIGHLIGHTS */}
       <section style={{ maxWidth: 1100, margin: '0 auto', padding: '80px 24px', borderTop: '1px solid rgba(70,69,85,0.1)' }}>
         <div style={{ textAlign: 'center', marginBottom: 48 }}>
-          <h2 style={{ fontSize: 36, fontWeight: 800, marginBottom: 12 }}>Creator Highlights</h2>
+          <h2 style={{ fontSize: 'clamp(28px,5vw,36px)', fontWeight: 800, marginBottom: 12 }}>Creator Highlights</h2>
           <p style={{ color: colors.onSurfaceVariant }}>Gospel voices reaching millions across Africa and beyond.</p>
         </div>
         <div className="reel-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 16 }}>
@@ -123,31 +152,38 @@ export default function LandingPage() {
           ))}
         </div>
       </section>
+
+      {/* TESTIMONIALS */}
       <section id="testimonials" style={{ maxWidth: 1100, margin: '0 auto', padding: '80px 24px' }}>
-        <div style={{ textAlign: 'center', marginBottom: 48 }}><h2 style={{ fontSize: 36, fontWeight: 800 }}>Loved by 50,000+ Creators</h2></div>
+        <div style={{ textAlign: 'center', marginBottom: 48 }}>
+          <h2 style={{ fontSize: 'clamp(28px,5vw,36px)', fontWeight: 800 }}>Loved by 50,000+ Creators</h2>
+        </div>
         <div className="testimonials-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 20 }}>
-          {TESTIMONIALS.map(t => <div key={t.name} style={{ background: colors.surfaceContainerHigh, borderRadius: radius.xl, padding: 32 }}>
-            <div style={{ display: 'flex', gap: 4, marginBottom: 16 }}>{[1,2,3,4,5].map(s => <Icon key={s} name="star" filled size={16} style={{ color: '#fbbf24' }} />)}</div>
-            <p style={{ fontSize: 14, lineHeight: 1.7, marginBottom: 20 }}>&ldquo;{t.text}&rdquo;</p>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{ width: 40, height: 40, borderRadius: '50%', background: gradients.cta, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 700, color: '#000' }}>{t.avatar}</div>
-              <div><p style={{ fontSize: 13, fontWeight: 600 }}>{t.name}</p><p style={{ fontSize: 11, color: colors.onSurfaceVariant }}>{t.role}</p></div>
+          {TESTIMONIALS.map(t => (
+            <div key={t.name} style={{ background: colors.surfaceContainerHigh, borderRadius: radius.xl, padding: 32 }}>
+              <div style={{ display: 'flex', gap: 4, marginBottom: 16 }}>{[1,2,3,4,5].map(s => <Icon key={s} name="star" filled size={16} style={{ color: '#fbbf24' }} />)}</div>
+              <p style={{ fontSize: 14, lineHeight: 1.7, marginBottom: 20 }}>&ldquo;{t.text}&rdquo;</p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{ width: 40, height: 40, borderRadius: '50%', background: gradients.cta, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 700, color: '#000' }}>{t.avatar}</div>
+                <div><p style={{ fontSize: 13, fontWeight: 600 }}>{t.name}</p><p style={{ fontSize: 11, color: colors.onSurfaceVariant }}>{t.role}</p></div>
+              </div>
             </div>
-          </div>)}
+          ))}
         </div>
       </section>
+
+      {/* PRICING */}
       <section id="pricing" style={{ maxWidth: 1100, margin: '0 auto', padding: '80px 24px' }}>
         <div style={{ textAlign: 'center', marginBottom: 48 }}>
-          <h2 style={{ fontSize: 36, fontWeight: 800, marginBottom: 12 }}>Simple, Transparent Pricing</h2>
+          <h2 style={{ fontSize: 'clamp(28px,5vw,36px)', fontWeight: 800, marginBottom: 12 }}>Simple, Transparent Pricing</h2>
           <p style={{ color: colors.onSurfaceVariant, marginBottom: 28 }}>Start free. Upgrade when you&apos;re ready.</p>
           <div style={{ display: 'inline-flex', background: colors.surfaceContainerHigh, borderRadius: radius.full, padding: 4 }}>
             <button onClick={() => setAnnual(false)} style={{ padding: '8px 20px', borderRadius: radius.full, border: 'none', cursor: 'pointer', background: !annual ? colors.primary : 'transparent', color: !annual ? '#000' : colors.onSurfaceVariant, fontWeight: 600, fontSize: 13, fontFamily: "'Inter', sans-serif" }}>Monthly</button>
             <button onClick={() => setAnnual(true)} style={{ padding: '8px 20px', borderRadius: radius.full, border: 'none', cursor: 'pointer', background: annual ? colors.primary : 'transparent', color: annual ? '#000' : colors.onSurfaceVariant, fontWeight: 600, fontSize: 13, fontFamily: "'Inter', sans-serif" }}>Annual <span style={{ color: annual ? '#000' : '#4ade80', fontSize: 11 }}>-25%</span></button>
           </div>
         </div>
-        {/* Credits explainer */}
         <div style={{ maxWidth: 600, margin: '0 auto 32px', padding: '14px 20px', borderRadius: radius.lg, background: colors.surfaceContainerHigh, border: '1px solid ' + colors.outlineVariant, fontSize: 13, color: colors.onSurfaceVariant, lineHeight: 1.6, textAlign: 'left' }}>
-          <strong style={{ color: colors.onSurface }}>How credits work:</strong> paste a 30-minute video → uses 30 credits. Credits reset monthly. Unused credits do not roll over.
+          <strong style={{ color: colors.onSurface }}>How credits work:</strong> paste a 30-minute video &rarr; uses 30 credits. Credits reset monthly. Unused credits do not roll over.
         </div>
         <div className="pricing-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16 }}>
           {[
@@ -158,23 +194,29 @@ export default function LandingPage() {
           ].map(plan => {
             const dp = annual ? Math.round(plan.p * 0.75) : plan.p;
             const hi = plan.badge !== null;
-            return <div key={plan.n} style={{ background: hi ? colors.surfaceContainerHigh : colors.surfaceContainerLow, borderRadius: radius.xl, padding: 32, border: hi ? '1px solid '+colors.primary+'40' : '1px solid transparent', position: 'relative', boxShadow: hi ? shadows.glow : 'none' }}>
-              {plan.badge && <div style={{ position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)', background: gradients.primary, color: '#000', fontSize: 11, fontWeight: 700, padding: '4px 16px', borderRadius: radius.full, whiteSpace: 'nowrap' }}>{plan.badge}</div>}
-              <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 4 }}>{plan.n}</h3>
-              <p style={{ fontSize: 12, color: colors.onSurfaceVariant, marginBottom: 16 }}>{plan.d}</p>
-              <div style={{ marginBottom: plan.p > 0 ? 4 : 24 }}><span style={{ fontSize: 40, fontWeight: 800 }}>${dp}</span><span style={{ fontSize: 14, color: colors.onSurfaceVariant }}>/mo</span></div>
-              {plan.p > 0 && <p style={{ fontSize: 11, color: colors.onSurfaceVariant, margin: '0 0 20px', opacity: 0.7 }}>1 credit = 1 minute of video processed</p>}
-              <button onClick={() => router.push('/auth')} style={{ width: '100%', background: hi ? gradients.primary : colors.surfaceContainer, color: hi ? '#FAF7FF' : colors.onSurface, border: hi ? 'none' : '1px solid '+colors.outlineVariant, padding: 12, borderRadius: radius.md, fontWeight: 700, fontSize: 13, cursor: 'pointer', marginBottom: 24, fontFamily: "'Inter', sans-serif" }}>{plan.p === 0 ? 'Get Started' : 'Start Trial'}</button>
-              <ul style={{ listStyle: 'none', padding: 0 }}>{plan.f.map(f => <li key={f} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: colors.onSurfaceVariant, marginBottom: 10 }}><Icon name="check_circle" size={16} style={{ color: colors.primary }} filled /> {f}</li>)}</ul>
-            </div>;
+            return (
+              <div key={plan.n} style={{ background: hi ? colors.surfaceContainerHigh : colors.surfaceContainerLow, borderRadius: radius.xl, padding: 32, border: hi ? '1px solid '+colors.primary+'40' : '1px solid transparent', position: 'relative', boxShadow: hi ? shadows.glow : 'none' }}>
+                {plan.badge && <div style={{ position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)', background: gradients.primary, color: '#000', fontSize: 11, fontWeight: 700, padding: '4px 16px', borderRadius: radius.full, whiteSpace: 'nowrap' }}>{plan.badge}</div>}
+                <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 4 }}>{plan.n}</h3>
+                <p style={{ fontSize: 12, color: colors.onSurfaceVariant, marginBottom: 16 }}>{plan.d}</p>
+                <div style={{ marginBottom: plan.p > 0 ? 4 : 24 }}><span style={{ fontSize: 40, fontWeight: 800 }}>${dp}</span><span style={{ fontSize: 14, color: colors.onSurfaceVariant }}>/mo</span></div>
+                {plan.p > 0 && <p style={{ fontSize: 11, color: colors.onSurfaceVariant, margin: '0 0 20px', opacity: 0.7 }}>1 credit = 1 minute of video processed</p>}
+                <button onClick={() => router.push('/auth')} style={{ width: '100%', background: hi ? gradients.primary : colors.surfaceContainer, color: hi ? '#FAF7FF' : colors.onSurface, border: hi ? 'none' : '1px solid '+colors.outlineVariant, padding: 12, borderRadius: radius.md, fontWeight: 700, fontSize: 13, cursor: 'pointer', marginBottom: 24, fontFamily: "'Inter', sans-serif" }}>{plan.p === 0 ? 'Get Started' : 'Start Trial'}</button>
+                <ul style={{ listStyle: 'none', padding: 0 }}>{plan.f.map(f => <li key={f} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: colors.onSurfaceVariant, marginBottom: 10 }}><Icon name="check_circle" size={16} style={{ color: colors.primary }} filled /> {f}</li>)}</ul>
+              </div>
+            );
           })}
         </div>
       </section>
+
+      {/* FINAL CTA */}
       <section style={{ maxWidth: 900, margin: '0 auto', padding: '80px 24px', textAlign: 'center' }}>
-        <h2 style={{ fontSize: 40, fontWeight: 800, marginBottom: 16 }}>Ready to go viral?</h2>
+        <h2 style={{ fontSize: 'clamp(28px,5vw,40px)', fontWeight: 800, marginBottom: 16 }}>Ready to go viral?</h2>
         <p style={{ color: colors.onSurfaceVariant, fontSize: 18, marginBottom: 36 }}>Join 50,000+ creators saving 20+ hours a week.</p>
-        <button onClick={() => router.push('/auth')} style={{ background: gradients.primary, color: '#FAF7FF', fontWeight: 700, padding: '16px 40px', borderRadius: radius.xl, border: 'none', cursor: 'pointer', fontSize: 16, boxShadow: shadows.glowStrong, fontFamily: "'Inter', sans-serif" }}>Start Creating — It&apos;s Free</button>
+        <button onClick={() => router.push('/auth')} style={{ background: gradients.primary, color: '#FAF7FF', fontWeight: 700, padding: '16px 40px', borderRadius: radius.xl, border: 'none', cursor: 'pointer', fontSize: 16, boxShadow: shadows.glowStrong, fontFamily: "'Inter', sans-serif" }}>Start Creating &mdash; It&apos;s Free</button>
       </section>
+
+      {/* FOOTER */}
       <footer style={{ borderTop: '1px solid rgba(70,69,85,0.1)', padding: '48px 24px', maxWidth: 1100, margin: '0 auto' }}>
         <div className="footer-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 32, marginBottom: 40 }}>
           <div>
@@ -184,17 +226,125 @@ export default function LandingPage() {
             <p style={{ fontSize: 12, color: colors.onSurfaceVariant, opacity: 0.5, marginBottom: 8 }}>Clip. Spread. Transform.</p>
             <p style={{ fontSize: 13, color: colors.onSurfaceVariant, lineHeight: 1.7 }}>Africa&apos;s AI clip platform for gospel creators, educators, and inspirational voices.</p>
           </div>
-          {[{ t: 'Product', l: ['Features','Pricing','Changelog'] }, { t: 'Company', l: ['About','Blog','Contact'] }, { t: 'Legal', l: ['Privacy','Terms','Cookies'] }].map(c => <div key={c.t}><h4 style={{ fontSize: 13, fontWeight: 700, marginBottom: 16, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{c.t}</h4>{c.l.map(l => <a key={l} href="#" style={{ display: 'block', fontSize: 13, color: colors.onSurfaceVariant, textDecoration: 'none', marginBottom: 10 }}>{l}</a>)}</div>)}
+          {[{ t: 'Product', l: ['Features','Pricing','Changelog'] }, { t: 'Company', l: ['About','Blog','Contact'] }, { t: 'Legal', l: ['Privacy','Terms','Cookies'] }].map(c => (
+            <div key={c.t}>
+              <h4 style={{ fontSize: 13, fontWeight: 700, marginBottom: 16, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{c.t}</h4>
+              {c.l.map(l => <a key={l} href="#" style={{ display: 'block', fontSize: 13, color: colors.onSurfaceVariant, textDecoration: 'none', marginBottom: 10 }}>{l}</a>)}
+            </div>
+          ))}
         </div>
         <div style={{ borderTop: '1px solid rgba(70,69,85,0.1)', paddingTop: 24, fontSize: 12, color: colors.onSurfaceVariant, textAlign: 'center' }}>&copy; 2026 VangelClip. All rights reserved.</div>
       </footer>
-      {showDemo && <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(12px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }} onClick={() => setShowDemo(false)}>
-        <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 900, borderRadius: radius.xl, overflow: 'hidden', background: '#000', position: 'relative' }}>
-          <button onClick={() => setShowDemo(false)} style={{ position: 'absolute', top: 12, right: 12, zIndex: 10, width: 36, height: 36, borderRadius: '50%', background: 'rgba(255,255,255,0.1)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="close" size={20} style={{ color: '#fff' }} /></button>
-          <div style={{ aspectRatio: '16/9' }}><iframe width="100%" height="100%" src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1&rel=0" title="Demo" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen style={{ border: 'none' }} /></div>
+
+      {/* DEMO MODAL */}
+      {showDemo && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(12px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }} onClick={() => setShowDemo(false)}>
+          <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 900, borderRadius: radius.xl, overflow: 'hidden', background: '#000', position: 'relative' }}>
+            <button onClick={() => setShowDemo(false)} style={{ position: 'absolute', top: 12, right: 12, zIndex: 10, width: 36, height: 36, borderRadius: '50%', background: 'rgba(255,255,255,0.1)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="close" size={20} style={{ color: '#fff' }} /></button>
+            <div style={{ aspectRatio: '16/9' }}><iframe width="100%" height="100%" src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1&rel=0" title="Demo" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen style={{ border: 'none' }} /></div>
+          </div>
         </div>
-      </div>}
-      <style>{'@media (max-width: 768px) { .nav-links { display: none !important; } .workflow-grid, .features-grid, .pricing-grid, .testimonials-grid { grid-template-columns: 1fr !important; } .reel-grid { grid-template-columns: repeat(2,1fr) !important; } .footer-grid { grid-template-columns: repeat(2, 1fr) !important; } } .reel-card { transition: transform 0.25s ease, box-shadow 0.25s ease; } .reel-card:hover { transform: translateY(-6px) scale(1.02); }'}</style>
+      )}
+
+      <style>{`
+        /* ─── HERO ───────────────────────────────── */
+        .hero-overlay {
+          background: linear-gradient(to right, rgba(5,0,20,0.92) 0%, rgba(10,0,40,0.85) 40%, rgba(10,0,40,0.45) 70%, rgba(0,0,0,0.15) 100%);
+        }
+        .hero-content {
+          max-width: 620px;
+          padding: 100px 24px 80px 80px;
+          text-align: left;
+        }
+        .hero-headline {
+          font-size: clamp(36px, 7vw, 72px);
+          font-weight: 800;
+          letter-spacing: -0.03em;
+          line-height: 1.08;
+          margin-bottom: 20px;
+          color: #ffffff;
+        }
+        .hero-subheadline {
+          font-size: clamp(15px, 2.2vw, 18px);
+          color: rgba(255,255,255,0.82);
+          max-width: 520px;
+          margin-bottom: 16px;
+          line-height: 1.7;
+        }
+        .hero-tags {
+          font-size: clamp(11px, 1.8vw, 13px);
+          color: rgba(255,255,255,0.5);
+          margin-bottom: 32px;
+          letter-spacing: 0.04em;
+        }
+        .hero-buttons {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 12px;
+          align-items: center;
+          margin-bottom: 48px;
+        }
+
+        /* ─── STATS ──────────────────────────────── */
+        .stats-grid {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 24px;
+          max-width: 560px;
+          margin-bottom: 60px;
+        }
+
+        /* ─── NAV ────────────────────────────────── */
+        .nav-links { display: flex; }
+
+        /* ─── REEL CARD HOVER ────────────────────── */
+        .reel-card { transition: transform 0.25s ease, box-shadow 0.25s ease; }
+        .reel-card:hover { transform: translateY(-6px) scale(1.02); }
+
+        /* ─── TABLET 900px ───────────────────────── */
+        @media (max-width: 900px) {
+          .workflow-grid  { grid-template-columns: repeat(2,1fr) !important; }
+          .features-grid  { grid-template-columns: repeat(2,1fr) !important; }
+          .pricing-grid   { grid-template-columns: repeat(2,1fr) !important; }
+          .reel-grid      { grid-template-columns: repeat(3,1fr) !important; }
+        }
+
+        /* ─── TABLET 768px ───────────────────────── */
+        @media (max-width: 768px) {
+          .nav-links { display: none !important; }
+          .hero-overlay {
+            background: linear-gradient(to right, rgba(5,0,20,0.95) 0%, rgba(10,0,40,0.92) 50%, rgba(10,0,40,0.75) 100%) !important;
+          }
+          .hero-content {
+            padding: 100px 20px 60px 20px !important;
+            max-width: 100% !important;
+          }
+          .hero-buttons { flex-direction: column; align-items: flex-start; }
+          .hero-buttons > * { width: 100% !important; justify-content: center; }
+          .stats-grid {
+            grid-template-columns: repeat(2,1fr) !important;
+            max-width: 100% !important;
+          }
+          .testimonials-grid { grid-template-columns: repeat(2,1fr) !important; }
+          .footer-grid       { grid-template-columns: repeat(2,1fr) !important; }
+        }
+
+        /* ─── MOBILE 600px ───────────────────────── */
+        @media (max-width: 600px) {
+          .workflow-grid    { grid-template-columns: 1fr !important; }
+          .features-grid    { grid-template-columns: 1fr !important; }
+          .pricing-grid     { grid-template-columns: 1fr !important; }
+          .reel-grid        { grid-template-columns: repeat(2,1fr) !important; }
+          .testimonials-grid { grid-template-columns: 1fr !important; }
+          .footer-grid      { grid-template-columns: 1fr !important; }
+        }
+
+        /* ─── MOBILE 480px ───────────────────────── */
+        @media (max-width: 480px) {
+          .hero-content { padding: 90px 16px 60px 16px !important; }
+          .stats-grid   { gap: 16px !important; }
+        }
+      `}</style>
     </div>
   );
 }
