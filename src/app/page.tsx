@@ -1,10 +1,8 @@
 'use client';
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import dynamic from 'next/dynamic';
 import Icon from '@/components/Icon';
 import { colors, gradients, radius, shadows } from '@/lib/tokens';
-const HeroAnimation = dynamic(() => import('@/components/HeroAnimation'), { ssr: false });
 const TESTIMONIALS = [
   { name: 'Sarah Chen', role: 'Creator · 1.2M followers', text: 'VangelClip cut my editing time from 8 hours to 20 minutes.', avatar: 'S' },
   { name: 'Marcus Johnson', role: 'Podcast Host · Top 50', text: 'I paste my episode link and get 10 viral clips back.', avatar: 'M' },
@@ -31,32 +29,34 @@ export default function LandingPage() {
           <button onClick={() => router.push('/auth')} style={{ background: '#fff', color: '#000', fontSize: '13px', fontWeight: 700, padding: '8px 18px', borderRadius: radius.md, border: 'none', cursor: 'pointer' }}>Start Free</button>
         </div>
       </nav>
-      <section style={{ maxWidth: 1100, margin: '0 auto', padding: '80px 24px 60px', textAlign: 'center', position: 'relative' }}>
-        <div style={{ position: 'absolute', top: '10%', left: '10%', width: 300, height: 300, background: 'rgba(93,96,235,0.06)', borderRadius: '50%', filter: 'blur(100px)', animation: 'float 8s ease-in-out infinite' }} />
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '4px 14px', borderRadius: radius.full, background: colors.surfaceContainerHighest, border: '1px solid ' + colors.outlineVariant, color: colors.primary, fontSize: 12, fontWeight: 600, marginBottom: 32, position: 'relative' }}>
-          <Icon name="verified" size={14} /> New: AI Reframe for Shorts
+      <section style={{ position: 'relative', width: '100%', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '177.78vh', minWidth: '100%', height: '56.25vw', minHeight: '100%', zIndex: 0, pointerEvents: 'none' }}>
+          <iframe
+            src="https://www.youtube.com/embed/ifIR8cdrbkY?autoplay=1&mute=1&loop=1&playlist=ifIR8cdrbkY&controls=0&showinfo=0&rel=0&modestbranding=1&playsinline=1&enablejsapi=1"
+            style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none', pointerEvents: 'none' }}
+            allow="autoplay; encrypted-media"
+            allowFullScreen={false}
+            title="Hero background video"
+          />
         </div>
-        <h1 style={{ fontSize: 'clamp(36px,6vw,72px)', fontWeight: 800, letterSpacing: '-0.03em', lineHeight: 1.08, marginBottom: 28, maxWidth: 900, marginLeft: 'auto', marginRight: 'auto', position: 'relative' }}>
-          Spread the Gospel. <span style={{ color: colors.primary }}>One Clip</span> at a Time.
-        </h1>
-        <p style={{ fontSize: 18, color: colors.onSurfaceVariant, maxWidth: 640, margin: '0 auto 20px', lineHeight: 1.7, position: 'relative' }}>VangelClip uses AI to turn your sermons, songs, teachings, and talks into viral short clips for TikTok, Reels, and YouTube Shorts. Built for African creators. Made for the world.</p>
-        <p style={{ fontSize: 14, color: colors.onSurfaceVariant, opacity: 0.55, maxWidth: 480, margin: '0 auto 40px', letterSpacing: '0.04em', position: 'relative' }}>Gospel &middot; Education &middot; Inspiration &middot; African-First &middot; World-Class</p>
-        <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 48, position: 'relative' }}>
-          <button onClick={() => router.push('/auth')} style={{ background: gradients.primary, color: '#FAF7FF', fontWeight: 700, padding: '16px 32px', borderRadius: radius.xl, border: 'none', cursor: 'pointer', fontSize: 15, boxShadow: shadows.glowStrong, fontFamily: "'Inter', sans-serif" }}>Start Clipping Free</button>
-          <button onClick={() => setShowDemo(true)} style={{ background: colors.surfaceContainer, color: colors.onSurface, border: '1px solid ' + colors.outlineVariant, fontWeight: 700, padding: '16px 32px', borderRadius: radius.xl, cursor: 'pointer', fontSize: 15, display: 'flex', alignItems: 'center', gap: 8, fontFamily: "'Inter', sans-serif" }}><Icon name="play_circle" filled size={20} /> View Demo</button>
-        </div>
-        <div style={{ display: 'flex', justifyContent: 'center', gap: 48, marginBottom: 60, flexWrap: 'wrap', position: 'relative' }}>
-          {[{ v: '50K+', l: 'Creators' }, { v: '2M+', l: 'Clips' }, { v: '8.2B', l: 'Views' }, { v: '94%', l: 'Satisfaction' }].map(s => <div key={s.l} style={{ textAlign: 'center' }}><p style={{ fontSize: 28, fontWeight: 800, color: '#fff' }}>{s.v}</p><p style={{ fontSize: 12, color: colors.onSurfaceVariant }}>{s.l}</p></div>)}
-        </div>
-        <div style={{
-          position: 'relative',
-          borderRadius: '20px',
-          overflow: 'hidden',
-          background: 'linear-gradient(135deg, #0d0721 0%, #1a0a3a 50%, #0a0a1a 100%)',
-          boxShadow: '0 0 60px rgba(124,58,237,0.3), 0 0 120px rgba(6,182,212,0.1)',
-          border: '1px solid rgba(124,58,237,0.3)',
-        }}>
-          <HeroAnimation />
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, rgba(10,0,40,0.80) 0%, rgba(26,10,58,0.72) 50%, rgba(10,10,26,0.78) 100%)', zIndex: 1 }} />
+        <div style={{ position: 'absolute', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '70%', height: '280px', background: 'radial-gradient(ellipse at center bottom, rgba(124,58,237,0.22) 0%, transparent 70%)', zIndex: 1 }} />
+        <div style={{ position: 'relative', zIndex: 2, textAlign: 'center', maxWidth: '800px', padding: '0 24px' }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '4px 14px', borderRadius: radius.full, background: colors.surfaceContainerHighest, border: '1px solid ' + colors.outlineVariant, color: colors.primary, fontSize: 12, fontWeight: 600, marginBottom: 32 }}>
+            <Icon name="verified" size={14} /> New: AI Reframe for Shorts
+          </div>
+          <h1 style={{ fontSize: 'clamp(36px,6vw,72px)', fontWeight: 800, letterSpacing: '-0.03em', lineHeight: 1.08, marginBottom: 28, maxWidth: 900, marginLeft: 'auto', marginRight: 'auto' }}>
+            Spread the Gospel. <span style={{ color: colors.primary }}>One Clip</span> at a Time.
+          </h1>
+          <p style={{ fontSize: 18, color: colors.onSurfaceVariant, maxWidth: 640, margin: '0 auto 20px', lineHeight: 1.7 }}>VangelClip uses AI to turn your sermons, songs, teachings, and talks into viral short clips for TikTok, Reels, and YouTube Shorts. Built for African creators. Made for the world.</p>
+          <p style={{ fontSize: 14, color: colors.onSurfaceVariant, opacity: 0.55, maxWidth: 480, margin: '0 auto 40px', letterSpacing: '0.04em' }}>Gospel &middot; Education &middot; Inspiration &middot; African-First &middot; World-Class</p>
+          <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 48 }}>
+            <button onClick={() => router.push('/auth')} style={{ background: gradients.primary, color: '#FAF7FF', fontWeight: 700, padding: '16px 32px', borderRadius: radius.xl, border: 'none', cursor: 'pointer', fontSize: 15, boxShadow: shadows.glowStrong, fontFamily: "'Inter', sans-serif" }}>Start Clipping Free</button>
+            <button onClick={() => setShowDemo(true)} style={{ background: colors.surfaceContainer, color: colors.onSurface, border: '1px solid ' + colors.outlineVariant, fontWeight: 700, padding: '16px 32px', borderRadius: radius.xl, cursor: 'pointer', fontSize: 15, display: 'flex', alignItems: 'center', gap: 8, fontFamily: "'Inter', sans-serif" }}><Icon name="play_circle" filled size={20} /> View Demo</button>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: 48, marginBottom: 60, flexWrap: 'wrap' }}>
+            {[{ v: '50K+', l: 'Creators' }, { v: '2M+', l: 'Clips' }, { v: '8.2B', l: 'Views' }, { v: '94%', l: 'Satisfaction' }].map(s => <div key={s.l} style={{ textAlign: 'center' }}><p style={{ fontSize: 28, fontWeight: 800, color: '#fff' }}>{s.v}</p><p style={{ fontSize: 12, color: colors.onSurfaceVariant }}>{s.l}</p></div>)}
+          </div>
         </div>
       </section>
       <section style={{ maxWidth: 1100, margin: '0 auto', padding: '40px 24px', textAlign: 'center' }}>
