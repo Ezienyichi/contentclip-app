@@ -1,8 +1,10 @@
 'use client';
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import Icon from '@/components/Icon';
 import { colors, gradients, radius, shadows } from '@/lib/tokens';
+const HeroAnimation = dynamic(() => import('@/components/HeroAnimation'), { ssr: false });
 const TESTIMONIALS = [
   { name: 'Sarah Chen', role: 'Creator Â· 1.2M followers', text: 'HookClip cut my editing time from 8 hours to 20 minutes.', avatar: 'S' },
   { name: 'Marcus Johnson', role: 'Podcast Host Â· Top 50', text: 'I paste my episode link and get 10 viral clips back.', avatar: 'M' },
@@ -45,12 +47,15 @@ export default function LandingPage() {
         <div style={{ display: 'flex', justifyContent: 'center', gap: 48, marginBottom: 60, flexWrap: 'wrap', position: 'relative' }}>
           {[{ v: '50K+', l: 'Creators' }, { v: '2M+', l: 'Clips' }, { v: '8.2B', l: 'Views' }, { v: '94%', l: 'Satisfaction' }].map(s => <div key={s.l} style={{ textAlign: 'center' }}><p style={{ fontSize: 28, fontWeight: 800, color: '#fff' }}>{s.v}</p><p style={{ fontSize: 12, color: colors.onSurfaceVariant }}>{s.l}</p></div>)}
         </div>
-        <div onClick={() => setShowDemo(true)} style={{ position: 'relative', maxWidth: 960, margin: '0 auto', cursor: 'pointer' }}>
-          <div style={{ position: 'relative', background: 'rgba(32,31,31,0.4)', backdropFilter: 'blur(16px)', borderRadius: radius.xl, padding: 8, border: '1px solid rgba(255,255,255,0.05)', boxShadow: shadows.float }}>
-            <div style={{ borderRadius: radius.lg, overflow: 'hidden', aspectRatio: '16/9', background: 'linear-gradient(135deg, ' + colors.surfaceContainerLow + ', ' + colors.surfaceContainer + ', rgba(93,96,235,0.08))', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="play_arrow" filled size={40} style={{ color: '#fff' }} /></div>
-            </div>
-          </div>
+        <div style={{
+          position: 'relative',
+          borderRadius: '20px',
+          overflow: 'hidden',
+          background: 'linear-gradient(135deg, #0d0721 0%, #1a0a3a 50%, #0a0a1a 100%)',
+          boxShadow: '0 0 60px rgba(124,58,237,0.3), 0 0 120px rgba(6,182,212,0.1)',
+          border: '1px solid rgba(124,58,237,0.3)',
+        }}>
+          <HeroAnimation />
         </div>
       </section>
       <section style={{ maxWidth: 1100, margin: '0 auto', padding: '40px 24px', textAlign: 'center' }}>
