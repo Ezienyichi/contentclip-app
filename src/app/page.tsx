@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Icon from '@/components/Icon';
@@ -142,7 +142,7 @@ export default function LandingPage() {
       <section style={{ maxWidth: 900, margin: '0 auto', padding: '80px 24px', textAlign: 'center' }}>
         <h2 style={{ fontSize: 40, fontWeight: 800, marginBottom: 16 }}>Ready to go viral?</h2>
         <p style={{ color: colors.onSurfaceVariant, fontSize: 18, marginBottom: 36 }}>Join 50,000+ creators saving 20+ hours a week.</p>
-        <button onClick={() => router.push('/auth')} style={{ background: gradients.primary, color: '#FAF7FF', fontWeight: 700, padding: '16px 40px', borderRadius: radius.xl, border: 'none', cursor: 'pointer', fontSize: 16, boxShadow: shadows.glowStrong, fontFamily: "'Inter', sans-serif" }}>Start Creating â€” It&apos;s Free</button>
+        <button onClick={() => router.push('/auth')} style={{ background: gradients.primary, color: '#FAF7FF', fontWeight: 700, padding: '16px 40px', borderRadius: radius.xl, border: 'none', cursor: 'pointer', fontSize: 16, boxShadow: shadows.glowStrong, fontFamily: "'Inter', sans-serif" }}>Start Creating — It&apos;s Free</button>
       </section>
       <footer style={{ borderTop: '1px solid rgba(70,69,85,0.1)', padding: '48px 24px', maxWidth: 1100, margin: '0 auto' }}>
         <div className="footer-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 32, marginBottom: 40 }}>

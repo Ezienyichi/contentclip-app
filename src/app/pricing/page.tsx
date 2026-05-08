@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Icon from '@/components/Icon';
@@ -49,10 +49,10 @@ export default function PricingPage(){
           <h2 style={{fontSize:'22px',fontWeight:700,marginBottom:'24px'}}>Feature Comparison</h2>
           <table style={{width:'100%',borderCollapse:'collapse',minWidth:'600px'}}>
             <thead><tr><th style={{textAlign:'left',padding:'12px',fontSize:'12px',fontWeight:600,color:colors.onSurfaceVariant,borderBottom:'1px solid rgba(70,69,85,0.1)'}}>Feature</th>
-            {P.map(p=><th key={p.n} style={{textAlign:'center',padding:'12px',fontSize:'13px',fontWeight:700,color:p.pop?colors.primary:colors.onSurface,borderBottom:'1px solid rgba(70,69,85,0.1)'}}>{p.n}</th>)}</tr></thead>
+            {P.map(p=><th key={p.n} style={{textAlign:'center',padding:'12px',fontSize:'13px',fontWeight:700,color:p.badge?colors.primary:colors.onSurface,borderBottom:'1px solid rgba(70,69,85,0.1)'}}>{p.n}</th>)}</tr></thead>
             <tbody>{keys.map((key,i)=><tr key={key}><td style={{padding:'12px',fontSize:'13px',color:colors.onSurfaceVariant,borderBottom:i<keys.length-1?'1px solid rgba(70,69,85,0.05)':'none'}}>{key}</td>
             {P.map(p=>{const v=p.f[key as keyof typeof p.f];return<td key={p.n} style={{textAlign:'center',padding:'12px',fontSize:'13px',borderBottom:i<keys.length-1?'1px solid rgba(70,69,85,0.05)':'none',color:v==='—'?colors.outlineVariant:v==='✓'?'#4ade80':colors.onSurface}}>
-              {v==='✓'?<Icon name=”check” size={16} style={{color:'#4ade80'}}/>:v}
+              {v==='✓'?<Icon name="check" size={16} style={{color:'#4ade80'}}/>:v}
             </td>;})}</tr>)}</tbody>
           </table>
         </div>
