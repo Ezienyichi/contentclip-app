@@ -15,47 +15,46 @@ export default function LandingPage() {
   return (
     <div style={{ background: colors.background, color: colors.onSurface, fontFamily: "'Inter', sans-serif" }}>
       <nav style={{ position: 'sticky', top: 0, zIndex: 50, background: 'rgba(14,14,14,0.8)', backdropFilter: 'blur(12px)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 24px', borderBottom: '1px solid rgba(70,69,85,0.2)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }} onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-          <div style={{ width: 32, height: 32, borderRadius: radius.md, background: gradients.cta, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="auto_awesome" size={18} style={{ color: '#fff' }} /></div>
-          <img src="/vangelclip-logo.svg" alt="VangelClip" style={{ height: 32, width: 'auto' }} />
+        <div style={{ cursor: 'pointer' }} onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+          <span style={{ fontSize: '22px', fontWeight: 800, color: '#ffffff', letterSpacing: '-0.5px', fontFamily: 'Arial Black, Arial, sans-serif' }}>Vangel<span style={{ color: '#7C3AED' }}>Clip</span></span>
         </div>
         <div className="nav-links" style={{ display: 'flex', alignItems: 'center', gap: '32px', fontSize: '14px', fontWeight: 500 }}>
           <a href="#features" style={{ color: colors.onSurfaceVariant, textDecoration: 'none' }}>Features</a>
           <a href="#workflow" style={{ color: colors.onSurfaceVariant, textDecoration: 'none' }}>Workflow</a>
           <a href="#pricing" style={{ color: colors.onSurfaceVariant, textDecoration: 'none' }}>Pricing</a>
+          <a href="/about" style={{ color: colors.onSurfaceVariant, textDecoration: 'none' }}>About</a>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           <button onClick={() => router.push('/auth')} style={{ background: 'none', border: 'none', color: colors.onSurfaceVariant, fontSize: '14px', fontWeight: 500, cursor: 'pointer', fontFamily: "'Inter', sans-serif" }}>Sign In</button>
           <button onClick={() => router.push('/auth')} style={{ background: '#fff', color: '#000', fontSize: '13px', fontWeight: 700, padding: '8px 18px', borderRadius: radius.md, border: 'none', cursor: 'pointer' }}>Start Free</button>
         </div>
       </nav>
-      <section style={{ position: 'relative', width: '100%', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+      <section style={{ position: 'relative', width: '100%', minHeight: '100vh', display: 'flex', alignItems: 'center', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '177.78vh', minWidth: '100%', height: '56.25vw', minHeight: '100%', zIndex: 0, pointerEvents: 'none' }}>
           <iframe
-            src="https://www.youtube.com/embed/ifIR8cdrbkY?autoplay=1&mute=1&loop=1&playlist=ifIR8cdrbkY&controls=0&showinfo=0&rel=0&modestbranding=1&playsinline=1&enablejsapi=1"
+            src="https://www.youtube.com/embed/ifIR8cdrbkY?autoplay=1&mute=1&loop=1&playlist=ifIR8cdrbkY&controls=0&showinfo=0&rel=0&modestbranding=1&playsinline=1"
             style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none', pointerEvents: 'none' }}
             allow="autoplay; encrypted-media"
-            allowFullScreen={false}
             title="Hero background video"
           />
         </div>
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, rgba(10,0,40,0.80) 0%, rgba(26,10,58,0.72) 50%, rgba(10,10,26,0.78) 100%)', zIndex: 1 }} />
-        <div style={{ position: 'absolute', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '70%', height: '280px', background: 'radial-gradient(ellipse at center bottom, rgba(124,58,237,0.22) 0%, transparent 70%)', zIndex: 1 }} />
-        <div style={{ position: 'relative', zIndex: 2, textAlign: 'center', maxWidth: '800px', padding: '0 24px' }}>
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, rgba(5,0,20,0.92) 0%, rgba(10,0,40,0.85) 40%, rgba(10,0,40,0.45) 70%, rgba(0,0,0,0.15) 100%)', zIndex: 1 }} />
+        <div style={{ position: 'absolute', bottom: 0, left: 0, width: '50%', height: '300px', background: 'radial-gradient(ellipse at left bottom, rgba(124,58,237,0.25) 0%, transparent 70%)', zIndex: 1 }} />
+        <div style={{ position: 'relative', zIndex: 2, maxWidth: '620px', padding: '120px 24px 120px 80px', textAlign: 'left' }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '4px 14px', borderRadius: radius.full, background: colors.surfaceContainerHighest, border: '1px solid ' + colors.outlineVariant, color: colors.primary, fontSize: 12, fontWeight: 600, marginBottom: 32 }}>
             <Icon name="verified" size={14} /> New: AI Reframe for Shorts
           </div>
-          <h1 style={{ fontSize: 'clamp(36px,6vw,72px)', fontWeight: 800, letterSpacing: '-0.03em', lineHeight: 1.08, marginBottom: 28, maxWidth: 900, marginLeft: 'auto', marginRight: 'auto' }}>
-            Spread the Gospel. <span style={{ color: colors.primary }}>One Clip</span> at a Time.
+          <h1 style={{ fontSize: 'clamp(36px,6vw,72px)', fontWeight: 800, letterSpacing: '-0.03em', lineHeight: 1.08, marginBottom: 28 }}>
+            Your Message. <span style={{ color: colors.primary }}>One Clip</span> at a Time.
           </h1>
-          <p style={{ fontSize: 18, color: colors.onSurfaceVariant, maxWidth: 640, margin: '0 auto 20px', lineHeight: 1.7 }}>VangelClip uses AI to turn your sermons, songs, teachings, and talks into viral short clips for TikTok, Reels, and YouTube Shorts. Built for African creators. Made for the world.</p>
-          <p style={{ fontSize: 14, color: colors.onSurfaceVariant, opacity: 0.55, maxWidth: 480, margin: '0 auto 40px', letterSpacing: '0.04em' }}>Gospel &middot; Education &middot; Inspiration &middot; African-First &middot; World-Class</p>
-          <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 48 }}>
+          <p style={{ fontSize: 18, color: colors.onSurfaceVariant, maxWidth: 560, marginBottom: 20, lineHeight: 1.7 }}>VangelClip uses AI to turn your sermons, songs, teachings, and talks into viral short clips for TikTok, Reels, and YouTube Shorts. Gospel. Education. Inspiration. Built for African creators. Made for the world.</p>
+          <p style={{ fontSize: 14, color: colors.onSurfaceVariant, opacity: 0.55, marginBottom: 40, letterSpacing: '0.04em' }}>Gospel &middot; Education &middot; Inspiration &middot; African-First &middot; World-Class</p>
+          <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 48 }}>
             <button onClick={() => router.push('/auth')} style={{ background: gradients.primary, color: '#FAF7FF', fontWeight: 700, padding: '16px 32px', borderRadius: radius.xl, border: 'none', cursor: 'pointer', fontSize: 15, boxShadow: shadows.glowStrong, fontFamily: "'Inter', sans-serif" }}>Start Clipping Free</button>
             <button onClick={() => setShowDemo(true)} style={{ background: colors.surfaceContainer, color: colors.onSurface, border: '1px solid ' + colors.outlineVariant, fontWeight: 700, padding: '16px 32px', borderRadius: radius.xl, cursor: 'pointer', fontSize: 15, display: 'flex', alignItems: 'center', gap: 8, fontFamily: "'Inter', sans-serif" }}><Icon name="play_circle" filled size={20} /> View Demo</button>
           </div>
-          <div style={{ display: 'flex', justifyContent: 'center', gap: 48, marginBottom: 60, flexWrap: 'wrap' }}>
-            {[{ v: '50K+', l: 'Creators' }, { v: '2M+', l: 'Clips' }, { v: '8.2B', l: 'Views' }, { v: '94%', l: 'Satisfaction' }].map(s => <div key={s.l} style={{ textAlign: 'center' }}><p style={{ fontSize: 28, fontWeight: 800, color: '#fff' }}>{s.v}</p><p style={{ fontSize: 12, color: colors.onSurfaceVariant }}>{s.l}</p></div>)}
+          <div style={{ display: 'flex', gap: 48, marginBottom: 60, flexWrap: 'wrap' }}>
+            {[{ v: '50K+', l: 'Creators' }, { v: '2M+', l: 'Clips' }, { v: '8.2B', l: 'Views' }, { v: '94%', l: 'Satisfaction' }].map(s => <div key={s.l}><p style={{ fontSize: 28, fontWeight: 800, color: '#fff' }}>{s.v}</p><p style={{ fontSize: 12, color: colors.onSurfaceVariant }}>{s.l}</p></div>)}
           </div>
         </div>
       </section>
@@ -179,9 +178,8 @@ export default function LandingPage() {
       <footer style={{ borderTop: '1px solid rgba(70,69,85,0.1)', padding: '48px 24px', maxWidth: 1100, margin: '0 auto' }}>
         <div className="footer-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 32, marginBottom: 40 }}>
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-              <div style={{ width: 28, height: 28, borderRadius: radius.sm, background: gradients.cta, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="auto_awesome" size={14} style={{ color: '#fff' }} /></div>
-              <img src="/vangelclip-logo.svg" alt="VangelClip" style={{ height: 28, width: "auto", opacity: 0.7 }} />
+            <div style={{ marginBottom: 16 }}>
+              <span style={{ fontSize: '20px', fontWeight: 800, color: '#ffffff', fontFamily: 'Arial Black, Arial, sans-serif' }}>Vangel<span style={{ color: '#7C3AED' }}>Clip</span></span>
             </div>
             <p style={{ fontSize: 12, color: colors.onSurfaceVariant, opacity: 0.5, marginBottom: 8 }}>Clip. Spread. Transform.</p>
             <p style={{ fontSize: 13, color: colors.onSurfaceVariant, lineHeight: 1.7 }}>Africa&apos;s AI clip platform for gospel creators, educators, and inspirational voices.</p>
