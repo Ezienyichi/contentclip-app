@@ -12,6 +12,8 @@ export default function LandingPage() {
   const router = useRouter();
   const [annual, setAnnual] = useState(false);
   const [showDemo, setShowDemo] = useState(false);
+  const [muted, setMuted] = React.useState(true);
+  const [iframeKey, setIframeKey] = React.useState(0);
   return (
     <div style={{ background: colors.background, color: colors.onSurface, fontFamily: "'Inter', sans-serif" }}>
 
@@ -35,13 +37,18 @@ export default function LandingPage() {
       {/* HERO — video bg, overflow hidden, dark fallback */}
       <section style={{ position: 'relative', width: '100%', minHeight: '100vh', display: 'flex', alignItems: 'center', overflow: 'hidden', background: '#0a0014' }}>
         {/* YouTube background — contained inside section via overflow:hidden */}
-        <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '177.78vh', minWidth: '100%', height: '56.25vw', minHeight: '100%', zIndex: 0, pointerEvents: 'none' }}>
+        <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '177.78vh', minWidth: '100%', height: '56.25vw', minHeight: '100%', zIndex: 0, pointerEvents: 'none', overflow: 'hidden' }}>
           <iframe
-            src="https://www.youtube.com/embed/ifIR8cdrbkY?autoplay=1&mute=1&loop=1&playlist=ifIR8cdrbkY&controls=0&showinfo=0&rel=0&modestbranding=1&playsinline=1"
-            style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none', pointerEvents: 'none' }}
+            key={iframeKey}
+            src={`https://www.youtube.com/embed/ifIR8cdrbkY?autoplay=1&mute=${muted ? 1 : 0}&loop=1&playlist=ifIR8cdrbkY&controls=0&showinfo=0&rel=0&modestbranding=1&playsinline=1&iv_load_policy=3&disablekb=1`}
+            style={{ position: 'absolute', top: '-80px', left: 0, width: '100%', height: 'calc(100% + 160px)', border: 'none', pointerEvents: 'none' }}
             allow="autoplay; encrypted-media"
             title="Hero background video"
           />
+          {/* Cover strip — hides YouTube title bar at top */}
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '80px', background: '#0a0014', zIndex: 2, pointerEvents: 'none' }} />
+          {/* Cover strip — hides YouTube bar at bottom */}
+          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '80px', background: '#0a0014', zIndex: 2, pointerEvents: 'none' }} />
         </div>
         {/* Overlay — stronger on mobile via CSS class */}
         <div className="hero-overlay" style={{ position: 'absolute', inset: 0, zIndex: 1 }} />
@@ -67,6 +74,14 @@ export default function LandingPage() {
             ))}
           </div>
         </div>
+        {/* Mute toggle */}
+        <button
+          onClick={() => { setMuted(m => !m); setIframeKey(k => k + 1); }}
+          style={{ position: 'absolute', bottom: '32px', right: '32px', zIndex: 10, background: 'rgba(124,58,237,0.4)', border: '1px solid rgba(124,58,237,0.6)', borderRadius: '50%', width: '44px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#ffffff', fontSize: '18px', backdropFilter: 'blur(8px)', transition: 'background 0.2s' }}
+          aria-label={muted ? 'Unmute video' : 'Mute video'}
+        >
+          {muted ? '🔇' : '🔊'}
+        </button>
       </section>
 
       {/* SOCIAL PROOF */}
