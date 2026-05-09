@@ -312,6 +312,58 @@ export default function LandingPage() {
         <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: '60%', height: '200px', background: 'radial-gradient(ellipse at center top, rgba(124,58,237,0.18) 0%, transparent 70%)', zIndex: 1, pointerEvents: 'none' }} />
         {/* Footer content */}
         <div style={{ position: 'relative', zIndex: 2, maxWidth: 1100, margin: '0 auto', padding: '48px 24px' }}>
+          {/* Decorative top border — film strip gradient */}
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '3px', background: 'linear-gradient(to right, transparent, rgba(124,58,237,0.6), rgba(6,182,212,0.4), rgba(236,72,153,0.3), transparent)', zIndex: 3 }} />
+          {/* Left edge film strip */}
+          <div style={{ position: 'absolute', top: 0, left: 0, width: '48px', height: '100%', zIndex: 2, pointerEvents: 'none' }}>
+            <svg width="48" height="100%" viewBox="0 0 48 500" preserveAspectRatio="xMidYMin slice" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="2" y="0" width="44" height="500" fill="none" stroke="rgba(124,58,237,0.12)" strokeWidth="0.5"/>
+              <rect x="6" y="10" width="36" height="26" rx="3" fill="rgba(124,58,237,0.06)" stroke="rgba(124,58,237,0.12)" strokeWidth="0.5"/>
+              <rect x="6" y="50" width="36" height="26" rx="3" fill="rgba(124,58,237,0.06)" stroke="rgba(124,58,237,0.12)" strokeWidth="0.5"/>
+              <rect x="6" y="90" width="36" height="26" rx="3" fill="rgba(124,58,237,0.06)" stroke="rgba(124,58,237,0.12)" strokeWidth="0.5"/>
+              <rect x="6" y="130" width="36" height="26" rx="3" fill="rgba(124,58,237,0.06)" stroke="rgba(124,58,237,0.12)" strokeWidth="0.5"/>
+              <rect x="6" y="170" width="36" height="26" rx="3" fill="rgba(124,58,237,0.06)" stroke="rgba(124,58,237,0.12)" strokeWidth="0.5"/>
+              <rect x="6" y="210" width="36" height="26" rx="3" fill="rgba(124,58,237,0.06)" stroke="rgba(124,58,237,0.12)" strokeWidth="0.5"/>
+              <rect x="6" y="250" width="36" height="26" rx="3" fill="rgba(124,58,237,0.06)" stroke="rgba(124,58,237,0.12)" strokeWidth="0.5"/>
+              <rect x="6" y="290" width="36" height="26" rx="3" fill="rgba(124,58,237,0.06)" stroke="rgba(124,58,237,0.12)" strokeWidth="0.5"/>
+              <circle cx="24" cy="80" r="4" fill="rgba(124,58,237,0.2)"/>
+              <circle cx="24" cy="200" r="3" fill="rgba(6,182,212,0.2)"/>
+              <circle cx="24" cy="340" r="5" fill="rgba(236,72,153,0.15)"/>
+            </svg>
+          </div>
+          {/* Right edge film strip */}
+          <div style={{ position: 'absolute', top: 0, right: 0, width: '48px', height: '100%', zIndex: 2, pointerEvents: 'none' }}>
+            <svg width="48" height="100%" viewBox="0 0 48 500" preserveAspectRatio="xMidYMin slice" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="2" y="0" width="44" height="500" fill="none" stroke="rgba(124,58,237,0.12)" strokeWidth="0.5"/>
+              <rect x="6" y="10" width="36" height="26" rx="3" fill="rgba(6,182,212,0.06)" stroke="rgba(6,182,212,0.12)" strokeWidth="0.5"/>
+              <rect x="6" y="50" width="36" height="26" rx="3" fill="rgba(6,182,212,0.06)" stroke="rgba(6,182,212,0.12)" strokeWidth="0.5"/>
+              <rect x="6" y="90" width="36" height="26" rx="3" fill="rgba(6,182,212,0.06)" stroke="rgba(6,182,212,0.12)" strokeWidth="0.5"/>
+              <rect x="6" y="130" width="36" height="26" rx="3" fill="rgba(6,182,212,0.06)" stroke="rgba(6,182,212,0.12)" strokeWidth="0.5"/>
+              <rect x="6" y="170" width="36" height="26" rx="3" fill="rgba(6,182,212,0.06)" stroke="rgba(6,182,212,0.12)" strokeWidth="0.5"/>
+              <rect x="6" y="210" width="36" height="26" rx="3" fill="rgba(6,182,212,0.06)" stroke="rgba(6,182,212,0.12)" strokeWidth="0.5"/>
+              <rect x="6" y="250" width="36" height="26" rx="3" fill="rgba(6,182,212,0.06)" stroke="rgba(6,182,212,0.12)" strokeWidth="0.5"/>
+              <rect x="6" y="290" width="36" height="26" rx="3" fill="rgba(6,182,212,0.06)" stroke="rgba(6,182,212,0.12)" strokeWidth="0.5"/>
+              <circle cx="24" cy="120" r="4" fill="rgba(6,182,212,0.2)"/>
+              <circle cx="24" cy="260" r="3" fill="rgba(124,58,237,0.2)"/>
+              <circle cx="24" cy="400" r="5" fill="rgba(236,72,153,0.12)"/>
+            </svg>
+          </div>
+          {/* Floating geometric shapes left */}
+          <div style={{ position: 'absolute', top: '40px', left: '80px', pointerEvents: 'none', zIndex: 2 }}>
+            <svg width="120" height="100" viewBox="0 0 120 100" fill="none">
+              <rect x="0" y="0" width="64" height="45" rx="8" fill="rgba(124,58,237,0.06)" stroke="rgba(124,58,237,0.18)" strokeWidth="0.8" transform="rotate(-8 32 22)"/>
+              <rect x="50" y="30" width="50" height="35" rx="6" fill="rgba(6,182,212,0.05)" stroke="rgba(6,182,212,0.15)" strokeWidth="0.8" transform="rotate(5 75 47)"/>
+            </svg>
+          </div>
+          {/* Floating geometric shapes right */}
+          <div style={{ position: 'absolute', top: '40px', right: '80px', pointerEvents: 'none', zIndex: 2 }}>
+            <svg width="120" height="100" viewBox="0 0 120 100" fill="none">
+              <rect x="10" y="5" width="55" height="38" rx="8" fill="rgba(236,72,153,0.05)" stroke="rgba(236,72,153,0.15)" strokeWidth="0.8" transform="rotate(10 37 24)"/>
+              <rect x="55" y="35" width="48" height="32" rx="6" fill="rgba(124,58,237,0.06)" stroke="rgba(124,58,237,0.18)" strokeWidth="0.8" transform="rotate(-6 79 51)"/>
+            </svg>
+          </div>
+          {/* Bottom glow */}
+          <div style={{ position: 'absolute', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '70%', height: '150px', background: 'radial-gradient(ellipse at center bottom, rgba(124,58,237,0.12) 0%, transparent 70%)', zIndex: 1, pointerEvents: 'none' }} />
           <div className="footer-grid" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', gap: 40, marginBottom: 40 }}>
             <div>
               <div style={{ marginBottom: 16 }}>
