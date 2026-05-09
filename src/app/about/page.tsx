@@ -1,12 +1,50 @@
 'use client';
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { colors, gradients, radius, shadows } from '@/lib/tokens';
 
+const BLOG_POSTS = [
+  {
+    date: 'May 2026',
+    tag: 'Product',
+    title: 'How African Pastors Are Reaching Millions with AI Clips',
+    excerpt: 'VangelClip users in Lagos, Accra, and Nairobi are turning 1-hour Sunday sermons into viral short clips that reach 10x their congregation size online.',
+    color: '#7c3aed',
+  },
+  {
+    date: 'April 2026',
+    tag: 'Education',
+    title: 'The Science of the 60-Second Hook: Why Short Clips Dominate',
+    excerpt: 'Research shows viewers decide whether to keep watching within the first 3 seconds. Here\'s how VangelClip\'s AI identifies those critical moments automatically.',
+    color: '#06b6d4',
+  },
+  {
+    date: 'March 2026',
+    tag: 'Creator Story',
+    title: 'From 500 Views to 2 Million: Mama Zola\'s Gospel Journey',
+    excerpt: 'A Durban gospel artist used VangelClip to transform her YouTube channel from a local ministry into a globally watched worship destination.',
+    color: '#10b981',
+  },
+];
+
 export default function AboutPage() {
   const router = useRouter();
   const [slide, setSlide] = useState(0);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [supportName, setSupportName] = useState('');
+  const [supportEmail, setSupportEmail] = useState('');
+  const [supportType, setSupportType] = useState('general');
+  const [supportMessage, setSupportMessage] = useState('');
+  const [supportSent, setSupportSent] = useState(false);
+
+  function handleSupport(e: React.FormEvent) {
+    e.preventDefault();
+    const subject = encodeURIComponent(`VangelClip Support: ${supportType}`);
+    const body = encodeURIComponent(`Name: ${supportName}\nEmail: ${supportEmail}\nType: ${supportType}\n\n${supportMessage}`);
+    window.location.href = `mailto:adminvangelclip@gmail.com?subject=${subject}&body=${body}`;
+    setSupportSent(true);
+  }
 
   useEffect(() => {
     const t = setInterval(() => setSlide(p => (p + 1) % 4), 3800);
@@ -37,13 +75,28 @@ export default function AboutPage() {
         <Link href="/" style={{ textDecoration: 'none' }}>
           <span style={{ fontSize: '22px', fontWeight: 800, color: '#ffffff', letterSpacing: '-0.5px', fontFamily: 'Arial Black, Arial, sans-serif', cursor: 'pointer' }}>Vangel<span style={{ color: '#7C3AED' }}>Clip</span></span>
         </Link>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '32px', fontSize: '14px', fontWeight: 500 }}>
+        <div className="about-nav-links" style={{ display: 'flex', alignItems: 'center', gap: '32px', fontSize: '14px', fontWeight: 500 }}>
           <a href="/#features" style={{ color: colors.onSurfaceVariant, textDecoration: 'none' }}>Features</a>
           <a href="/#pricing" style={{ color: colors.onSurfaceVariant, textDecoration: 'none' }}>Pricing</a>
           <span style={{ color: colors.primary, fontWeight: 600 }}>About</span>
         </div>
-        <button onClick={() => router.push('/auth')} style={{ background: gradients.primary, color: '#FAF7FF', fontSize: '13px', fontWeight: 700, padding: '8px 18px', borderRadius: radius.md, border: 'none', cursor: 'pointer', fontFamily: "'Inter', sans-serif" }}>Start Free</button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <button onClick={() => router.push('/auth')} className="about-nav-cta" style={{ background: gradients.primary, color: '#FAF7FF', fontSize: '13px', fontWeight: 700, padding: '8px 18px', borderRadius: radius.md, border: 'none', cursor: 'pointer', fontFamily: "'Inter', sans-serif" }}>Start Free</button>
+          <button className="about-hamburger" onClick={() => setMenuOpen(o => !o)} aria-label="Toggle menu" style={{ display: 'none', flexDirection: 'column', gap: 5, background: 'none', border: 'none', cursor: 'pointer', padding: 6 }}>
+            <span style={{ display: 'block', width: 22, height: 2, background: '#fff', borderRadius: 2 }} />
+            <span style={{ display: 'block', width: 22, height: 2, background: '#fff', borderRadius: 2 }} />
+            <span style={{ display: 'block', width: 22, height: 2, background: '#fff', borderRadius: 2 }} />
+          </button>
+        </div>
       </nav>
+      {menuOpen && (
+        <div style={{ position: 'fixed', top: 57, left: 0, right: 0, background: 'rgba(10,0,30,0.97)', backdropFilter: 'blur(16px)', padding: '16px 24px 24px', zIndex: 49, borderBottom: '1px solid rgba(124,58,237,0.2)', display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <a href="/#features" onClick={() => setMenuOpen(false)} style={{ padding: '12px 16px', borderRadius: 8, fontSize: 15, fontWeight: 600, color: 'rgba(255,255,255,0.85)', textDecoration: 'none' }}>Features</a>
+          <a href="/#pricing" onClick={() => setMenuOpen(false)} style={{ padding: '12px 16px', borderRadius: 8, fontSize: 15, fontWeight: 600, color: 'rgba(255,255,255,0.85)', textDecoration: 'none' }}>Pricing</a>
+          <a href="/about" onClick={() => setMenuOpen(false)} style={{ padding: '12px 16px', borderRadius: 8, fontSize: 15, fontWeight: 600, color: '#a78bfa', textDecoration: 'none' }}>About</a>
+          <button onClick={() => { setMenuOpen(false); router.push('/auth'); }} style={{ padding: '12px 16px', borderRadius: 8, fontSize: 15, fontWeight: 700, color: '#FAF7FF', background: gradients.primary, border: 'none', cursor: 'pointer', fontFamily: "'Inter',sans-serif", textAlign: 'left', marginTop: 4 }}>Start Free</button>
+        </div>
+      )}
 
       <style>{`
         .about-hero { position:relative; min-height:100vh; display:flex; align-items:center; overflow:hidden; background:linear-gradient(135deg,#080014 0%,#0d0021 60%,#080014 100%); }
@@ -83,7 +136,12 @@ export default function AboutPage() {
         @media(max-width:500px){
           .c-stage { width:280px; height:360px; }
         }
-        @media (max-width: 768px) { .pillars-grid, .stats-grid { grid-template-columns: 1fr !important; } }
+        @media (max-width: 768px) {
+          .pillars-grid, .stats-grid { grid-template-columns: 1fr !important; }
+          .about-nav-links { display: none !important; }
+          .about-nav-cta   { display: none !important; }
+          .about-hamburger { display: flex !important; }
+        }
       `}</style>
 
       {/* HERO */}
@@ -230,6 +288,70 @@ export default function AboutPage() {
           by Monday morning. The tool a gospel artist in Accra uses to turn a 4-minute song into 8 viral Reels. What a teacher
           in Nairobi uses to clip a masterclass into 15 educational shorts that change lives worldwide.
         </p>
+      </section>
+
+      {/* BLOG */}
+      <section style={{ maxWidth: 1100, margin: '0 auto', padding: '60px 24px', borderTop: '1px solid rgba(70,69,85,0.1)' }}>
+        <h2 style={{ fontSize: 32, fontWeight: 800, marginBottom: 8 }}>From the Blog</h2>
+        <p style={{ fontSize: 15, color: colors.onSurfaceVariant, marginBottom: 40 }}>Stories, insights, and inspiration for African creators.</p>
+        <div className="pillars-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 24 }}>
+          {BLOG_POSTS.map(post => (
+            <div key={post.title} style={{ background: colors.surfaceContainerHigh, borderRadius: radius.xl, overflow: 'hidden', cursor: 'pointer' }}>
+              <div style={{ height: 6, background: post.color }} />
+              <div style={{ padding: 28 }}>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 12 }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: post.color, background: post.color + '18', padding: '2px 10px', borderRadius: radius.full }}>{post.tag}</span>
+                  <span style={{ fontSize: 11, color: colors.onSurfaceVariant }}>{post.date}</span>
+                </div>
+                <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 10, lineHeight: 1.4 }}>{post.title}</h3>
+                <p style={{ fontSize: 13, color: colors.onSurfaceVariant, lineHeight: 1.7, marginBottom: 16 }}>{post.excerpt}</p>
+                <span style={{ fontSize: 12, fontWeight: 700, color: post.color }}>Read more →</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* SUPPORT */}
+      <section style={{ maxWidth: 700, margin: '0 auto', padding: '60px 24px', borderTop: '1px solid rgba(70,69,85,0.1)' }}>
+        <h2 style={{ fontSize: 32, fontWeight: 800, marginBottom: 8, textAlign: 'center' }}>Support</h2>
+        <p style={{ fontSize: 15, color: colors.onSurfaceVariant, marginBottom: 40, textAlign: 'center' }}>Have a question or need help? Send us a message and we&apos;ll get back to you within 2 business days.</p>
+        {supportSent ? (
+          <div style={{ textAlign: 'center', padding: '40px 20px', background: colors.surfaceContainerHigh, borderRadius: radius.xl, border: '1px solid rgba(74,222,128,0.2)' }}>
+            <div style={{ fontSize: 40, marginBottom: 12 }}>✅</div>
+            <h3 style={{ fontSize: 20, fontWeight: 700, marginBottom: 8 }}>Message Sent!</h3>
+            <p style={{ color: colors.onSurfaceVariant }}>Your email client should open. We&apos;ll reply to <strong>{supportEmail}</strong> within 2 business days.</p>
+            <button onClick={() => { setSupportSent(false); setSupportName(''); setSupportEmail(''); setSupportMessage(''); }} style={{ marginTop: 20, padding: '10px 24px', borderRadius: radius.md, background: colors.surfaceContainerHighest, border: '1px solid ' + colors.outlineVariant, color: colors.onSurface, cursor: 'pointer', fontFamily: "'Inter',sans-serif", fontWeight: 600, fontSize: 13 }}>Send Another</button>
+          </div>
+        ) : (
+          <form onSubmit={handleSupport} style={{ background: colors.surfaceContainerHigh, borderRadius: radius.xl, padding: 32, display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 600, color: colors.onSurfaceVariant, display: 'block', marginBottom: 6 }}>Your Name</label>
+                <input required value={supportName} onChange={e => setSupportName(e.target.value)} placeholder="Pastor Emeka" style={{ width: '100%', background: colors.surfaceContainerLowest, color: colors.onSurface, border: '1px solid ' + colors.outlineVariant, borderRadius: radius.md, padding: '10px 14px', fontSize: 14, fontFamily: "'Inter',sans-serif", outline: 'none', boxSizing: 'border-box' as const }}/>
+              </div>
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 600, color: colors.onSurfaceVariant, display: 'block', marginBottom: 6 }}>Email Address</label>
+                <input required type="email" value={supportEmail} onChange={e => setSupportEmail(e.target.value)} placeholder="you@example.com" style={{ width: '100%', background: colors.surfaceContainerLowest, color: colors.onSurface, border: '1px solid ' + colors.outlineVariant, borderRadius: radius.md, padding: '10px 14px', fontSize: 14, fontFamily: "'Inter',sans-serif", outline: 'none', boxSizing: 'border-box' as const }}/>
+              </div>
+            </div>
+            <div>
+              <label style={{ fontSize: 12, fontWeight: 600, color: colors.onSurfaceVariant, display: 'block', marginBottom: 6 }}>Type of Request</label>
+              <select value={supportType} onChange={e => setSupportType(e.target.value)} style={{ width: '100%', background: colors.surfaceContainerLowest, color: colors.onSurface, border: '1px solid ' + colors.outlineVariant, borderRadius: radius.md, padding: '10px 14px', fontSize: 14, fontFamily: "'Inter',sans-serif", outline: 'none' }}>
+                <option value="general">General Question</option>
+                <option value="billing">Billing & Payments</option>
+                <option value="technical">Technical Issue</option>
+                <option value="feature">Feature Request</option>
+                <option value="account">Account Help</option>
+              </select>
+            </div>
+            <div>
+              <label style={{ fontSize: 12, fontWeight: 600, color: colors.onSurfaceVariant, display: 'block', marginBottom: 6 }}>Message</label>
+              <textarea required rows={5} value={supportMessage} onChange={e => setSupportMessage(e.target.value)} placeholder="Describe your question or issue..." style={{ width: '100%', background: colors.surfaceContainerLowest, color: colors.onSurface, border: '1px solid ' + colors.outlineVariant, borderRadius: radius.md, padding: '10px 14px', fontSize: 14, fontFamily: "'Inter',sans-serif", outline: 'none', resize: 'vertical', boxSizing: 'border-box' as const }}/>
+            </div>
+            <button type="submit" style={{ padding: '14px', borderRadius: radius.md, background: gradients.primary, color: '#FAF7FF', fontWeight: 700, fontSize: 15, border: 'none', cursor: 'pointer', fontFamily: "'Inter',sans-serif" }}>Send Message →</button>
+          </form>
+        )}
       </section>
 
       {/* CTA */}

@@ -244,13 +244,15 @@ function ClipCard({
   index,
   onDownload,
   onPost,
+  onOpenInEditor,
 }: {
   clip: RekaClip;
   index: number;
   onDownload: () => void;
   onPost: () => void;
+  onOpenInEditor: () => void;
 }) {
-  const videoUrl = clip.video_url;
+  const clipVideoUrl = clip.video_url;
   const thumbUrl = clip.thumbnail_url;
 
   return (
@@ -276,7 +278,14 @@ function ClipCard({
           justifyContent: "center",
         }}
       >
-        {thumbUrl ? (
+        {clipVideoUrl ? (
+          <video
+            src={clipVideoUrl}
+            controls
+            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+            preload="metadata"
+          />
+        ) : thumbUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={thumbUrl}
@@ -386,20 +395,6 @@ function ClipCard({
             <span style={{ fontSize: 10, color: colors.onSurfaceVariant }}>/100</span>
           </div>
         )}
-        {videoUrl && (
-          <a
-            href={videoUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              fontSize: 11,
-              color: colors.primary,
-              wordBreak: "break-all",
-            }}
-          >
-            View clip →
-          </a>
-        )}
       </div>
 
       <div
@@ -408,12 +403,14 @@ function ClipCard({
           display: "flex",
           gap: 8,
           borderTop: `1px solid ${colors.outlineVariant}`,
+          flexWrap: "wrap",
         }}
       >
         <button
           onClick={onDownload}
           style={{
             flex: 1,
+            minWidth: 80,
             height: 34,
             borderRadius: radius.md,
             border: `1px solid ${colors.outlineVariant}`,
@@ -430,6 +427,7 @@ function ClipCard({
           onClick={onPost}
           style={{
             flex: 1,
+            minWidth: 80,
             height: 34,
             borderRadius: radius.md,
             border: "none",
@@ -441,6 +439,23 @@ function ClipCard({
           }}
         >
           → Save to Clips
+        </button>
+        <button
+          onClick={onOpenInEditor}
+          style={{
+            width: "100%",
+            height: 34,
+            borderRadius: radius.md,
+            border: `1px solid ${colors.primary}40`,
+            background: `${colors.primary}10`,
+            color: colors.primary,
+            fontSize: 12,
+            fontWeight: 700,
+            cursor: "pointer",
+            fontFamily: "'Inter', sans-serif",
+          }}
+        >
+          Open in Editor →
         </button>
       </div>
     </div>
@@ -1225,10 +1240,7 @@ export default function ImportPage() {
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: `repeat(${Math.min(
-                  result.clips.length,
-                  3
-                )}, 1fr)`,
+                gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
                 gap: 16,
               }}
             >
@@ -1239,6 +1251,7 @@ export default function ImportPage() {
                   index={i}
                   onDownload={() => handleDownload(clip)}
                   onPost={() => handlePost(clip, i)}
+                  onOpenInEditor={() => router.push(`/editor?clipId=${encodeURIComponent(clip.title)}&videoUrl=${encodeURIComponent(clip.video_url || '')}&title=${encodeURIComponent(clip.title)}`)}
                 />
               ))}
             </div>

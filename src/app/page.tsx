@@ -14,6 +14,7 @@ export default function LandingPage() {
   const [showDemo, setShowDemo] = useState(false);
   const [muted, setMuted] = React.useState(true);
   const [iframeKey, setIframeKey] = React.useState(0);
+  const [menuOpen, setMenuOpen] = React.useState(false);
   return (
     <div style={{ background: colors.background, color: colors.onSurface, fontFamily: "'Inter', sans-serif" }}>
 
@@ -22,20 +23,32 @@ export default function LandingPage() {
         <div style={{ cursor: 'pointer' }} onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
           <span style={{ fontSize: '22px', fontWeight: 800, color: '#ffffff', letterSpacing: '-0.5px', fontFamily: 'Arial Black, Arial, sans-serif' }}>Vangel<span style={{ color: '#7C3AED' }}>Clip</span></span>
         </div>
-        <div className="nav-links" style={{ display: 'flex', alignItems: 'center', gap: '32px', fontSize: '14px', fontWeight: 500 }}>
+        <div className="nav-links-desktop" style={{ display: 'flex', alignItems: 'center', gap: '32px', fontSize: '14px', fontWeight: 500 }}>
           <a href="#features" style={{ color: colors.onSurfaceVariant, textDecoration: 'none' }}>Features</a>
           <a href="#workflow" style={{ color: colors.onSurfaceVariant, textDecoration: 'none' }}>Workflow</a>
           <a href="#pricing" style={{ color: colors.onSurfaceVariant, textDecoration: 'none' }}>Pricing</a>
           <a href="/about" style={{ color: colors.onSurfaceVariant, textDecoration: 'none' }}>About</a>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <button onClick={() => router.push('/auth')} style={{ background: 'none', border: 'none', color: colors.onSurfaceVariant, fontSize: '14px', fontWeight: 500, cursor: 'pointer', fontFamily: "'Inter', sans-serif" }}>Sign In</button>
-          <button onClick={() => router.push('/auth')} style={{ background: '#fff', color: '#000', fontSize: '13px', fontWeight: 700, padding: '8px 18px', borderRadius: radius.md, border: 'none', cursor: 'pointer' }}>Start Free</button>
+          <button onClick={() => router.push('/auth')} className="nav-signin" style={{ background: 'none', border: 'none', color: colors.onSurfaceVariant, fontSize: '14px', fontWeight: 500, cursor: 'pointer', fontFamily: "'Inter', sans-serif" }}>Sign In</button>
+          <button onClick={() => router.push('/auth')} className="nav-cta" style={{ background: '#fff', color: '#000', fontSize: '13px', fontWeight: 700, padding: '8px 18px', borderRadius: radius.md, border: 'none', cursor: 'pointer' }}>Start Free</button>
+          <button className="hamburger" onClick={() => setMenuOpen(o => !o)} aria-label="Toggle menu">
+            <span /><span /><span />
+          </button>
         </div>
       </nav>
+      {/* Mobile menu */}
+      <div className={`mobile-menu${menuOpen ? ' open' : ''}`}>
+        <a href="#features" onClick={() => setMenuOpen(false)}>Features</a>
+        <a href="#workflow" onClick={() => setMenuOpen(false)}>Workflow</a>
+        <a href="#pricing" onClick={() => setMenuOpen(false)}>Pricing</a>
+        <a href="/about" onClick={() => setMenuOpen(false)}>About</a>
+        <button onClick={() => { setMenuOpen(false); router.push('/auth'); }}>Sign In</button>
+        <button onClick={() => { setMenuOpen(false); router.push('/auth'); }} style={{ background: gradients.primary, color: '#FAF7FF' }}>Start Free</button>
+      </div>
 
       {/* HERO — video bg, overflow hidden, dark fallback */}
-      <section style={{ position: 'relative', width: '100%', minHeight: '100vh', display: 'flex', alignItems: 'center', overflow: 'hidden', background: '#0a0014' }}>
+      <section className="hero-section-wrap" style={{ position: 'relative', width: '100%', minHeight: '100vh', display: 'flex', alignItems: 'center', overflow: 'hidden', background: '#0a0014' }}>
         {/* YouTube background — contained inside section via overflow:hidden */}
         <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '177.78vh', minWidth: '100%', height: '56.25vw', minHeight: '100%', zIndex: 0, pointerEvents: 'none', overflow: 'hidden' }}>
           <iframe
@@ -56,7 +69,7 @@ export default function LandingPage() {
         <div style={{ position: 'absolute', bottom: 0, left: 0, width: '50%', height: '300px', background: 'radial-gradient(ellipse at left bottom, rgba(124,58,237,0.25) 0%, transparent 70%)', zIndex: 1 }} />
         {/* Hero text content */}
         <div className="hero-content" style={{ position: 'relative', zIndex: 2 }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '4px 14px', borderRadius: radius.full, background: colors.surfaceContainerHighest, border: '1px solid ' + colors.outlineVariant, color: colors.primary, fontSize: 12, fontWeight: 600, marginBottom: 32 }}>
+          <div className="hero-badge" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '4px 14px', borderRadius: radius.full, background: colors.surfaceContainerHighest, border: '1px solid ' + colors.outlineVariant, color: colors.primary, fontSize: 12, fontWeight: 600, marginBottom: 32 }}>
             <Icon name="verified" size={14} /> New: AI Reframe for Shorts
           </div>
           <h1 className="hero-headline">
@@ -114,63 +127,38 @@ export default function LandingPage() {
 
       {/* WORKFLOW */}
       <section id="workflow" className="deco-section" style={{ maxWidth: 1100, margin: '0 auto', padding: '80px 24px', borderTop: '1px solid rgba(70,69,85,0.1)' }}>
-        {/* Top left corner decoration */}
-        <div className="deco-corner" style={{ top: 0, left: 0, width: '200px', height: '200px' }}>
-          <svg width="200" height="200" viewBox="0 0 200 200" fill="none">
-            <rect x="0" y="0" width="28" height="180" rx="4" fill="none" stroke="rgba(124,58,237,0.25)" strokeWidth="1"/>
-            <rect x="4" y="12" width="20" height="14" rx="2" fill="rgba(124,58,237,0.12)"/>
-            <rect x="4" y="34" width="20" height="14" rx="2" fill="rgba(124,58,237,0.12)"/>
-            <rect x="4" y="56" width="20" height="14" rx="2" fill="rgba(124,58,237,0.12)"/>
-            <rect x="4" y="78" width="20" height="14" rx="2" fill="rgba(124,58,237,0.12)"/>
-            <rect x="4" y="100" width="20" height="14" rx="2" fill="rgba(124,58,237,0.12)"/>
-            <rect x="4" y="122" width="20" height="14" rx="2" fill="rgba(124,58,237,0.12)"/>
-            <rect x="4" y="144" width="20" height="14" rx="2" fill="rgba(124,58,237,0.12)"/>
-            <rect x="50" y="20" width="40" height="28" rx="6" fill="none" stroke="rgba(124,58,237,0.2)" strokeWidth="1" transform="rotate(-12 70 34)"/>
-            <rect x="90" y="60" width="32" height="22" rx="4" fill="rgba(6,182,212,0.08)" stroke="rgba(6,182,212,0.2)" strokeWidth="1" transform="rotate(8 106 71)"/>
-            <circle cx="140" cy="30" r="8" fill="none" stroke="rgba(124,58,237,0.18)" strokeWidth="1"/>
-            <circle cx="170" cy="80" r="4" fill="rgba(124,58,237,0.2)"/>
+        {/* Left film strip */}
+        <div className="deco-corner" style={{ top: 0, left: 0, width: '40px', height: '100%' }}>
+          <svg width="40" height="100%" viewBox="0 0 40 600" preserveAspectRatio="xMidYMin slice" fill="none">
+            <rect x="2" y="0" width="36" height="600" fill="none" stroke="rgba(124,58,237,0.15)" strokeWidth="0.5"/>
+            {[0,1,2,3,4,5,6,7,8,9,10].map(i => <rect key={i} x="6" y={8+i*54} width="28" height="38" rx="3" fill="rgba(124,58,237,0.07)"/>)}
           </svg>
         </div>
-        {/* Top right corner decoration */}
-        <div className="deco-corner" style={{ top: 0, right: 0, width: '200px', height: '200px' }}>
-          <svg width="200" height="200" viewBox="0 0 200 200" fill="none">
-            <rect x="172" y="0" width="28" height="180" rx="4" fill="none" stroke="rgba(124,58,237,0.25)" strokeWidth="1"/>
-            <rect x="176" y="12" width="20" height="14" rx="2" fill="rgba(124,58,237,0.12)"/>
-            <rect x="176" y="34" width="20" height="14" rx="2" fill="rgba(124,58,237,0.12)"/>
-            <rect x="176" y="56" width="20" height="14" rx="2" fill="rgba(124,58,237,0.12)"/>
-            <rect x="176" y="78" width="20" height="14" rx="2" fill="rgba(124,58,237,0.12)"/>
-            <rect x="176" y="100" width="20" height="14" rx="2" fill="rgba(124,58,237,0.12)"/>
-            <rect x="100" y="30" width="44" height="30" rx="6" fill="none" stroke="rgba(236,72,153,0.2)" strokeWidth="1" transform="rotate(15 122 45)"/>
-            <rect x="50" y="70" width="36" height="24" rx="4" fill="rgba(124,58,237,0.06)" stroke="rgba(124,58,237,0.18)" strokeWidth="1" transform="rotate(-8 68 82)"/>
-            <circle cx="30" cy="30" r="10" fill="none" stroke="rgba(6,182,212,0.2)" strokeWidth="1"/>
-            <circle cx="10" cy="90" r="5" fill="rgba(6,182,212,0.15)"/>
-          </svg>
-        </div>
-        {/* Bottom decorative line */}
-        <div className="deco-corner" style={{ bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', height: '60px' }}>
-          <svg width="100%" height="60" viewBox="0 0 1200 60" preserveAspectRatio="xMidYMid meet" fill="none">
-            <line x1="0" y1="30" x2="480" y2="30" stroke="rgba(124,58,237,0.15)" strokeWidth="1" strokeDasharray="4 8"/>
-            <circle cx="490" cy="30" r="3" fill="rgba(124,58,237,0.3)"/>
-            <circle cx="600" cy="30" r="5" fill="rgba(124,58,237,0.2)" stroke="rgba(124,58,237,0.4)" strokeWidth="1"/>
-            <circle cx="710" cy="30" r="3" fill="rgba(124,58,237,0.3)"/>
-            <line x1="720" y1="30" x2="1200" y2="30" stroke="rgba(124,58,237,0.15)" strokeWidth="1" strokeDasharray="4 8"/>
+        {/* Right film strip */}
+        <div className="deco-corner" style={{ top: 0, right: 0, width: '40px', height: '100%' }}>
+          <svg width="40" height="100%" viewBox="0 0 40 600" preserveAspectRatio="xMidYMin slice" fill="none">
+            <rect x="2" y="0" width="36" height="600" fill="none" stroke="rgba(6,182,212,0.15)" strokeWidth="0.5"/>
+            {[0,1,2,3,4,5,6,7,8,9,10].map(i => <rect key={i} x="6" y={8+i*54} width="28" height="38" rx="3" fill="rgba(6,182,212,0.07)"/>)}
           </svg>
         </div>
         <div style={{ textAlign: 'center', marginBottom: 64 }}>
-          <h2 style={{ fontSize: 'clamp(28px,5vw,36px)', fontWeight: 800, marginBottom: 12 }}>Three Steps to Viral Content</h2>
-          <p style={{ color: colors.onSurfaceVariant }}>From long-form video to viral clips in under 5 minutes.</p>
+          <h2 style={{ fontSize: 'clamp(28px,5vw,36px)', fontWeight: 800, marginBottom: 12 }}>How VangelClip Works</h2>
+          <p style={{ color: colors.onSurfaceVariant }}>From long-form video to viral clips in 6 simple steps.</p>
         </div>
-        <div className="workflow-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 32 }}>
+        <div className="workflow-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 24 }}>
           {[
-            { icon: 'link', n: '01', t: 'Paste a Link', d: 'Drop a YouTube, Vimeo, or TikTok URL. Zero uploads, zero storage costs.', c: colors.primary },
-            { icon: 'auto_awesome', n: '02', t: 'AI Does the Work', d: 'Transcribes, detects hooks, cuts clips, adds captions, reframes to 9:16.', c: colors.tertiary },
-            { icon: 'rocket_launch', n: '03', t: 'Publish & Grow', d: 'Review clips ranked by virality. Edit, schedule, and export everywhere.', c: '#4ade80' },
+            { icon: 'link', n: '01', t: 'Paste a Link', d: 'Drop any YouTube, Vimeo, or TikTok URL. No uploading, no storage costs. Just the link.', c: colors.primary },
+            { icon: 'auto_awesome', n: '02', t: 'AI Analyses Video', d: 'Our AI transcribes your video, detects viral hooks, and scores every moment for impact.', c: colors.tertiary },
+            { icon: 'movie_edit', n: '03', t: 'Review Your Clips', d: 'Get back 5–15 AI-generated clips ranked by virality score. Preview each one instantly.', c: '#06b6d4' },
+            { icon: 'tune', n: '04', t: 'Edit & Customise', d: 'Adjust captions, add your logo, reframe to 9:16, apply colour grading and transitions.', c: '#fbbf24' },
+            { icon: 'dashboard', n: '05', t: 'Choose a Template', d: 'Pick from 20 proven clip formats — Gospel, Podcast, Motivation, Education, and more.', c: '#ff97b5' },
+            { icon: 'rocket_launch', n: '06', t: 'Schedule & Publish', d: 'Schedule clips to TikTok, Reels, and Shorts from one calendar. Track performance in-app.', c: '#4ade80' },
           ].map(s => (
-            <div key={s.n} style={{ background: colors.surfaceContainerHigh, borderRadius: radius.xl, padding: 36, position: 'relative', overflow: 'hidden' }}>
-              <span style={{ position: 'absolute', top: 16, right: 20, fontSize: 64, fontWeight: 900, color: 'rgba(255,255,255,0.03)' }}>{s.n}</span>
-              <div style={{ width: 56, height: 56, borderRadius: radius.lg, background: s.c+'10', border: '1px solid '+s.c+'20', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}><Icon name={s.icon} size={26} style={{ color: s.c }} /></div>
-              <h3 style={{ fontSize: 20, fontWeight: 700, marginBottom: 10 }}>{s.t}</h3>
-              <p style={{ color: colors.onSurfaceVariant, fontSize: 14, lineHeight: 1.7 }}>{s.d}</p>
+            <div key={s.n} style={{ background: colors.surfaceContainerHigh, borderRadius: radius.xl, padding: 28, position: 'relative', overflow: 'hidden' }}>
+              <span style={{ position: 'absolute', top: 12, right: 16, fontSize: 56, fontWeight: 900, color: 'rgba(255,255,255,0.03)' }}>{s.n}</span>
+              <div style={{ width: 48, height: 48, borderRadius: radius.lg, background: s.c+'10', border: '1px solid '+s.c+'20', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}><Icon name={s.icon} size={22} style={{ color: s.c }} /></div>
+              <h3 style={{ fontSize: 17, fontWeight: 700, marginBottom: 8 }}>{s.t}</h3>
+              <p style={{ color: colors.onSurfaceVariant, fontSize: 13, lineHeight: 1.7 }}>{s.d}</p>
             </div>
           ))}
         </div>
@@ -231,7 +219,31 @@ export default function LandingPage() {
       </section>
 
       {/* TESTIMONIALS */}
-      <section id="testimonials" style={{ maxWidth: 1100, margin: '0 auto', padding: '80px 24px' }}>
+      <section id="testimonials" className="deco-section" style={{ maxWidth: 1100, margin: '0 auto', padding: '80px 24px' }}>
+        {/* Central radial glow */}
+        <div className="deco-corner" style={{ top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: '500px', height: '300px', background: 'radial-gradient(ellipse at center, rgba(124,58,237,0.08) 0%, transparent 70%)', pointerEvents: 'none' }} />
+        {/* Left film strip */}
+        <div className="deco-corner" style={{ top: 0, left: 0, width: '36px', height: '100%' }}>
+          <svg width="36" height="100%" viewBox="0 0 36 400" preserveAspectRatio="xMidYMin slice" fill="none">
+            <rect x="2" y="0" width="32" height="400" fill="none" stroke="rgba(124,58,237,0.12)" strokeWidth="0.5"/>
+            {[0,1,2,3,4,5,6].map(i => <rect key={i} x="5" y={8+i*54} width="26" height="36" rx="3" fill="rgba(124,58,237,0.06)"/>)}
+          </svg>
+        </div>
+        {/* Right film strip */}
+        <div className="deco-corner" style={{ top: 0, right: 0, width: '36px', height: '100%' }}>
+          <svg width="36" height="100%" viewBox="0 0 36 400" preserveAspectRatio="xMidYMin slice" fill="none">
+            <rect x="2" y="0" width="32" height="400" fill="none" stroke="rgba(236,72,153,0.12)" strokeWidth="0.5"/>
+            {[0,1,2,3,4,5,6].map(i => <rect key={i} x="5" y={8+i*54} width="26" height="36" rx="3" fill="rgba(236,72,153,0.06)"/>)}
+          </svg>
+        </div>
+        {/* Floating video frame top-left */}
+        <div className="deco-corner" style={{ top: 20, left: 60, opacity: 0.4, pointerEvents: 'none' }}>
+          <svg width="72" height="52" viewBox="0 0 72 52" fill="none"><rect x="1" y="1" width="70" height="50" rx="6" fill="rgba(124,58,237,0.08)" stroke="rgba(124,58,237,0.3)" strokeWidth="1"/><circle cx="36" cy="26" r="10" fill="none" stroke="rgba(124,58,237,0.25)" strokeWidth="1"/><polygon points="33,22 33,30 41,26" fill="rgba(124,58,237,0.3)"/></svg>
+        </div>
+        {/* Floating video frame top-right */}
+        <div className="deco-corner" style={{ top: 20, right: 60, opacity: 0.4, pointerEvents: 'none' }}>
+          <svg width="72" height="52" viewBox="0 0 72 52" fill="none"><rect x="1" y="1" width="70" height="50" rx="6" fill="rgba(6,182,212,0.08)" stroke="rgba(6,182,212,0.3)" strokeWidth="1"/><circle cx="36" cy="26" r="10" fill="none" stroke="rgba(6,182,212,0.25)" strokeWidth="1"/><polygon points="33,22 33,30 41,26" fill="rgba(6,182,212,0.3)"/></svg>
+        </div>
         <div style={{ textAlign: 'center', marginBottom: 48 }}>
           <h2 style={{ fontSize: 'clamp(28px,5vw,36px)', fontWeight: 800 }}>Loved by 50,000+ Creators</h2>
         </div>
@@ -250,7 +262,32 @@ export default function LandingPage() {
       </section>
 
       {/* PRICING */}
-      <section id="pricing" style={{ maxWidth: 1100, margin: '0 auto', padding: '80px 24px' }}>
+      <section id="pricing" className="deco-section" style={{ maxWidth: 1100, margin: '0 auto', padding: '80px 24px' }}>
+        {/* Diagonal stripe background */}
+        <div className="deco-corner" style={{ inset: 0, background: 'repeating-linear-gradient(135deg, transparent, transparent 40px, rgba(124,58,237,0.02) 40px, rgba(124,58,237,0.02) 80px)', pointerEvents: 'none' }} />
+        {/* Central radial glow */}
+        <div className="deco-corner" style={{ top: '30%', left: '50%', transform: 'translateX(-50%)', width: '600px', height: '400px', background: 'radial-gradient(ellipse at center, rgba(124,58,237,0.06) 0%, transparent 70%)', pointerEvents: 'none' }} />
+        {/* Left film strip */}
+        <div className="deco-corner" style={{ top: 0, left: 0, width: '36px', height: '100%' }}>
+          <svg width="36" height="100%" viewBox="0 0 36 600" preserveAspectRatio="xMidYMin slice" fill="none">
+            <rect x="2" y="0" width="32" height="600" fill="none" stroke="rgba(124,58,237,0.12)" strokeWidth="0.5"/>
+            {[0,1,2,3,4,5,6,7,8,9].map(i => <rect key={i} x="5" y={8+i*60} width="26" height="40" rx="3" fill="rgba(124,58,237,0.05)"/>)}
+          </svg>
+        </div>
+        {/* Right film strip */}
+        <div className="deco-corner" style={{ top: 0, right: 0, width: '36px', height: '100%' }}>
+          <svg width="36" height="100%" viewBox="0 0 36 600" preserveAspectRatio="xMidYMin slice" fill="none">
+            <rect x="2" y="0" width="32" height="600" fill="none" stroke="rgba(6,182,212,0.12)" strokeWidth="0.5"/>
+            {[0,1,2,3,4,5,6,7,8,9].map(i => <rect key={i} x="5" y={8+i*60} width="26" height="40" rx="3" fill="rgba(6,182,212,0.05)"/>)}
+          </svg>
+        </div>
+        {/* Floating video frames */}
+        <div className="deco-corner" style={{ top: 40, left: 56, opacity: 0.35, pointerEvents: 'none' }}>
+          <svg width="64" height="46" viewBox="0 0 64 46" fill="none"><rect x="1" y="1" width="62" height="44" rx="5" fill="rgba(124,58,237,0.08)" stroke="rgba(124,58,237,0.25)" strokeWidth="1"/><circle cx="32" cy="23" r="9" fill="none" stroke="rgba(124,58,237,0.2)" strokeWidth="1"/><polygon points="29,19 29,27 37,23" fill="rgba(124,58,237,0.25)"/></svg>
+        </div>
+        <div className="deco-corner" style={{ top: 40, right: 56, opacity: 0.35, pointerEvents: 'none' }}>
+          <svg width="64" height="46" viewBox="0 0 64 46" fill="none"><rect x="1" y="1" width="62" height="44" rx="5" fill="rgba(6,182,212,0.08)" stroke="rgba(6,182,212,0.25)" strokeWidth="1"/><circle cx="32" cy="23" r="9" fill="none" stroke="rgba(6,182,212,0.2)" strokeWidth="1"/><polygon points="29,19 29,27 37,23" fill="rgba(6,182,212,0.25)"/></svg>
+        </div>
         <div style={{ textAlign: 'center', marginBottom: 48 }}>
           <h2 style={{ fontSize: 'clamp(28px,5vw,36px)', fontWeight: 800, marginBottom: 12 }}>Simple, Transparent Pricing</h2>
           <p style={{ color: colors.onSurfaceVariant, marginBottom: 28 }}>Start free. Upgrade when you&apos;re ready.</p>
@@ -264,22 +301,22 @@ export default function LandingPage() {
         </div>
         <div className="pricing-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16 }}>
           {[
-            { n: 'Free', p: 0, cr: 30, d: 'Try it out', f: ['30 credits/month', '5 min video window', '720p exports', 'Watermark on clips', 'Basic captions', '1 project'], badge: null },
-            { n: 'Starter', p: 12, cr: 300, d: 'Growing creators', f: ['300 credits/month', '15 min video window', '1080p exports', 'No watermark', 'Custom captions', '5 projects'], badge: 'Most Popular' },
-            { n: 'Pro', p: 29, cr: 1000, d: 'Serious creators', f: ['1,000 credits/month', '45 min video window', '4K exports', 'No watermark', 'Animated captions', 'Unlimited projects'], badge: 'Best Value' },
-            { n: 'Agency', p: 89, cr: 5000, d: 'Teams & agencies', f: ['5,000 credits/month', '90 min video window', '4K + ProRes', 'No watermark', 'All caption styles', 'Unlimited projects', 'Priority processing', 'API access'], badge: null },
+            { n: 'Free', p: 0, cr: 30, d: 'Try it out', f: ['30 credits/month', '5 min video window', '720p exports', 'Watermark on clips', 'Basic captions', '1 project', '3 African templates', 'Email support'], badge: null },
+            { n: 'Starter', p: 12, cr: 300, d: 'Growing creators', f: ['300 credits/month', '15 min video window', '1080p exports', 'No watermark', 'Custom captions', '5 projects', 'All 20 templates', 'Scheduling calendar', 'Basic analytics', 'Email support'], badge: 'Most Popular' },
+            { n: 'Pro', p: 29, cr: 1000, d: 'Serious creators', f: ['1,000 credits/month', '45 min video window', '4K exports', 'No watermark', 'Animated captions', 'Unlimited projects', 'All 20 + custom templates', 'Scheduling calendar', 'Full analytics', 'Priority support'], badge: 'Best Value' },
+            { n: 'Agency', p: 89, cr: 5000, d: 'Teams & agencies', f: ['5,000 credits/month', '90 min video window', '4K + ProRes', 'No watermark', 'All caption styles', 'Unlimited projects', 'White-label templates', 'Scheduling calendar', 'Full analytics + reports', 'Up to 10 team members', 'API access', 'Dedicated support'], badge: null },
           ].map(plan => {
             const dp = annual ? Math.round(plan.p * 0.75) : plan.p;
             const hi = plan.badge !== null;
             return (
-              <div key={plan.n} style={{ background: hi ? colors.surfaceContainerHigh : colors.surfaceContainerLow, borderRadius: radius.xl, padding: 32, border: hi ? '1px solid '+colors.primary+'40' : '1px solid transparent', position: 'relative', boxShadow: hi ? shadows.glow : 'none' }}>
+              <div key={plan.n} style={{ background: hi ? colors.surfaceContainerHigh : colors.surfaceContainerLow, borderRadius: radius.xl, padding: 28, border: hi ? '1px solid '+colors.primary+'40' : '1px solid transparent', position: 'relative', boxShadow: hi ? shadows.glow : 'none' }}>
                 {plan.badge && <div style={{ position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)', background: gradients.primary, color: '#000', fontSize: 11, fontWeight: 700, padding: '4px 16px', borderRadius: radius.full, whiteSpace: 'nowrap' }}>{plan.badge}</div>}
                 <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 4 }}>{plan.n}</h3>
                 <p style={{ fontSize: 12, color: colors.onSurfaceVariant, marginBottom: 16 }}>{plan.d}</p>
                 <div style={{ marginBottom: plan.p > 0 ? 4 : 24 }}><span style={{ fontSize: 40, fontWeight: 800 }}>${dp}</span><span style={{ fontSize: 14, color: colors.onSurfaceVariant }}>/mo</span></div>
                 {plan.p > 0 && <p style={{ fontSize: 11, color: colors.onSurfaceVariant, margin: '0 0 20px', opacity: 0.7 }}>1 credit = 1 minute of video processed</p>}
                 <button onClick={() => router.push('/auth')} style={{ width: '100%', background: hi ? gradients.primary : colors.surfaceContainer, color: hi ? '#FAF7FF' : colors.onSurface, border: hi ? 'none' : '1px solid '+colors.outlineVariant, padding: 12, borderRadius: radius.md, fontWeight: 700, fontSize: 13, cursor: 'pointer', marginBottom: 24, fontFamily: "'Inter', sans-serif" }}>{plan.p === 0 ? 'Get Started' : 'Start Trial'}</button>
-                <ul style={{ listStyle: 'none', padding: 0 }}>{plan.f.map(f => <li key={f} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: colors.onSurfaceVariant, marginBottom: 10 }}><Icon name="check_circle" size={16} style={{ color: colors.primary }} filled /> {f}</li>)}</ul>
+                <ul style={{ listStyle: 'none', padding: 0 }}>{plan.f.map(f => <li key={f} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 12, color: colors.onSurfaceVariant, marginBottom: 9 }}><Icon name="check_circle" size={15} style={{ color: colors.primary, flexShrink: 0, marginTop: 1 }} filled /> {f}</li>)}</ul>
               </div>
             );
           })}
@@ -311,7 +348,7 @@ export default function LandingPage() {
         {/* Purple glow top center */}
         <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: '60%', height: '200px', background: 'radial-gradient(ellipse at center top, rgba(124,58,237,0.18) 0%, transparent 70%)', zIndex: 1, pointerEvents: 'none' }} />
         {/* Footer content */}
-        <div style={{ position: 'relative', zIndex: 2, maxWidth: 1100, margin: '0 auto', padding: '48px 24px' }}>
+        <div style={{ position: 'relative', zIndex: 2, maxWidth: 1100, margin: '0 auto', padding: '60px 40px 40px' }}>
           {/* Decorative top border — film strip gradient */}
           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '3px', background: 'linear-gradient(to right, transparent, rgba(124,58,237,0.6), rgba(6,182,212,0.4), rgba(236,72,153,0.3), transparent)', zIndex: 3 }} />
           {/* Left edge film strip */}
@@ -372,10 +409,14 @@ export default function LandingPage() {
               <p style={{ fontSize: 12, color: colors.onSurfaceVariant, opacity: 0.5, marginBottom: 8 }}>Clip. Spread. Transform.</p>
               <p style={{ fontSize: 13, color: colors.onSurfaceVariant, lineHeight: 1.7 }}>Africa&apos;s AI clip platform for gospel creators, educators, and inspirational voices.</p>
             </div>
-            {[{ t: 'Product', l: ['Features','Pricing','Changelog'] }, { t: 'Company', l: ['About','Blog','Contact'] }, { t: 'Legal', l: ['Privacy','Terms','Cookies'] }].map(c => (
+            {[
+              { t: 'Product', items: [{ l: 'Features', h: '#features' }, { l: 'Pricing', h: '#pricing' }, { l: 'Changelog', h: '#' }] },
+              { t: 'Company', items: [{ l: 'About', h: '/about' }, { l: 'Blog', h: '#' }, { l: 'Contact', h: '#' }] },
+              { t: 'Legal', items: [{ l: 'Privacy', h: '/legal/privacy' }, { l: 'Terms', h: '/legal/terms' }, { l: 'Cookies', h: '/legal/cookies' }] },
+            ].map(c => (
               <div key={c.t}>
                 <h4 style={{ fontSize: 13, fontWeight: 700, marginBottom: 16, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{c.t}</h4>
-                {c.l.map(l => <a key={l} href="#" style={{ display: 'block', fontSize: 13, color: colors.onSurfaceVariant, textDecoration: 'none', marginBottom: 10 }}>{l}</a>)}
+                {c.items.map(item => <a key={item.l} href={item.h} style={{ display: 'block', fontSize: 13, color: colors.onSurfaceVariant, textDecoration: 'none', marginBottom: 10 }}>{item.l}</a>)}
               </div>
             ))}
           </div>
@@ -444,12 +485,70 @@ export default function LandingPage() {
         /* ─── FOOTER GRID ────────────────────────── */
         .footer-grid {
           display: grid;
-          grid-template-columns: 2fr 1fr 1fr 1fr;
+          grid-template-columns: 2.5fr 1fr 1fr 1fr;
           gap: 40px;
         }
 
         /* ─── NAV ────────────────────────────────── */
-        .nav-links { display: flex; }
+        .nav-links-desktop { display: flex; }
+        .nav-signin { display: inline; }
+        .nav-cta { display: inline; }
+
+        /* ─── HAMBURGER ──────────────────────────── */
+        .hamburger {
+          display: none;
+          flex-direction: column;
+          gap: 5px;
+          background: none;
+          border: none;
+          cursor: pointer;
+          padding: 6px;
+        }
+        .hamburger span {
+          display: block;
+          width: 22px;
+          height: 2px;
+          background: #fff;
+          border-radius: 2px;
+          transition: transform 0.2s, opacity 0.2s;
+        }
+
+        /* ─── MOBILE MENU ────────────────────────── */
+        .mobile-menu {
+          display: none;
+          flex-direction: column;
+          gap: 4px;
+          position: fixed;
+          top: 57px;
+          left: 0;
+          right: 0;
+          background: rgba(10,0,30,0.97);
+          backdrop-filter: blur(16px);
+          padding: 16px 24px 24px;
+          z-index: 49;
+          border-bottom: 1px solid rgba(124,58,237,0.2);
+          transform: translateY(-110%);
+          transition: transform 0.3s ease;
+        }
+        .mobile-menu.open {
+          transform: translateY(0);
+          display: flex;
+        }
+        .mobile-menu a, .mobile-menu button {
+          padding: 12px 16px;
+          border-radius: 8px;
+          font-size: 15px;
+          font-weight: 600;
+          color: rgba(255,255,255,0.85);
+          text-decoration: none;
+          background: none;
+          border: none;
+          cursor: pointer;
+          font-family: 'Inter', sans-serif;
+          text-align: left;
+          transition: background 0.15s;
+        }
+        .mobile-menu a:hover, .mobile-menu button:hover { background: rgba(124,58,237,0.15); }
 
         /* ─── DECORATIVE SECTIONS ────────────────── */
         .deco-section { position: relative; overflow: hidden; }
@@ -466,11 +565,15 @@ export default function LandingPage() {
           .features-grid  { grid-template-columns: repeat(2,1fr) !important; }
           .pricing-grid   { grid-template-columns: repeat(2,1fr) !important; }
           .reel-grid      { grid-template-columns: repeat(3,1fr) !important; }
+          .footer-grid    { grid-template-columns: 1fr 1fr !important; gap: 28px !important; }
         }
 
         /* ─── TABLET 768px ───────────────────────── */
         @media (max-width: 768px) {
-          .nav-links { display: none !important; }
+          .nav-links-desktop { display: none !important; }
+          .nav-signin        { display: none !important; }
+          .nav-cta           { display: none !important; }
+          .hamburger         { display: flex !important; }
           .hero-overlay {
             background: linear-gradient(to right, rgba(5,0,20,0.95) 0%, rgba(10,0,40,0.92) 50%, rgba(10,0,40,0.75) 100%) !important;
           }
@@ -485,7 +588,6 @@ export default function LandingPage() {
             max-width: 100% !important;
           }
           .testimonials-grid { grid-template-columns: repeat(2,1fr) !important; }
-          .footer-grid       { grid-template-columns: 1fr !important; gap: 32px !important; }
         }
 
         /* ─── MOBILE 600px ───────────────────────── */
@@ -495,11 +597,19 @@ export default function LandingPage() {
           .pricing-grid     { grid-template-columns: 1fr !important; }
           .reel-grid        { grid-template-columns: repeat(2,1fr) !important; }
           .testimonials-grid { grid-template-columns: 1fr !important; }
+          .footer-grid      { grid-template-columns: 1fr !important; gap: 24px !important; }
+          /* ─── HERO MOBILE MINIMIZE ─── */
+          .hero-section-wrap { align-items: flex-end !important; min-height: 85vh !important; }
+          .hero-content      { padding: 60px 16px 48px 16px !important; }
+          .hero-headline     { font-size: 32px !important; }
+          .hero-subheadline  { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+          .hero-tags         { display: none !important; }
+          .hero-badge        { display: none !important; }
         }
 
         /* ─── MOBILE 480px ───────────────────────── */
         @media (max-width: 480px) {
-          .hero-content { padding: 90px 16px 60px 16px !important; }
+          .hero-content { padding: 60px 16px 40px 16px !important; }
           .stats-grid   { gap: 16px !important; }
         }
       `}</style>

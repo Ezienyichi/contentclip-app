@@ -16,3 +16,21 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: rgba(19
 img, video, iframe { max-width: 100%; }
 .container { width: 100%; max-width: 1200px; margin: 0 auto; padding: 0 24px; }
 @media (max-width: 600px) { .container { padding: 0 16px; } }
+
+/* ─── SECTION UTILITIES ─────────────────── */
+.section-container { width: 100%; max-width: 1100px; margin: 0 auto; padding: 80px 24px; }
+.section-title { font-size: clamp(28px, 5vw, 36px); font-weight: 800; margin-bottom: 12px; }
+.section-subtitle { font-size: 16px; color: #8B8AA3; margin-bottom: 48px; }
+.card-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+.card-grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+@media (max-width: 900px) {
+  .section-container { padding: 60px 24px; }
+  .card-grid-3 { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 600px) {
+  .section-container { padding: 48px 16px; }
+  .card-grid-3 { grid-template-columns: 1fr; }
+  .card-grid-2 { grid-template-columns: 1fr; }
+  .section-title { font-size: 26px; }
+  .section-subtitle { font-size: 14px; }
+}

@@ -6,9 +6,9 @@ import { useRouter } from 'next/navigation';
 import { colors, gradients, radius, inputField } from '@/lib/tokens';
 
 type Clip = {
-  title: string; hook_text: string; start_time: number; end_time: number;
+  id?: string; title: string; hook_text: string; start_time: number; end_time: number;
   virality_score: number; suggested_caption: string; hashtags: string;
-  platform: string; clip_url?: string; duration: number; status?: string;
+  platform: string; clip_url?: string; video_url?: string; thumbnail_url?: string; duration: number; status?: string;
 };
 
 const SORTS = ['Most Viral','Newest','Longest','Shortest'];
@@ -112,20 +112,27 @@ export default function ClipsPage() {
       </div>
 
       {/* Clips grid */}
-      <div className="clips-grid" style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))', gap:'16px' }}>
-        {filtered.map((clip, idx) => (
+      <div className="clips-grid" style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(220px,1fr))', gap:'16px' }}>
+        {filtered.map((clip, idx) => {
+          const previewSrc = clip.clip_url || clip.video_url || '';
+          return (
           <div key={idx} style={{ background:colors.surfaceContainerHigh, borderRadius:radius.lg, overflow:'hidden' }}>
             {/* Thumbnail */}
-            <div onClick={() => clip.clip_url ? setPlayingUrl(clip.clip_url) : setPreview(idx)} style={{ aspectRatio:'9/12', background:colors.surfaceContainer, position:'relative', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer' }}>
-              <div style={{ position:'absolute', top:12, left:12, background:'rgba(0,0,0,0.7)', backdropFilter:'blur(8px)', padding:'4px 10px', borderRadius:radius.full, display:'flex', alignItems:'center', gap:'4px' }}>
+            <div onClick={() => previewSrc ? setPlayingUrl(previewSrc) : setPreview(idx)} style={{ aspectRatio:'9/12', background:colors.surfaceContainer, position:'relative', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', overflow:'hidden' }}>
+              {clip.thumbnail_url ? (
+                <img src={clip.thumbnail_url} alt={clip.title} style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover' }}/>
+              ) : previewSrc ? (
+                <video src={previewSrc} style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover' }} muted playsInline preload="metadata"/>
+              ) : null}
+              <div style={{ position:'absolute', top:12, left:12, background:'rgba(0,0,0,0.7)', backdropFilter:'blur(8px)', padding:'4px 10px', borderRadius:radius.full, display:'flex', alignItems:'center', gap:'4px', zIndex:2 }}>
                 <Icon name="local_fire_department" size={14} style={{ color:sc(clip.virality_score) }} filled/>
                 <span style={{ fontSize:'12px', fontWeight:700, color:sc(clip.virality_score) }}>{clip.virality_score}</span>
               </div>
-              <div style={{ position:'absolute', top:12, right:12, background:'rgba(0,0,0,0.7)', padding:'4px 8px', borderRadius:radius.sm, fontSize:'11px', color:'#fff', fontWeight:600 }}>{formatDuration(clip.duration)}</div>
-              <div style={{ width:56, height:56, borderRadius:'50%', background:'rgba(255,255,255,0.1)', backdropFilter:'blur(8px)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+              <div style={{ position:'absolute', top:12, right:12, background:'rgba(0,0,0,0.7)', padding:'4px 8px', borderRadius:radius.sm, fontSize:'11px', color:'#fff', fontWeight:600, zIndex:2 }}>{formatDuration(clip.duration)}</div>
+              <div style={{ width:56, height:56, borderRadius:'50%', background:'rgba(255,255,255,0.1)', backdropFilter:'blur(8px)', display:'flex', alignItems:'center', justifyContent:'center', position:'relative', zIndex:2 }}>
                 <Icon name="play_arrow" filled size={28} style={{ color:'#fff' }}/>
               </div>
-              <div style={{ position:'absolute', bottom:12, left:12, right:12, background:'rgba(0,0,0,0.7)', backdropFilter:'blur(8px)', padding:'8px 12px', borderRadius:radius.md }}>
+              <div style={{ position:'absolute', bottom:12, left:12, right:12, background:'rgba(0,0,0,0.7)', backdropFilter:'blur(8px)', padding:'8px 12px', borderRadius:radius.md, zIndex:2 }}>
                 <p style={{ fontSize:'11px', color:'#fff', fontWeight:500, lineHeight:1.4 }}>&ldquo;{clip.hook_text}&rdquo;</p>
               </div>
             </div>
@@ -139,7 +146,7 @@ export default function ClipsPage() {
 
               {/* Action buttons */}
               <div style={{ display:'flex', gap:'6px' }}>
-                <button onClick={() => router.push('/editor')} style={{ flex:1, padding:'8px', borderRadius:radius.md, background:colors.surfaceContainer, border:'1px solid '+colors.outlineVariant, color:colors.onSurface, fontSize:'11px', fontWeight:600, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:'4px', fontFamily:"'Inter',sans-serif" }}>
+                <button onClick={() => router.push(`/editor?clipId=${clip.id||''}&videoUrl=${encodeURIComponent(previewSrc)}&title=${encodeURIComponent(clip.title)}`)} style={{ flex:1, padding:'8px', borderRadius:radius.md, background:colors.surfaceContainer, border:'1px solid '+colors.outlineVariant, color:colors.onSurface, fontSize:'11px', fontWeight:600, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:'4px', fontFamily:"'Inter',sans-serif" }}>
                   <Icon name="edit" size={13}/> Edit
                 </button>
                 <button onClick={() => openSchedule(clip)} style={{ flex:1, padding:'8px', borderRadius:radius.md, background:'rgba(37,211,102,0.1)', border:'1px solid rgba(37,211,102,0.2)', color:'#25D366', fontSize:'11px', fontWeight:600, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:'4px', fontFamily:"'Inter',sans-serif" }}>
@@ -151,7 +158,8 @@ export default function ClipsPage() {
               </div>
             </div>
           </div>
-        ))}
+        );
+        })}
       </div>
 
       {/* Video player modal */}
@@ -259,7 +267,7 @@ export default function ClipsPage() {
               <div style={{ position:'absolute', bottom:16, left:16, right:16, background:'rgba(0,0,0,0.7)', padding:'8px 12px', borderRadius:radius.md }}><p style={{ fontSize:'13px', color:'#fff', fontWeight:600 }}>{filtered[preview].title}</p></div>
             </div>
             <div style={{ padding:'16px', display:'flex', gap:'8px' }}>
-              <button onClick={() => { setPreview(null); router.push('/editor'); }} style={{ flex:1, padding:'10px', borderRadius:radius.md, background:gradients.primary, color:'#FAF7FF', border:'none', fontWeight:600, fontSize:'13px', cursor:'pointer', fontFamily:"'Inter',sans-serif" }}>Edit Clip</button>
+              <button onClick={() => { const c = filtered[preview!]; const src = c.clip_url || c.video_url || ''; setPreview(null); router.push(`/editor?clipId=${c.id||''}&videoUrl=${encodeURIComponent(src)}&title=${encodeURIComponent(c.title)}`); }} style={{ flex:1, padding:'10px', borderRadius:radius.md, background:gradients.primary, color:'#FAF7FF', border:'none', fontWeight:600, fontSize:'13px', cursor:'pointer', fontFamily:"'Inter',sans-serif" }}>Edit Clip</button>
               <button onClick={() => { openSchedule(filtered[preview]); setPreview(null); }} style={{ flex:1, padding:'10px', borderRadius:radius.md, background:'rgba(37,211,102,0.1)', border:'1px solid rgba(37,211,102,0.2)', color:'#25D366', fontWeight:600, fontSize:'13px', cursor:'pointer', fontFamily:"'Inter',sans-serif" }}>Schedule</button>
               <button onClick={() => setPreview(null)} style={{ padding:'10px', borderRadius:radius.md, background:colors.surfaceContainer, border:'1px solid '+colors.outlineVariant, color:colors.onSurface, cursor:'pointer' }}><Icon name="close" size={18}/></button>
             </div>

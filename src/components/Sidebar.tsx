@@ -25,8 +25,8 @@ export default function Sidebar() {
     <>
       <div onClick={() => router.push('/')} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '8px', marginBottom: '24px', cursor: 'pointer' }}>
         <div>
-          <img src="/vangelclip-logo.svg" alt="VangelClip" style={{ height: 44, width: 'auto' }} />
-          <p style={{ fontSize: '11px', color: colors.onSurfaceVariant, fontWeight: 500 }}>Creator Pro</p>
+          <span style={{ fontSize: '20px', fontWeight: 800, color: '#ffffff', letterSpacing: '-0.5px', fontFamily: 'Arial Black, Arial, sans-serif' }}>Vangel<span style={{ color: '#7C3AED' }}>Clip</span></span>
+          <p style={{ fontSize: '11px', color: colors.onSurfaceVariant, fontWeight: 500, marginTop: 2 }}>← Back to home</p>
         </div>
       </div>
       <button onClick={() => router.push('/import')} style={{ background: gradients.cta, color: '#000', padding: '10px 16px', borderRadius: radius.md, fontWeight: 700, fontSize: '13px', marginBottom: '28px', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', width: '100%', fontFamily: "'Inter', sans-serif" }}>

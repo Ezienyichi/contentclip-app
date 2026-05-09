@@ -1,24 +1,38 @@
 'use client';
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, Suspense } from 'react';
 import DashboardLayout from '@/components/DashboardLayout';
 import Icon from '@/components/Icon';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { colors, gradients, radius, inputField } from '@/lib/tokens';
 
 const CAPTIONS = [{name:'Bold Pop',fw:900,c:'#fff',bg:'rgba(0,0,0,0.8)'},{name:'Minimal',fw:500,c:'#fff',bg:'transparent'},{name:'Neon',fw:800,c:'#C0C1FF',bg:'rgba(0,0,0,0.6)'},{name:'Gradient',fw:800,c:'#fff',bg:'linear-gradient(135deg,rgba(93,96,235,0.8),rgba(192,193,255,0.5))'}];
+const CLIP_TEMPLATES = [
+  { id:'gospel',   name:'Gospel',       color:'#7c3aed', icon:'church',           desc:'Faith-first cuts with spiritual impact' },
+  { id:'education',name:'Education',    color:'#06b6d4', icon:'school',           desc:'Clear step-by-step knowledge delivery' },
+  { id:'motivation',name:'Motivation',  color:'#f59e0b', icon:'rocket_launch',    desc:'High-energy motivational highlights' },
+  { id:'worship',  name:'Worship',      color:'#ec4899', icon:'music_note',       desc:'Worship moments for maximum reach' },
+  { id:'podcast',  name:'Podcast',      color:'#10b981', icon:'mic',              desc:'Compelling quotes from long-form audio' },
+  { id:'viral',    name:'Viral Hook',   color:'#ef4444', icon:'bolt',             desc:'Cold opens engineered to stop scrolling' },
+];
 const ADJUSTMENTS = [{cat:'Color',items:['Color Match','Color Correction','Brightness','Contrast','Saturation','Brilliance']},{cat:'Detail',items:['Sharpen','Clarity','HSL','Highlights','Shadows','Whites','Blacks']},{cat:'Atmosphere',items:['Temp','Hue','Fade','Vignette','Grain']},{cat:'Video Quality',items:['Enhance Quality','Reduce Noise','Auto Adjust','Stabilize','Optical Flow','Remove Flicker']}];
 const LANGUAGES = ['English','Spanish','French','German','Portuguese','Chinese','Japanese','Korean','Arabic','Hindi','Italian','Dutch','Russian','Turkish','Polish','Swedish'];
 const TRANSITIONS = ['Cut','Dissolve','Fade','Slide Left','Slide Up','Zoom In','Zoom Out','Spin','Glitch','Flash'];
 
 type Overlay = { id: string; url: string; name: string; opacity: number };
 
-export default function EditorPage() {
+function EditorPageInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const clipId = searchParams.get('clipId') || '';
+  const videoUrl = searchParams.get('videoUrl') || '';
+  const clipTitle = searchParams.get('title') || 'Edited Clip';
+
   const [playing, setPlaying] = useState(false);
   const [capStyle, setCapStyle] = useState(0);
   const [format, setFormat] = useState('9:16');
   const [time, setTime] = useState(12);
-  const [tab, setTab] = useState<'style'|'adjust'|'overlay'|'export'>('style');
+  const [selectedTemplate, setSelectedTemplate] = useState<string|null>(null);
+  const [tab, setTab] = useState<'style'|'adjust'|'overlay'|'templates'|'export'>('style');
   const [lang, setLang] = useState('English');
   const [transition, setTransition] = useState('Cut');
   const [showExport, setShowExport] = useState(false);
@@ -100,7 +114,7 @@ export default function EditorPage() {
     const existing = JSON.parse(sessionStorage.getItem('hookclip_scheduled') || '[]');
     existing.push({
       id: Date.now().toString(),
-      clip_title: 'Edited Clip',
+      clip_title: clipTitle,
       hook_text: 'The shocking truth about AI',
       virality_score: 94,
       caption: schedCaption,
@@ -123,6 +137,16 @@ export default function EditorPage() {
           <div style={{ maxWidth:320, margin:'0 auto 24px', borderRadius:radius.xl, overflow:'hidden', background:colors.surfaceContainerHigh, position:'relative' }}>
             <div style={{ aspectRatio:format==='9:16'?'9/16':format==='1:1'?'1/1':format==='4:5'?'4/5':'16/9', background:'linear-gradient(180deg,'+colors.surfaceContainerLow+','+colors.surfaceContainer+',rgba(93,96,235,0.05))', position:'relative', display:'flex', alignItems:'center', justifyContent:'center', transition:'aspect-ratio 0.3s' }}>
 
+              {/* Video element if videoUrl available */}
+              {videoUrl ? (
+                <video
+                  key={videoUrl}
+                  src={videoUrl}
+                  controls
+                  style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover' }}
+                />
+              ) : null}
+
               {/* Overlays rendered on preview */}
               {overlays.map(ov => (
                 <img key={ov.id} src={ov.url} alt={ov.name} style={{
@@ -133,14 +157,18 @@ export default function EditorPage() {
               ))}
 
               {/* Caption preview */}
-              <div style={{ position:'absolute', bottom:60, left:16, right:16, textAlign:'center' }}>
-                <span style={{ fontSize:CAPTIONS[capStyle].name==='Minimal'?'18px':'22px', fontWeight:CAPTIONS[capStyle].fw, color:CAPTIONS[capStyle].c, background:CAPTIONS[capStyle].bg, padding:'4px 12px', borderRadius:'6px', display:'inline-block' }}>The shocking truth about AI</span>
-              </div>
+              {!videoUrl && (
+                <div style={{ position:'absolute', bottom:60, left:16, right:16, textAlign:'center' }}>
+                  <span style={{ fontSize:CAPTIONS[capStyle].name==='Minimal'?'18px':'22px', fontWeight:CAPTIONS[capStyle].fw, color:CAPTIONS[capStyle].c, background:CAPTIONS[capStyle].bg, padding:'4px 12px', borderRadius:'6px', display:'inline-block' }}>{clipTitle}</span>
+                </div>
+              )}
 
-              {/* Play button */}
-              <button onClick={() => setPlaying(!playing)} style={{ width:64, height:64, borderRadius:'50%', background:'rgba(255,255,255,0.12)', backdropFilter:'blur(8px)', border:'1px solid rgba(255,255,255,0.2)', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', position:'absolute' }}>
-                <Icon name={playing?'pause':'play_arrow'} filled size={32} style={{ color:'#fff' }}/>
-              </button>
+              {/* Play button — only when no video */}
+              {!videoUrl && (
+                <button onClick={() => setPlaying(!playing)} style={{ width:64, height:64, borderRadius:'50%', background:'rgba(255,255,255,0.12)', backdropFilter:'blur(8px)', border:'1px solid rgba(255,255,255,0.2)', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', position:'absolute' }}>
+                  <Icon name={playing?'pause':'play_arrow'} filled size={32} style={{ color:'#fff' }}/>
+                </button>
+              )}
             </div>
           </div>
 
@@ -170,10 +198,10 @@ export default function EditorPage() {
 
         {/* ═══ RIGHT: Controls Panel ═══ */}
         <div style={{ display:'flex', flexDirection:'column', gap:'16px' }}>
-          {/* Tab bar — added 'overlay' tab */}
+          {/* Tab bar */}
           <div style={{ display:'flex', gap:'4px', background:colors.surfaceContainerHigh, borderRadius:radius.md, padding:'3px' }}>
-            {(['style','adjust','overlay','export'] as const).map(t => (
-              <button key={t} onClick={() => setTab(t)} style={{ flex:1, padding:'8px', borderRadius:radius.sm, background:tab===t?colors.surfaceContainerHighest:'transparent', color:tab===t?colors.onSurface:colors.onSurfaceVariant, border:'none', fontWeight:600, fontSize:'11px', cursor:'pointer', fontFamily:"'Inter',sans-serif", textTransform:'capitalize' }}>
+            {(['style','adjust','overlay','templates','export'] as const).map(t => (
+              <button key={t} onClick={() => setTab(t)} style={{ flex:1, padding:'7px 4px', borderRadius:radius.sm, background:tab===t?colors.surfaceContainerHighest:'transparent', color:tab===t?colors.onSurface:colors.onSurfaceVariant, border:'none', fontWeight:600, fontSize:'10px', cursor:'pointer', fontFamily:"'Inter',sans-serif", textTransform:'capitalize' }}>
                 {t === 'overlay' ? 'Logo' : t}
               </button>
             ))}
@@ -281,6 +309,37 @@ export default function EditorPage() {
             </div>
           </div>}
 
+          {/* ═══ TEMPLATES TAB ═══ */}
+          {tab==='templates' && <div style={{ display:'flex', flexDirection:'column', gap:'10px' }}>
+            <div style={{ background:colors.surfaceContainerHigh, borderRadius:radius.lg, padding:'16px' }}>
+              <h3 style={{ fontSize:'14px', fontWeight:700, marginBottom:'6px' }}>Clip Style</h3>
+              <p style={{ fontSize:'12px', color:colors.onSurfaceVariant, marginBottom:'14px' }}>Choose a style template to shape how your clip is presented.</p>
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'8px' }}>
+                {CLIP_TEMPLATES.map(tmpl => (
+                  <button
+                    key={tmpl.id}
+                    onClick={() => setSelectedTemplate(tmpl.id)}
+                    style={{ padding:'12px 10px', borderRadius:radius.md, background:selectedTemplate===tmpl.id?tmpl.color+'18':colors.surfaceContainer, border:`1px solid ${selectedTemplate===tmpl.id?tmpl.color+'60':colors.outlineVariant}`, cursor:'pointer', textAlign:'left', transition:'all 0.15s', fontFamily:"'Inter',sans-serif" }}
+                  >
+                    <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:4 }}>
+                      <Icon name={tmpl.icon} size={16} style={{ color:tmpl.color }}/>
+                      <span style={{ fontSize:'12px', fontWeight:700, color:selectedTemplate===tmpl.id?tmpl.color:colors.onSurface }}>{tmpl.name}</span>
+                    </div>
+                    <p style={{ fontSize:'10px', color:colors.onSurfaceVariant, lineHeight:1.4, margin:0 }}>{tmpl.desc}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
+            {selectedTemplate && (
+              <div style={{ background:colors.surfaceContainerHigh, borderRadius:radius.lg, padding:'14px', display:'flex', alignItems:'center', gap:10 }}>
+                <Icon name="check_circle" size={18} style={{ color:'#4ade80' }} filled/>
+                <p style={{ fontSize:'13px', color:'#4ade80', fontWeight:600 }}>
+                  {CLIP_TEMPLATES.find(t => t.id === selectedTemplate)?.name} template applied
+                </p>
+              </div>
+            )}
+          </div>}
+
           {/* ═══ EXPORT TAB ═══ */}
           {tab==='export' && <div style={{ display:'flex', flexDirection:'column', gap:'12px' }}>
             <div style={{ background:colors.surfaceContainerHigh, borderRadius:radius.lg, padding:'20px', textAlign:'center' }}>
@@ -385,5 +444,13 @@ export default function EditorPage() {
 
       <style>{'@media(max-width:768px){.editor-layout{grid-template-columns:1fr!important}}@keyframes fadeInUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}'}</style>
     </DashboardLayout>
+  );
+}
+
+export default function EditorPage() {
+  return (
+    <Suspense fallback={<div style={{ background: '#0E0E0E', minHeight: '100vh' }} />}>
+      <EditorPageInner />
+    </Suspense>
   );
 }

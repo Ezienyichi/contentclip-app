@@ -320,7 +320,9 @@ export default function TemplatesPage() {
     setApplied(tmpl.id);
     sessionStorage.setItem('hookclip_template_prompt', tmpl.prompt);
     sessionStorage.setItem('hookclip_template_name', tmpl.name);
-    setTimeout(() => { router.push('/import'); }, 600);
+    setTimeout(() => {
+      router.push(`/import?template=${encodeURIComponent(tmpl.name)}&prompt=${encodeURIComponent(tmpl.prompt)}`);
+    }, 600);
   };
 
   return (
@@ -414,9 +416,9 @@ export default function TemplatesPage() {
                 </span>
                 <button
                   onClick={() => handleUse(t)}
-                  style={{ padding: '6px 14px', borderRadius: radius.md, background: applied === t.id ? '#4ade80' : gradients.primary, color: applied === t.id ? '#000' : '#FAF7FF', border: 'none', fontWeight: 600, fontSize: '11px', cursor: 'pointer', fontFamily: "'Inter',sans-serif", transition: 'background 0.2s' }}
+                  style={{ padding: '8px 16px', borderRadius: radius.md, background: applied === t.id ? '#4ade80' : gradients.primary, color: applied === t.id ? '#000' : '#FAF7FF', border: 'none', fontWeight: 700, fontSize: '12px', cursor: 'pointer', fontFamily: "'Inter',sans-serif", transition: 'background 0.2s', display: 'flex', alignItems: 'center', gap: 4 }}
                 >
-                  {applied === t.id ? '✓ Applied!' : 'Use Template'}
+                  {applied === t.id ? '✓ Applied!' : 'Use This Template →'}
                 </button>
               </div>
             </div>
