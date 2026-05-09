@@ -401,7 +401,7 @@ export default function LandingPage() {
           </div>
           {/* Bottom glow */}
           <div style={{ position: 'absolute', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '70%', height: '150px', background: 'radial-gradient(ellipse at center bottom, rgba(124,58,237,0.12) 0%, transparent 70%)', zIndex: 1, pointerEvents: 'none' }} />
-          <div className="footer-grid" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', gap: 40, marginBottom: 40 }}>
+          <div className="footer-inner" style={{ display: 'grid', gridTemplateColumns: '2.5fr 1fr 1fr 1fr', gap: '48px', maxWidth: '1200px', margin: '0 auto', padding: '60px 80px 40px' }}>
             <div>
               <div style={{ marginBottom: 16 }}>
                 <span style={{ fontSize: '20px', fontWeight: 800, color: '#ffffff', fontFamily: 'Arial Black, Arial, sans-serif' }}>Vangel<span style={{ color: '#7C3AED' }}>Clip</span></span>
@@ -483,7 +483,7 @@ export default function LandingPage() {
         }
 
         /* ─── FOOTER GRID ────────────────────────── */
-        .footer-grid {
+        .footer-inner {
           display: grid;
           grid-template-columns: 2.5fr 1fr 1fr 1fr;
           gap: 40px;
@@ -565,7 +565,7 @@ export default function LandingPage() {
           .features-grid  { grid-template-columns: repeat(2,1fr) !important; }
           .pricing-grid   { grid-template-columns: repeat(2,1fr) !important; }
           .reel-grid      { grid-template-columns: repeat(3,1fr) !important; }
-          .footer-grid    { grid-template-columns: 1fr 1fr !important; gap: 28px !important; }
+          .footer-inner   { grid-template-columns: 1fr 1fr !important; gap: 28px !important; padding: 40px 40px 32px !important; }
         }
 
         /* ─── TABLET 768px ───────────────────────── */
@@ -597,7 +597,7 @@ export default function LandingPage() {
           .pricing-grid     { grid-template-columns: 1fr !important; }
           .reel-grid        { grid-template-columns: repeat(2,1fr) !important; }
           .testimonials-grid { grid-template-columns: 1fr !important; }
-          .footer-grid      { grid-template-columns: 1fr !important; gap: 24px !important; }
+          .footer-inner     { grid-template-columns: 1fr !important; gap: 24px !important; padding: 32px 24px 24px !important; }
           /* ─── HERO MOBILE MINIMIZE ─── */
           .hero-section-wrap { align-items: flex-end !important; min-height: 85vh !important; }
           .hero-content      { padding: 60px 16px 48px 16px !important; }
