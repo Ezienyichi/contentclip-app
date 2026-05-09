@@ -244,15 +244,13 @@ function ClipCard({
   index,
   onDownload,
   onPost,
-  onOpenInEditor,
 }: {
   clip: RekaClip;
   index: number;
   onDownload: () => void;
   onPost: () => void;
-  onOpenInEditor: () => void;
 }) {
-  const clipVideoUrl = clip.video_url;
+  const router = useRouter();
   const thumbUrl = clip.thumbnail_url;
 
   return (
@@ -264,61 +262,69 @@ function ClipCard({
         background: colors.surfaceContainerLow,
         display: "flex",
         flexDirection: "column",
+        padding: "14px",
       }}
     >
-      <div
-        style={{
-          aspectRatio: "9/16",
-          maxHeight: 280,
-          background: colors.surfaceContainer,
-          position: "relative",
-          overflow: "hidden",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        {clipVideoUrl ? (
-          <video
-            src={clipVideoUrl}
-            controls
-            style={{ width: "100%", height: "100%", objectFit: "cover" }}
-            preload="metadata"
-          />
-        ) : thumbUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={thumbUrl}
-            alt={clip.title}
-            style={{ width: "100%", height: "100%", objectFit: "cover" }}
-          />
-        ) : (
-          <div
-            style={{
-              width: "100%",
-              height: "100%",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 8,
-              background: gradients.primary,
-            }}
-          >
-            <span style={{ fontSize: 32 }}>🎬</span>
-            <span style={{ color: colors.onPrimary, fontSize: 12, opacity: 0.8 }}>
-              Clip {index + 1}
-            </span>
-          </div>
-        )}
-        {clip.duration && (
-          <span
-            style={{
-              position: "absolute",
-              bottom: 8,
-              right: 8,
-              background: "rgba(0,0,0,0.75)",
-              color: "#fff",
+      {/* Video preview — direct video element with exact requested styles */}
+      {clip.video_url ? (
+        <video
+          src={clip.video_url}
+          style={{
+            width: "100%",
+            aspectRatio: "9/16",
+            borderRadius: "12px",
+            objectFit: "cover",
+            background: "#0a0014",
+            display: "block",
+            marginBottom: "8px",
+          }}
+          controls
+          preload="metadata"
+        />
+      ) : thumbUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={thumbUrl}
+          alt={clip.title}
+          style={{
+            width: "100%",
+            aspectRatio: "9/16",
+            borderRadius: "12px",
+            objectFit: "cover",
+            display: "block",
+            marginBottom: "8px",
+          }}
+        />
+      ) : (
+        <div
+          style={{
+            width: "100%",
+            aspectRatio: "9/16",
+            borderRadius: "12px",
+            background: gradients.primary,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 8,
+            marginBottom: "8px",
+          }}
+        >
+          <span style={{ fontSize: 32 }}>🎬</span>
+          <span style={{ color: colors.onPrimary, fontSize: 12, opacity: 0.8 }}>
+            Clip {index + 1}
+          </span>
+        </div>
+      )}
+
+      {/* Duration badge */}
+      {clip.duration && (
+        <span
+          style={{
+            display: "inline-block",
+            marginBottom: 8,
+            background: "rgba(0,0,0,0.75)",
+            color: "#fff",
               fontSize: 11,
               padding: "2px 8px",
               borderRadius: radius.sm,
@@ -327,15 +333,14 @@ function ClipCard({
             {clip.duration}s
           </span>
         )}
-      </div>
 
       <div
         style={{
-          padding: 14,
           flex: 1,
           display: "flex",
           flexDirection: "column",
           gap: 6,
+          marginBottom: 10,
         }}
       >
         <h4
@@ -399,10 +404,8 @@ function ClipCard({
 
       <div
         style={{
-          padding: "10px 14px",
           display: "flex",
           gap: 8,
-          borderTop: `1px solid ${colors.outlineVariant}`,
           flexWrap: "wrap",
         }}
       >
@@ -441,17 +444,23 @@ function ClipCard({
           → Save to Clips
         </button>
         <button
-          onClick={onOpenInEditor}
+          onClick={() => router.push(
+            '/editor?videoUrl=' +
+            encodeURIComponent(clip.video_url || '') +
+            '&title=' +
+            encodeURIComponent(clip.title || '')
+          )}
           style={{
-            width: "100%",
-            height: 34,
-            borderRadius: radius.md,
-            border: `1px solid ${colors.primary}40`,
-            background: `${colors.primary}10`,
-            color: colors.primary,
-            fontSize: 12,
+            width: '100%',
+            padding: '10px',
+            background: 'linear-gradient(135deg,#7c3aed,#5b21b6)',
+            border: 'none',
+            borderRadius: '8px',
+            color: '#fff',
             fontWeight: 700,
-            cursor: "pointer",
+            cursor: 'pointer',
+            marginTop: '8px',
+            fontSize: '13px',
             fontFamily: "'Inter', sans-serif",
           }}
         >
@@ -1251,7 +1260,6 @@ export default function ImportPage() {
                   index={i}
                   onDownload={() => handleDownload(clip)}
                   onPost={() => handlePost(clip, i)}
-                  onOpenInEditor={() => router.push(`/editor?clipId=${encodeURIComponent(clip.title)}&videoUrl=${encodeURIComponent(clip.video_url || '')}&title=${encodeURIComponent(clip.title)}`)}
                 />
               ))}
             </div>
