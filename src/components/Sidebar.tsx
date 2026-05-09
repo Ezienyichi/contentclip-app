@@ -1,6 +1,7 @@
 ﻿'use client';
 import React from 'react';
 import { usePathname, useRouter } from 'next/navigation';
+import Link from 'next/link';
 import Icon from './Icon';
 import { colors, gradients, radius } from '@/lib/tokens';
 const NAV = [
@@ -23,12 +24,14 @@ export default function Sidebar() {
   };
   const content = (
     <>
-      <div onClick={() => router.push('/')} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '8px', marginBottom: '24px', cursor: 'pointer' }}>
-        <div>
-          <span style={{ fontSize: '20px', fontWeight: 800, color: '#ffffff', letterSpacing: '-0.5px', fontFamily: 'Arial Black, Arial, sans-serif' }}>Vangel<span style={{ color: '#7C3AED' }}>Clip</span></span>
-          <p style={{ fontSize: '11px', color: colors.onSurfaceVariant, fontWeight: 500, marginTop: 2 }}>← Back to home</p>
+      <Link href="/" style={{ textDecoration: 'none', display: 'block', padding: '8px', marginBottom: '24px' }}>
+        <span style={{ fontSize: '20px', fontWeight: 800, color: '#ffffff', fontFamily: 'Arial Black, Arial, sans-serif' }}>
+          Vangel<span style={{ color: '#7c3aed' }}>Clip</span>
+        </span>
+        <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', marginTop: '2px' }}>
+          ← Home
         </div>
-      </div>
+      </Link>
       <button onClick={() => router.push('/import')} style={{ background: gradients.cta, color: '#000', padding: '10px 16px', borderRadius: radius.md, fontWeight: 700, fontSize: '13px', marginBottom: '28px', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', width: '100%', fontFamily: "'Inter', sans-serif" }}>
         <Icon name="add_circle" size={20} /> Create New
       </button>
