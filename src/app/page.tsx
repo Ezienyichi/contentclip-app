@@ -23,7 +23,7 @@ export default function LandingPage() {
         <div style={{ cursor: 'pointer' }} onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
           <span style={{ fontSize: '22px', fontWeight: 800, color: '#ffffff', letterSpacing: '-0.5px', fontFamily: 'Arial Black, Arial, sans-serif' }}>Vangel<span style={{ color: '#7C3AED' }}>Clip</span></span>
         </div>
-        <div className="nav-links-desktop" style={{ display: 'flex', alignItems: 'center', gap: '32px', fontSize: '14px', fontWeight: 500 }}>
+        <div className="nav-desktop" style={{ display: 'flex', alignItems: 'center', gap: '32px', fontSize: '14px', fontWeight: 500 }}>
           <a href="#features" style={{ color: colors.onSurfaceVariant, textDecoration: 'none' }}>Features</a>
           <a href="#workflow" style={{ color: colors.onSurfaceVariant, textDecoration: 'none' }}>Workflow</a>
           <a href="#pricing" style={{ color: colors.onSurfaceVariant, textDecoration: 'none' }}>Pricing</a>
@@ -39,12 +39,14 @@ export default function LandingPage() {
       </nav>
       {/* Mobile menu */}
       <div className={`mobile-menu${menuOpen ? ' open' : ''}`}>
-        <a href="#features" onClick={() => setMenuOpen(false)}>Features</a>
-        <a href="#workflow" onClick={() => setMenuOpen(false)}>Workflow</a>
-        <a href="#pricing" onClick={() => setMenuOpen(false)}>Pricing</a>
+        <a href="/#features" onClick={() => setMenuOpen(false)}>Features</a>
+        <a href="/#workflow" onClick={() => setMenuOpen(false)}>Workflow</a>
+        <a href="/pricing" onClick={() => setMenuOpen(false)}>Pricing</a>
         <a href="/about" onClick={() => setMenuOpen(false)}>About</a>
-        <button onClick={() => { setMenuOpen(false); router.push('/auth'); }}>Sign In</button>
-        <button onClick={() => { setMenuOpen(false); router.push('/auth'); }} style={{ background: gradients.primary, color: '#FAF7FF' }}>Start Free</button>
+        <a href="/about#blog" onClick={() => setMenuOpen(false)}>Blog</a>
+        <a href="/about#support" onClick={() => setMenuOpen(false)}>Support</a>
+        <a href="/auth" onClick={() => setMenuOpen(false)}>Sign In</a>
+        <a href="/auth" onClick={() => setMenuOpen(false)} style={{ background: 'linear-gradient(135deg,#7c3aed,#5b21b6)', borderRadius: '10px', textAlign: 'center', marginTop: '8px', color: '#fff' }}>Start Free</a>
       </div>
 
       {/* HERO — video bg, overflow hidden, dark fallback */}
@@ -490,7 +492,7 @@ export default function LandingPage() {
         }
 
         /* ─── NAV ────────────────────────────────── */
-        .nav-links-desktop { display: flex; }
+        .nav-desktop { display: flex; gap:28px; align-items:center; }
         .nav-signin { display: inline; }
         .nav-cta { display: inline; }
 
@@ -519,36 +521,28 @@ export default function LandingPage() {
           flex-direction: column;
           gap: 4px;
           position: fixed;
-          top: 57px;
+          top: 64px;
           left: 0;
           right: 0;
-          background: rgba(10,0,30,0.97);
-          backdrop-filter: blur(16px);
-          padding: 16px 24px 24px;
-          z-index: 49;
-          border-bottom: 1px solid rgba(124,58,237,0.2);
-          transform: translateY(-110%);
-          transition: transform 0.3s ease;
+          bottom: 0;
+          background: rgba(8,0,20,0.97);
+          padding: 32px 24px;
+          z-index: 999;
+          overflow-y: auto;
         }
-        .mobile-menu.open {
-          transform: translateY(0);
-          display: flex;
-        }
-        .mobile-menu a, .mobile-menu button {
-          padding: 12px 16px;
-          border-radius: 8px;
-          font-size: 15px;
-          font-weight: 600;
+        .mobile-menu.open { display: flex; }
+        .mobile-menu a {
           color: rgba(255,255,255,0.85);
+          font-size: 18px;
+          font-weight: 600;
+          padding: 16px 0;
+          border-bottom: 1px solid rgba(124,58,237,0.15);
           text-decoration: none;
-          background: none;
-          border: none;
-          cursor: pointer;
+          display: block;
           font-family: 'Inter', sans-serif;
-          text-align: left;
-          transition: background 0.15s;
+          transition: color 0.15s;
         }
-        .mobile-menu a:hover, .mobile-menu button:hover { background: rgba(124,58,237,0.15); }
+        .mobile-menu a:hover { color: #a78bfa; }
 
         /* ─── DECORATIVE SECTIONS ────────────────── */
         .deco-section { position: relative; overflow: hidden; }
@@ -570,7 +564,7 @@ export default function LandingPage() {
 
         /* ─── TABLET 768px ───────────────────────── */
         @media (max-width: 768px) {
-          .nav-links-desktop { display: none !important; }
+          .nav-desktop { display: none !important; }
           .nav-signin        { display: none !important; }
           .nav-cta           { display: none !important; }
           .hamburger         { display: flex !important; }
