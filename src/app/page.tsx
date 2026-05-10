@@ -594,9 +594,9 @@ export default function LandingPage() {
           .footer-inner     { grid-template-columns: 1fr !important; gap: 24px !important; padding: 32px 24px 24px !important; }
           /* ─── HERO MOBILE MINIMIZE ─── */
           .hero-section-wrap { align-items: flex-end !important; min-height: 85vh !important; }
-          .hero-content      { padding: 60px 16px 48px 16px !important; }
-          .hero-headline     { font-size: 32px !important; }
-          .hero-subheadline  { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+          .hero-content      { padding-bottom: 48px !important; padding-top: 0 !important; }
+          .hero-headline     { font-size: 30px !important; }
+          .hero-subheadline  { font-size: 14px !important; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
           .hero-tags         { display: none !important; }
           .hero-badge        { display: none !important; }
         }

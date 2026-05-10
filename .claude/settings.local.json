@@ -6,7 +6,16 @@
       "Bash(Format-Table FullName)",
       "Bash(git add *)",
       "Bash(git commit -m ' *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(npm run *)",
+      "Bash(Get-Content src/app/pricing/page.tsx)",
+      "Bash(Select-Object -Index 54)",
+      "Bash(node -e ' *)",
+      "PowerShell(Copy-Item \"c:\\\\Users\\\\HP\\\\helpedit\\\\public\\\\hookclip-logo.svg\" \"c:\\\\Users\\\\HP\\\\helpedit\\\\public\\\\vangelclip-logo.svg\")",
+      "Bash(rename \"carousel-2.png.png\" \"carousel-2.png\")",
+      "Bash(rename \"carousel-3.png.png\" \"carousel-3.png\")",
+      "Bash(rename \"carousel-4.png.png\" \"carousel-4.png\")",
+      "Bash(git commit *)"
     ]
   }
 }
