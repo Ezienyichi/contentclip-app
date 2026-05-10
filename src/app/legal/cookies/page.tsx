@@ -17,7 +17,7 @@ export default function CookiesPage() {
       <div style={{ maxWidth: 800, margin: '0 auto', padding: '60px 24px 100px' }}>
         <p style={{ fontSize: 12, color: '#8B8AA3', marginBottom: 8 }}>Last updated: May 2026</p>
         <h1 style={{ fontSize: 'clamp(28px,5vw,40px)', fontWeight: 800, marginBottom: 16 }}>Cookie Policy</h1>
-        <p style={{ fontSize: 15, color: '#8B8AA3', marginBottom: 48, lineHeight: 1.7 }}>This Cookie Policy explains how VangelClip uses cookies and similar technologies to recognise you when you visit our website and use our Service.</p>
+        <p style={{ fontSize: 15, color: '#8B8AA3', marginBottom: 48, lineHeight: 1.7 }}>This Cookie Policy explains how VangelClip uses cookies and similar technologies to recognise you when you visit our website and use our Service. VangelClip is operated by a company based in Nigeria.</p>
 
         {[
           { title: '1. What Are Cookies?', body: 'Cookies are small data files placed on your computer or mobile device when you visit a website. Cookies are widely used by website owners to make their websites work efficiently, to provide reporting information, and to enable certain features or personalisation. We use both first-party cookies (set by VangelClip) and third-party cookies (set by our service partners).' },

@@ -17,7 +17,7 @@ export default function PrivacyPage() {
       <div style={{ maxWidth: 800, margin: '0 auto', padding: '60px 24px 100px' }}>
         <p style={{ fontSize: 12, color: '#8B8AA3', marginBottom: 8 }}>Last updated: May 2026</p>
         <h1 style={{ fontSize: 'clamp(28px,5vw,40px)', fontWeight: 800, marginBottom: 16 }}>Privacy Policy</h1>
-        <p style={{ fontSize: 15, color: '#8B8AA3', marginBottom: 48, lineHeight: 1.7 }}>VangelClip respects your privacy. This policy explains what data we collect, how we use it, and the choices available to you.</p>
+        <p style={{ fontSize: 15, color: '#8B8AA3', marginBottom: 48, lineHeight: 1.7 }}>VangelClip respects your privacy. This policy explains what data we collect, how we use it, and the choices available to you. VangelClip is operated by a company based in Nigeria and this policy is governed by the laws of the Federal Republic of Nigeria, including the Nigeria Data Protection Act (NDPA) 2023.</p>
 
         {[
           { title: '1. Information We Collect', body: 'We collect information you provide directly to us, including: account registration details (name, email address, password); payment information processed securely through our payment providers; content you upload or process through our Service; communications you send to us. We also collect certain information automatically when you use the Service, including usage data, device information, IP addresses, and cookie data as described in our Cookie Policy.' },
