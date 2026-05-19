@@ -1,11 +1,35 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { createServerClient } from "@supabase/ssr";
+import { cookies } from "next/headers";
 import { detectClips } from "@/lib/clipDetection";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
+
+async function getSessionUser() {
+  const cookieStore = await cookies();
+  const client = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() { return cookieStore.getAll(); },
+        setAll(cookiesToSet) {
+          try {
+            cookiesToSet.forEach(({ name, value, options }) =>
+              cookieStore.set(name, value, options)
+            );
+          } catch {}
+        },
+      },
+    }
+  );
+  const { data: { user }, error } = await client.auth.getUser();
+  return { user, error };
+}
 
 const PLAN_WINDOW_LIMITS: Record<string, number> = {
   free: 300,
@@ -18,7 +42,7 @@ const PLAN_WINDOW_LIMITS: Record<string, number> = {
 
 export interface ProcessRequest {
   videoUrl: string;
-  userId: string;
+  userId?: string;
   prompt?: string;
   numClips?: number;
   minDuration?: number;
@@ -31,14 +55,25 @@ export interface ProcessRequest {
 
 export async function POST(req: NextRequest) {
   try {
+    const { user, error: sessionError } = await getSessionUser();
+
+    if (sessionError || !user) {
+      console.error("[/api/process] Auth error:", sessionError?.message ?? "No session");
+      return NextResponse.json(
+        { error: "You must be logged in. Please sign in.", code: "UNAUTHORIZED" },
+        { status: 401 }
+      );
+    }
+
+    console.log("[/api/process] Authenticated user:", user.id);
+
     const body: ProcessRequest = await req.json();
-    const { videoUrl, userId } = body;
+    const { videoUrl } = body;
+    // Always use the verified session user — never trust userId from the body
+    const userId = user.id;
 
     if (!videoUrl) {
       return NextResponse.json({ error: "videoUrl is required" }, { status: 400 });
-    }
-    if (!userId) {
-      return NextResponse.json({ error: "userId is required" }, { status: 400 });
     }
     if (!process.env.OPENAI_API_KEY) {
       return NextResponse.json(

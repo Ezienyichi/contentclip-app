@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@supabase/supabase-js";
+import { createBrowserClient } from "@supabase/ssr";
 import DashboardLayout from "@/components/DashboardLayout";
 import { colors, gradients, radius } from "@/lib/tokens";
 
@@ -15,7 +15,7 @@ const PLAN_LIMITS: Record<string, number> = {
   agency: 5400,       // 90 min
 };
 
-const supabase = createClient(
+const supabase = createBrowserClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
@@ -557,6 +557,7 @@ export default function ImportPage() {
       const res = await fetch("/api/process", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           videoUrl,
           userId: user.id,
