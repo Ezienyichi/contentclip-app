@@ -1,9 +1,12 @@
 ﻿'use client';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Icon from './Icon';
 import { colors, gradients, radius } from '@/lib/tokens';
+import { createBrowserClient } from '@supabase/ssr';
+
+const ADMIN_EMAIL = 'adminvangelclip@gmail.com';
 const NAV = [
   { label: 'Home', icon: 'home', href: '/dashboard' },
   { label: 'Projects', icon: 'video_library', href: '/import' },
@@ -16,7 +19,18 @@ const NAV = [
 export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
+  const [isAdmin, setIsAdmin] = useState(false);
   const isActive = (href: string) => href === '/dashboard' ? pathname === '/dashboard' : pathname.startsWith(href);
+
+  useEffect(() => {
+    const supabase = createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setIsAdmin(user?.email === ADMIN_EMAIL);
+    });
+  }, []);
   const go = (href: string) => {
     if (href === '#signout') { router.push('/auth'); return; }
     if (href === '#') return;
@@ -57,6 +71,11 @@ export default function Sidebar() {
         </div>
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+        {isAdmin && (
+          <button onClick={() => router.push('/admin')} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 12px', borderRadius: '6px', background: 'rgba(124,58,237,0.1)', color: '#a78bfa', fontWeight: 600, fontSize: '13px', border: '1px solid rgba(124,58,237,0.3)', cursor: 'pointer', width: '100%', textAlign: 'left', fontFamily: "'Inter', sans-serif", marginBottom: '4px' }}>
+            <Icon name="admin_panel_settings" size={20} style={{ color: '#a78bfa' }} /><span>Admin Panel</span>
+          </button>
+        )}
         {[{ label: 'Support', icon: 'contact_support', href: '#' }, { label: 'Sign Out', icon: 'logout', href: '#signout' }].map((item) => (
           <button key={item.label} onClick={() => go(item.href)} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 12px', borderRadius: '6px', background: 'transparent', color: colors.onSurfaceVariant, fontWeight: 500, fontSize: '13px', border: 'none', cursor: 'pointer', width: '100%', textAlign: 'left', fontFamily: "'Inter', sans-serif" }}>
             <Icon name={item.icon} size={20} /><span>{item.label}</span>
