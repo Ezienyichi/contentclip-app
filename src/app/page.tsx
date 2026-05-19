@@ -13,7 +13,8 @@ const TESTIMONIALS = [
 const heroSlides = [
   {
     id: 0,
-    image: '/hero-1.jpg',
+    image: '/hero-1.webp',
+    fallbackImage: '/hero-1.jpg',
     objectPosition: 'center center',
     fallbackGradient: 'linear-gradient(135deg, #1a0800 0%, #2d1000 40%, #1a0033 100%)',
     category: 'VangelClip · Gospel',
@@ -26,7 +27,8 @@ const heroSlides = [
   },
   {
     id: 1,
-    image: '/hero-2.jpg',
+    image: '/hero-2.webp',
+    fallbackImage: '/hero-2.jpg',
     objectPosition: 'center top',
     fallbackGradient: 'linear-gradient(135deg, #050010 0%, #0d0021 40%, #1a0033 100%)',
     category: 'VangelClip · Education',
@@ -39,7 +41,8 @@ const heroSlides = [
   },
   {
     id: 2,
-    image: '/hero-3.jpg',
+    image: '/hero-3.webp',
+    fallbackImage: '/hero-3.jpg',
     objectPosition: 'center center',
     fallbackGradient: 'linear-gradient(135deg, #0d1a00 0%, #1a3300 40%, #2d5200 100%)',
     category: 'VangelClip · Inspiration',
@@ -62,6 +65,7 @@ export default function LandingPage() {
   const [heroPrev, setHeroPrev] = useState<number | null>(null);
   const [heroTransitioning, setHeroTransitioning] = useState(false);
   const [heroPaused, setHeroPaused] = useState(false);
+  const [heroImagesLoaded, setHeroImagesLoaded] = useState(false);
 
   const goToHeroSlide = useCallback((index: number) => {
     if (heroTransitioning || index === heroActive) return;
@@ -523,6 +527,17 @@ export default function LandingPage() {
           }
         `}</style>
 
+        {/* Skeleton — fades out once first image loads */}
+        <div style={{
+          position: 'absolute',
+          inset: 0,
+          background: 'linear-gradient(135deg, #0d0021 0%, #1a0a3a 100%)',
+          zIndex: 0,
+          transition: 'opacity 0.5s ease',
+          opacity: heroImagesLoaded ? 0 : 1,
+          pointerEvents: 'none',
+        }} />
+
         {/* ── SLIDES ── */}
         {heroSlides.map((slide, i) => (
           <div
@@ -537,13 +552,20 @@ export default function LandingPage() {
               className="vc-slide-fallback"
               style={{ background: slide.fallbackGradient }}
             />
-            <img
-              src={slide.image}
-              alt={slide.headlineRegular}
-              className="vc-slide-img"
-              style={{ position: 'absolute', inset: 0, objectPosition: slide.objectPosition }}
-              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-            />
+            <picture>
+              <source srcSet={slide.image} type="image/webp" />
+              <img
+                src={slide.fallbackImage}
+                alt={slide.headlineRegular}
+                className="vc-slide-img"
+                loading={i === 0 ? 'eager' : 'lazy'}
+                fetchPriority={i === 0 ? 'high' : 'auto'}
+                decoding={i === 0 ? 'sync' : 'async'}
+                style={{ position: 'absolute', inset: 0, objectPosition: slide.objectPosition }}
+                onLoad={i === 0 ? () => setHeroImagesLoaded(true) : undefined}
+                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+              />
+            </picture>
             <div className="vc-overlay-bottom" />
             <div className="vc-overlay-left" />
           </div>
@@ -636,13 +658,18 @@ export default function LandingPage() {
               inset: 0,
             }}
           />
-          <img
-            src={heroSlides[(heroActive + 1) % heroSlides.length].image}
-            alt="Next"
-            className="vc-peek-img"
-            style={{ position: 'absolute', inset: 0 }}
-            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-          />
+          <picture>
+            <source srcSet={heroSlides[(heroActive + 1) % heroSlides.length].image} type="image/webp" />
+            <img
+              src={heroSlides[(heroActive + 1) % heroSlides.length].fallbackImage}
+              alt="Next"
+              className="vc-peek-img"
+              loading="lazy"
+              decoding="async"
+              style={{ position: 'absolute', inset: 0 }}
+              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+            />
+          </picture>
           <div className="vc-peek-overlay" />
           <div className="vc-peek-label">Next →</div>
         </div>
