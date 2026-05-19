@@ -1,102 +1,711 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Icon from '@/components/Icon';
 import { colors, gradients, radius, shadows } from '@/lib/tokens';
+
 const TESTIMONIALS = [
   { name: 'Sarah Chen', role: 'Creator · 1.2M followers', text: 'VangelClip cut my editing time from 8 hours to 20 minutes.', avatar: 'S' },
   { name: 'Marcus Johnson', role: 'Podcast Host · Top 50', text: 'I paste my episode link and get 10 viral clips back.', avatar: 'M' },
   { name: 'Priya Sharma', role: 'Agency · 40+ clients', text: 'Handles what used to take a 5-person team.', avatar: 'P' },
 ];
+
+const heroSlides = [
+  {
+    id: 0,
+    image: '/hero-1.jpg',
+    objectPosition: 'center center',
+    fallbackGradient: 'linear-gradient(135deg, #1a0800 0%, #2d1000 40%, #1a0033 100%)',
+    category: 'VangelClip · Gospel',
+    headlineRegular: 'Spread the Word.',
+    headlineItalic: 'One Clip at a Time.',
+    description: 'Turn your sermons, songs and teachings into viral short clips for TikTok, Reels, and YouTube Shorts.',
+    ctaText: 'Start Clipping Free',
+    ctaLink: '/auth',
+    accentColor: '#f97316',
+  },
+  {
+    id: 1,
+    image: '/hero-2.jpg',
+    objectPosition: 'center top',
+    fallbackGradient: 'linear-gradient(135deg, #050010 0%, #0d0021 40%, #1a0033 100%)',
+    category: 'VangelClip · Education',
+    headlineRegular: 'Your Teaching,',
+    headlineItalic: 'Heard Worldwide.',
+    description: 'AI finds your most powerful moments and clips them automatically. No editing skills needed.',
+    ctaText: 'Try It Free',
+    ctaLink: '/auth',
+    accentColor: '#7c3aed',
+  },
+  {
+    id: 2,
+    image: '/hero-3.jpg',
+    objectPosition: 'center center',
+    fallbackGradient: 'linear-gradient(135deg, #0d1a00 0%, #1a3300 40%, #2d5200 100%)',
+    category: 'VangelClip · Inspiration',
+    headlineRegular: 'African Voices.',
+    headlineItalic: 'Global Reach.',
+    description: 'Built for African creators first. Gospel. Education. Motivation. World-class tools, African soul.',
+    ctaText: 'Join 50K Creators',
+    ctaLink: '/auth',
+    accentColor: '#10b981',
+  },
+];
+
 export default function LandingPage() {
   const router = useRouter();
   const [annual, setAnnual] = useState(false);
   const [showDemo, setShowDemo] = useState(false);
-  const [muted, setMuted] = React.useState(true);
-  const [iframeKey, setIframeKey] = React.useState(0);
-  const [menuOpen, setMenuOpen] = React.useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const [heroActive, setHeroActive] = useState(0);
+  const [heroPrev, setHeroPrev] = useState<number | null>(null);
+  const [heroTransitioning, setHeroTransitioning] = useState(false);
+  const [heroPaused, setHeroPaused] = useState(false);
+
+  const goToHeroSlide = useCallback((index: number) => {
+    if (heroTransitioning || index === heroActive) return;
+    setHeroPrev(heroActive);
+    setHeroTransitioning(true);
+    setHeroActive(index);
+    setTimeout(() => {
+      setHeroPrev(null);
+      setHeroTransitioning(false);
+    }, 800);
+  }, [heroActive, heroTransitioning]);
+
+  const nextHeroSlide = useCallback(() => {
+    goToHeroSlide((heroActive + 1) % heroSlides.length);
+  }, [heroActive, goToHeroSlide]);
+
+  useEffect(() => {
+    if (heroPaused) return;
+    const timer = setInterval(nextHeroSlide, 5000);
+    return () => clearInterval(timer);
+  }, [nextHeroSlide, heroPaused]);
+
   return (
     <div style={{ background: colors.background, color: colors.onSurface, fontFamily: "'Inter', sans-serif" }}>
 
-      {/* NAV */}
-      <nav style={{ position: 'sticky', top: 0, zIndex: 50, background: 'rgba(14,14,14,0.8)', backdropFilter: 'blur(12px)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 24px', borderBottom: '1px solid rgba(70,69,85,0.2)' }}>
-        <div style={{ cursor: 'pointer' }} onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-          <span style={{ fontSize: '22px', fontWeight: 800, color: '#ffffff', letterSpacing: '-0.5px', fontFamily: 'Arial Black, Arial, sans-serif' }}>Vangel<span style={{ color: '#7C3AED' }}>Clip</span></span>
-        </div>
-        <div className="nav-desktop" style={{ display: 'flex', alignItems: 'center', gap: '32px', fontSize: '14px', fontWeight: 500 }}>
-          <a href="#features" style={{ color: colors.onSurfaceVariant, textDecoration: 'none' }}>Features</a>
-          <a href="#workflow" style={{ color: colors.onSurfaceVariant, textDecoration: 'none' }}>Workflow</a>
-          <a href="#pricing" style={{ color: colors.onSurfaceVariant, textDecoration: 'none' }}>Pricing</a>
-          <a href="/about" style={{ color: colors.onSurfaceVariant, textDecoration: 'none' }}>About</a>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <button onClick={() => router.push('/auth')} className="nav-signin" style={{ background: 'none', border: 'none', color: colors.onSurfaceVariant, fontSize: '14px', fontWeight: 500, cursor: 'pointer', fontFamily: "'Inter', sans-serif" }}>Sign In</button>
-          <button onClick={() => router.push('/auth')} className="nav-cta" style={{ background: '#fff', color: '#000', fontSize: '13px', fontWeight: 700, padding: '8px 18px', borderRadius: radius.md, border: 'none', cursor: 'pointer' }}>Start Free</button>
-          <button className="hamburger" onClick={() => setMenuOpen(o => !o)} aria-label="Toggle menu">
-            <span /><span /><span />
-          </button>
-        </div>
-      </nav>
-      {/* Mobile menu */}
-      <div className={`mobile-menu${menuOpen ? ' open' : ''}`}>
-        <a href="/#features" onClick={() => setMenuOpen(false)}>Features</a>
-        <a href="/#workflow" onClick={() => setMenuOpen(false)}>Workflow</a>
-        <a href="/pricing" onClick={() => setMenuOpen(false)}>Pricing</a>
-        <a href="/about" onClick={() => setMenuOpen(false)}>About</a>
-        <a href="/about#blog" onClick={() => setMenuOpen(false)}>Blog</a>
-        <a href="/about#support" onClick={() => setMenuOpen(false)}>Support</a>
-        <a href="/auth" onClick={() => setMenuOpen(false)}>Sign In</a>
-        <a href="/auth" onClick={() => setMenuOpen(false)} style={{ background: 'linear-gradient(135deg,#7c3aed,#5b21b6)', borderRadius: '10px', textAlign: 'center', marginTop: '8px', color: '#fff' }}>Start Free</a>
-      </div>
+      {/* ══════════════════════════════════════════════════════════
+          HERO — cinematic full-screen carousel with embedded nav
+          ══════════════════════════════════════════════════════════ */}
+      <section
+        className="vc-hero"
+        onMouseEnter={() => setHeroPaused(true)}
+        onMouseLeave={() => setHeroPaused(false)}
+      >
+        <style>{`
+          /* ── HERO SECTION ── */
+          .vc-hero {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+            min-height: 600px;
+            overflow: hidden;
+            background: #050010;
+          }
 
-      {/* HERO — video bg, overflow hidden, dark fallback */}
-      <section className="hero-section-wrap" style={{ position: 'relative', width: '100%', minHeight: '100vh', display: 'flex', alignItems: 'center', overflow: 'hidden', background: '#0a0014' }}>
-        {/* YouTube background — contained inside section via overflow:hidden */}
-        <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '177.78vh', minWidth: '100%', height: '56.25vw', minHeight: '100%', zIndex: 0, pointerEvents: 'none', overflow: 'hidden' }}>
-          <iframe
-            key={iframeKey}
-            src={`https://www.youtube.com/embed/ifIR8cdrbkY?autoplay=1&mute=${muted ? 1 : 0}&loop=1&playlist=ifIR8cdrbkY&controls=0&showinfo=0&rel=0&modestbranding=1&playsinline=1&iv_load_policy=3&disablekb=1`}
-            style={{ position: 'absolute', top: '-80px', left: 0, width: '100%', height: 'calc(100% + 160px)', border: 'none', pointerEvents: 'none' }}
-            allow="autoplay; encrypted-media"
-            title="Hero background video"
-          />
-          {/* Cover strip — hides YouTube title bar at top */}
-          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '80px', background: '#0a0014', zIndex: 2, pointerEvents: 'none' }} />
-          {/* Cover strip — hides YouTube bar at bottom */}
-          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '80px', background: '#0a0014', zIndex: 2, pointerEvents: 'none' }} />
+          /* Full-screen slide backgrounds */
+          .vc-slide {
+            position: absolute;
+            inset: 0;
+            transition: opacity 0.8s ease-in-out;
+          }
+          .vc-slide-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center center;
+            display: block;
+          }
+          .vc-slide-fallback {
+            width: 100%;
+            height: 100%;
+            display: block;
+          }
+
+          /* Gradient overlays */
+          .vc-overlay-bottom {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(
+              to top,
+              rgba(5,0,16,0.95) 0%,
+              rgba(5,0,16,0.75) 25%,
+              rgba(5,0,16,0.4) 55%,
+              rgba(5,0,16,0.1) 100%
+            );
+          }
+          .vc-overlay-left {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(
+              to right,
+              rgba(5,0,16,0.85) 0%,
+              rgba(5,0,16,0.5) 35%,
+              rgba(5,0,16,0.15) 65%,
+              transparent 100%
+            );
+          }
+
+          /* Navbar */
+          .vc-nav {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 20;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 24px 60px;
+          }
+          .vc-logo {
+            font-size: 22px;
+            font-weight: 800;
+            color: #ffffff;
+            letter-spacing: -0.5px;
+            text-decoration: none;
+            font-family: 'Arial Black', Arial, sans-serif;
+            flex-shrink: 0;
+          }
+          .vc-logo em { color: #7c3aed; font-style: normal; }
+          .vc-nav-center {
+            display: flex;
+            gap: 36px;
+            align-items: center;
+          }
+          .vc-nav-center a {
+            color: rgba(255,255,255,0.7);
+            font-size: 14px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: color 0.2s;
+            letter-spacing: 0.01em;
+          }
+          .vc-nav-center a:hover { color: #ffffff; }
+          .vc-nav-right {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+          }
+          .vc-btn-ghost {
+            padding: 8px 20px;
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 100px;
+            color: #ffffff;
+            font-size: 13px;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            font-family: 'Inter', sans-serif;
+          }
+          .vc-btn-ghost:hover {
+            border-color: rgba(255,255,255,0.6);
+            background: rgba(255,255,255,0.06);
+          }
+          .vc-btn-solid {
+            padding: 8px 22px;
+            border: none;
+            border-radius: 100px;
+            background: linear-gradient(135deg, #7c3aed, #5b21b6);
+            color: #ffffff;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 16px rgba(124,58,237,0.4);
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            font-family: 'Inter', sans-serif;
+          }
+          .vc-btn-solid:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 24px rgba(124,58,237,0.55);
+          }
+
+          /* Hamburger */
+          .vc-hamburger {
+            display: none;
+            flex-direction: column;
+            gap: 5px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px;
+          }
+          .vc-hamburger span {
+            width: 22px;
+            height: 2px;
+            background: #ffffff;
+            border-radius: 2px;
+            display: block;
+          }
+
+          /* Mobile menu */
+          .vc-mobile-menu {
+            display: none;
+            position: fixed;
+            top: 72px;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(5,0,16,0.98);
+            z-index: 999;
+            flex-direction: column;
+            padding: 32px 24px;
+            gap: 4px;
+            overflow-y: auto;
+          }
+          .vc-mobile-menu.open { display: flex; }
+          .vc-mobile-menu a {
+            color: rgba(255,255,255,0.85);
+            font-size: 18px;
+            font-weight: 600;
+            padding: 16px 0;
+            border-bottom: 1px solid rgba(124,58,237,0.15);
+            text-decoration: none;
+            display: block;
+            font-family: 'Inter', sans-serif;
+            transition: color 0.15s;
+          }
+          .vc-mobile-menu a:hover { color: #a78bfa; }
+
+          /* Hero content wrapper */
+          .vc-content {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 10;
+            padding: 0 60px 60px;
+            display: flex;
+            flex-direction: column;
+          }
+
+          /* Top-left description */
+          .vc-top-desc {
+            position: absolute;
+            top: 100px;
+            left: 60px;
+            max-width: 280px;
+            z-index: 10;
+          }
+          .vc-top-desc p {
+            font-size: 13px;
+            line-height: 1.7;
+            color: rgba(255,255,255,0.6);
+            font-weight: 400;
+            letter-spacing: 0.01em;
+            transition: opacity 0.6s ease;
+          }
+
+          /* Slide numbers */
+          .vc-slide-numbers {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+          }
+          .vc-slide-num {
+            font-size: 11px;
+            font-weight: 600;
+            color: rgba(255,255,255,0.35);
+            letter-spacing: 0.05em;
+            cursor: pointer;
+            padding: 4px 8px;
+            transition: color 0.3s;
+            position: relative;
+            background: none;
+            border: none;
+            font-family: 'Inter', sans-serif;
+          }
+          .vc-slide-num.active { color: #ffffff; }
+          .vc-slide-num::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 8px;
+            right: 8px;
+            height: 1px;
+            background: rgba(255,255,255,0.2);
+            transform: scaleX(0);
+            transition: transform 0.3s;
+          }
+          .vc-slide-num.active::after {
+            transform: scaleX(1);
+            background: #7c3aed;
+          }
+
+          /* Category label */
+          .vc-category {
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+            transition: opacity 0.5s ease;
+          }
+
+          /* Headline */
+          .vc-headline {
+            margin: 0 0 20px;
+            transition: opacity 0.5s ease, transform 0.5s ease;
+          }
+          .vc-headline-regular {
+            display: block;
+            font-size: clamp(44px, 6.5vw, 88px);
+            font-weight: 700;
+            color: #ffffff;
+            line-height: 1.05;
+            letter-spacing: -0.02em;
+            font-family: Georgia, 'Times New Roman', serif;
+          }
+          .vc-headline-italic {
+            display: block;
+            font-size: clamp(44px, 6.5vw, 88px);
+            font-weight: 300;
+            font-style: italic;
+            color: rgba(255,255,255,0.85);
+            line-height: 1.05;
+            letter-spacing: -0.01em;
+            font-family: Georgia, 'Times New Roman', serif;
+          }
+
+          /* Divider */
+          .vc-divider {
+            width: 100%;
+            height: 1px;
+            background: rgba(255,255,255,0.12);
+            margin-bottom: 20px;
+          }
+
+          /* Bottom row */
+          .vc-bottom-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+          }
+
+          /* CTA link */
+          .vc-cta {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            letter-spacing: 0.02em;
+            transition: color 0.2s, gap 0.2s;
+            font-family: 'Inter', sans-serif;
+          }
+          .vc-cta:hover { color: #ffffff; gap: 16px; }
+          .vc-cta-arrow {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 1px solid rgba(255,255,255,0.3);
+            font-size: 16px;
+            transition: all 0.2s;
+            flex-shrink: 0;
+          }
+          .vc-cta:hover .vc-cta-arrow {
+            background: #7c3aed;
+            border-color: #7c3aed;
+          }
+
+          /* Peek circle — right edge */
+          .vc-peek {
+            position: absolute;
+            right: -80px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            overflow: hidden;
+            cursor: pointer;
+            z-index: 15;
+            transition: right 0.4s cubic-bezier(0.34,1.4,0.64,1),
+                        transform 0.4s cubic-bezier(0.34,1.4,0.64,1),
+                        box-shadow 0.3s;
+            box-shadow:
+              0 0 0 2px rgba(255,255,255,0.15),
+              0 0 0 4px rgba(124,58,237,0.2),
+              0 20px 60px rgba(0,0,0,0.5);
+          }
+          .vc-peek:hover {
+            right: -60px;
+            transform: translateY(-50%) scale(1.05);
+            box-shadow:
+              0 0 0 2px rgba(255,255,255,0.3),
+              0 0 0 4px rgba(124,58,237,0.4),
+              0 24px 70px rgba(0,0,0,0.6);
+          }
+          .vc-peek-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center top;
+            display: block;
+            transition: transform 0.4s ease;
+          }
+          .vc-peek:hover .vc-peek-img { transform: scale(1.08); }
+          .vc-peek-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(5,0,16,0.2);
+            transition: background 0.3s;
+          }
+          .vc-peek:hover .vc-peek-overlay { background: rgba(5,0,16,0.05); }
+          .vc-peek-label {
+            position: absolute;
+            bottom: 16px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 10px;
+            font-weight: 600;
+            color: rgba(255,255,255,0.8);
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            font-family: 'Inter', sans-serif;
+          }
+
+          /* Progress bar */
+          .vc-progress {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 2px;
+            background: linear-gradient(to right, #7c3aed, #a78bfa);
+            z-index: 20;
+          }
+
+          /* ── RESPONSIVE ── */
+          @media (max-width: 1024px) {
+            .vc-nav { padding: 20px 32px; }
+            .vc-content { padding: 0 32px 48px; }
+            .vc-top-desc { left: 32px; top: 90px; max-width: 220px; }
+            .vc-peek { width: 160px; height: 160px; right: -70px; }
+          }
+          @media (max-width: 768px) {
+            .vc-nav-center { display: none; }
+            .vc-hamburger { display: flex; }
+            .vc-nav { padding: 18px 20px; }
+            .vc-content { padding: 0 20px 40px; }
+            .vc-top-desc { display: none; }
+            .vc-headline-regular,
+            .vc-headline-italic { font-size: clamp(32px, 8vw, 52px) !important; }
+            .vc-peek {
+              width: 100px;
+              height: 100px;
+              right: -40px;
+              top: auto;
+              bottom: 110px;
+              transform: none;
+            }
+            .vc-peek:hover { right: -20px; transform: scale(1.05); }
+            .vc-hero { height: 85vh; min-height: 550px; }
+          }
+          @media (max-width: 480px) {
+            .vc-peek { display: none; }
+            .vc-content { padding: 0 16px 32px; }
+          }
+        `}</style>
+
+        {/* ── SLIDES ── */}
+        {heroSlides.map((slide, i) => (
+          <div
+            key={slide.id}
+            className="vc-slide"
+            style={{
+              opacity: i === heroActive ? 1 : 0,
+              zIndex: i === heroActive ? 1 : 0,
+            }}
+          >
+            <div
+              className="vc-slide-fallback"
+              style={{ background: slide.fallbackGradient }}
+            />
+            <img
+              src={slide.image}
+              alt={slide.headlineRegular}
+              className="vc-slide-img"
+              style={{ position: 'absolute', inset: 0, objectPosition: slide.objectPosition }}
+              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+            />
+            <div className="vc-overlay-bottom" />
+            <div className="vc-overlay-left" />
+          </div>
+        ))}
+
+        {/* ── PROGRESS BAR ── */}
+        <div
+          className="vc-progress"
+          key={heroActive}
+          style={{
+            animation: heroPaused ? 'none' : 'vcProgress 5s linear forwards',
+          }}
+        />
+        <style>{`
+          @keyframes vcProgress {
+            from { width: 0%; }
+            to   { width: 100%; }
+          }
+        `}</style>
+
+        {/* ── NAVBAR ── */}
+        <nav className="vc-nav">
+          <a href="/" className="vc-logo">
+            Vangel<em>Clip</em>
+          </a>
+          <div className="vc-nav-center">
+            <a href="/#features">Features</a>
+            <a href="/#workflow">Workflow</a>
+            <a href="/pricing">Pricing</a>
+            <a href="/about">About</a>
+          </div>
+          <div className="vc-nav-right">
+            <a href="/auth" className="vc-btn-ghost">Sign In</a>
+            <a href="/auth" className="vc-btn-solid">Start Free</a>
+            <button
+              className="vc-hamburger"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label="Toggle menu"
+            >
+              <span /><span /><span />
+            </button>
+          </div>
+        </nav>
+
+        {/* ── MOBILE MENU ── */}
+        <div className={`vc-mobile-menu${mobileMenuOpen ? ' open' : ''}`}>
+          <a href="/#features" onClick={() => setMobileMenuOpen(false)}>Features</a>
+          <a href="/#workflow" onClick={() => setMobileMenuOpen(false)}>Workflow</a>
+          <a href="/pricing" onClick={() => setMobileMenuOpen(false)}>Pricing</a>
+          <a href="/about" onClick={() => setMobileMenuOpen(false)}>About</a>
+          <a href="/about#blog" onClick={() => setMobileMenuOpen(false)}>Blog</a>
+          <a href="/about#support" onClick={() => setMobileMenuOpen(false)}>Support</a>
+          <a href="/auth" onClick={() => setMobileMenuOpen(false)}>Sign In</a>
+          <a
+            href="/auth"
+            onClick={() => setMobileMenuOpen(false)}
+            style={{
+              background: 'linear-gradient(135deg,#7c3aed,#5b21b6)',
+              borderRadius: '10px',
+              textAlign: 'center',
+              marginTop: '8px',
+              color: '#fff',
+            }}
+          >
+            Start Free
+          </a>
         </div>
-        {/* Overlay — stronger on mobile via CSS class */}
-        <div className="hero-overlay" style={{ position: 'absolute', inset: 0, zIndex: 1 }} />
-        {/* Purple glow bottom-left */}
-        <div style={{ position: 'absolute', bottom: 0, left: 0, width: '50%', height: '300px', background: 'radial-gradient(ellipse at left bottom, rgba(124,58,237,0.25) 0%, transparent 70%)', zIndex: 1 }} />
-        {/* Hero text content */}
-        <div className="hero-content" style={{ position: 'relative', zIndex: 2 }}>
-          <div className="hero-badge" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '4px 14px', borderRadius: radius.full, background: colors.surfaceContainerHighest, border: '1px solid ' + colors.outlineVariant, color: colors.primary, fontSize: 12, fontWeight: 600, marginBottom: 32 }}>
-            <Icon name="verified" size={14} /> New: AI Reframe for Shorts
-          </div>
-          <h1 className="hero-headline">
-            Your Message. <span style={{ color: colors.primary }}>One Clip</span> at a Time.
-          </h1>
-          <p className="hero-subheadline">VangelClip uses AI to turn your sermons, songs, teachings, and talks into viral short clips for TikTok, Reels, and YouTube Shorts. Gospel. Education. Inspiration. Built for African creators. Made for the world.</p>
-          <p className="hero-tags">Gospel &middot; Education &middot; Inspiration &middot; African-First &middot; World-Class</p>
-          <div className="hero-buttons">
-            <button onClick={() => router.push('/auth')} style={{ background: gradients.primary, color: '#FAF7FF', fontWeight: 700, padding: '16px 32px', borderRadius: radius.xl, border: 'none', cursor: 'pointer', fontSize: 15, boxShadow: shadows.glowStrong, fontFamily: "'Inter', sans-serif" }}>Start Clipping Free</button>
-            <button onClick={() => setShowDemo(true)} style={{ background: colors.surfaceContainer, color: colors.onSurface, border: '1px solid ' + colors.outlineVariant, fontWeight: 700, padding: '16px 32px', borderRadius: radius.xl, cursor: 'pointer', fontSize: 15, display: 'flex', alignItems: 'center', gap: 8, fontFamily: "'Inter', sans-serif" }}><Icon name="play_circle" filled size={20} /> View Demo</button>
-          </div>
-          <div className="stats-grid">
-            {[{ v: '50K+', l: 'Creators' }, { v: '2M+', l: 'Clips' }, { v: '8.2B', l: 'Views' }, { v: '94%', l: 'Satisfaction' }].map(s => (
-              <div key={s.l}><p style={{ fontSize: 28, fontWeight: 800, color: '#fff' }}>{s.v}</p><p style={{ fontSize: 12, color: colors.onSurfaceVariant }}>{s.l}</p></div>
+
+        {/* ── TOP-LEFT DESCRIPTION ── */}
+        <div className="vc-top-desc">
+          <p style={{ opacity: heroTransitioning ? 0 : 1 }}>
+            {heroSlides[heroActive].description}
+          </p>
+        </div>
+
+        {/* ── PEEK CIRCLE (next slide preview) ── */}
+        <div
+          className="vc-peek"
+          onClick={nextHeroSlide}
+          role="button"
+          aria-label="Next slide"
+          title="Next slide"
+        >
+          <div
+            style={{
+              width: '100%',
+              height: '100%',
+              background: heroSlides[(heroActive + 1) % heroSlides.length].fallbackGradient,
+              position: 'absolute',
+              inset: 0,
+            }}
+          />
+          <img
+            src={heroSlides[(heroActive + 1) % heroSlides.length].image}
+            alt="Next"
+            className="vc-peek-img"
+            style={{ position: 'absolute', inset: 0 }}
+            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+          />
+          <div className="vc-peek-overlay" />
+          <div className="vc-peek-label">Next →</div>
+        </div>
+
+        {/* ── MAIN CONTENT — bottom-left stack ── */}
+        <div className="vc-content">
+
+          {/* Slide numbers */}
+          <div className="vc-slide-numbers">
+            {heroSlides.map((_, i) => (
+              <button
+                key={i}
+                className={`vc-slide-num${i === heroActive ? ' active' : ''}`}
+                onClick={() => goToHeroSlide(i)}
+                aria-label={`Go to slide ${i + 1}`}
+              >
+                {String(i + 1).padStart(2, '0')}
+              </button>
             ))}
           </div>
+
+          {/* Category label */}
+          <div
+            className="vc-category"
+            style={{
+              color: heroSlides[heroActive].accentColor,
+              opacity: heroTransitioning ? 0 : 1,
+            }}
+          >
+            {heroSlides[heroActive].category}
+          </div>
+
+          {/* Headline */}
+          <h1
+            className="vc-headline"
+            style={{
+              opacity: heroTransitioning ? 0 : 1,
+              transform: heroTransitioning ? 'translateY(12px)' : 'translateY(0)',
+            }}
+          >
+            <span className="vc-headline-regular">
+              {heroSlides[heroActive].headlineRegular}
+            </span>
+            <span className="vc-headline-italic">
+              {heroSlides[heroActive].headlineItalic}
+            </span>
+          </h1>
+
+          {/* Divider */}
+          <div className="vc-divider" />
+
+          {/* Bottom row — CTA */}
+          <div className="vc-bottom-row">
+            <a
+              href={heroSlides[heroActive].ctaLink}
+              className="vc-cta"
+            >
+              {heroSlides[heroActive].ctaText}
+              <span className="vc-cta-arrow">→</span>
+            </a>
+          </div>
+
         </div>
-        {/* Mute toggle */}
-        <button
-          onClick={() => { setMuted(m => !m); setIframeKey(k => k + 1); }}
-          style={{ position: 'absolute', bottom: '32px', right: '32px', zIndex: 10, background: 'rgba(124,58,237,0.4)', border: '1px solid rgba(124,58,237,0.6)', borderRadius: '50%', width: '44px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#ffffff', fontSize: '18px', backdropFilter: 'blur(8px)', transition: 'background 0.2s' }}
-          aria-label={muted ? 'Unmute video' : 'Mute video'}
-        >
-          {muted ? '🔇' : '🔊'}
-        </button>
       </section>
 
       {/* SOCIAL PROOF */}
@@ -345,13 +954,13 @@ export default function LandingPage() {
           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '80px', background: '#0a0014', zIndex: 2, pointerEvents: 'none' }} />
           <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '80px', background: '#0a0014', zIndex: 2, pointerEvents: 'none' }} />
         </div>
-        {/* Dark overlay — heavier than hero so text is readable */}
+        {/* Dark overlay */}
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(5,0,20,0.92) 0%, rgba(10,0,40,0.96) 60%, rgba(5,0,15,0.98) 100%)', zIndex: 1 }} />
         {/* Purple glow top center */}
         <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: '60%', height: '200px', background: 'radial-gradient(ellipse at center top, rgba(124,58,237,0.18) 0%, transparent 70%)', zIndex: 1, pointerEvents: 'none' }} />
         {/* Footer content */}
         <div style={{ position: 'relative', zIndex: 2, maxWidth: 1100, margin: '0 auto', padding: '60px 40px 40px' }}>
-          {/* Decorative top border — film strip gradient */}
+          {/* Decorative top border */}
           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '3px', background: 'linear-gradient(to right, transparent, rgba(124,58,237,0.6), rgba(6,182,212,0.4), rgba(236,72,153,0.3), transparent)', zIndex: 3 }} />
           {/* Left edge film strip */}
           <div style={{ position: 'absolute', top: 0, left: 0, width: '48px', height: '100%', zIndex: 2, pointerEvents: 'none' }}>
@@ -437,112 +1046,12 @@ export default function LandingPage() {
       )}
 
       <style>{`
-        /* ─── HERO ───────────────────────────────── */
-        .hero-overlay {
-          background: linear-gradient(to right, rgba(5,0,20,0.92) 0%, rgba(10,0,40,0.85) 40%, rgba(10,0,40,0.45) 70%, rgba(0,0,0,0.15) 100%);
-        }
-        .hero-content {
-          max-width: 620px;
-          padding: 100px 24px 80px 80px;
-          text-align: left;
-        }
-        .hero-headline {
-          font-size: clamp(36px, 7vw, 72px);
-          font-weight: 800;
-          letter-spacing: -0.03em;
-          line-height: 1.08;
-          margin-bottom: 20px;
-          color: #ffffff;
-        }
-        .hero-subheadline {
-          font-size: clamp(15px, 2.2vw, 18px);
-          color: rgba(255,255,255,0.82);
-          max-width: 520px;
-          margin-bottom: 16px;
-          line-height: 1.7;
-        }
-        .hero-tags {
-          font-size: clamp(11px, 1.8vw, 13px);
-          color: rgba(255,255,255,0.5);
-          margin-bottom: 32px;
-          letter-spacing: 0.04em;
-        }
-        .hero-buttons {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 12px;
-          align-items: center;
-          margin-bottom: 48px;
-        }
-
-        /* ─── STATS ──────────────────────────────── */
-        .stats-grid {
-          display: grid;
-          grid-template-columns: repeat(4, 1fr);
-          gap: 24px;
-          max-width: 560px;
-          margin-bottom: 60px;
-        }
-
         /* ─── FOOTER GRID ────────────────────────── */
         .footer-inner {
           display: grid;
           grid-template-columns: 2.5fr 1fr 1fr 1fr;
           gap: 40px;
         }
-
-        /* ─── NAV ────────────────────────────────── */
-        .nav-desktop { display: flex; gap:28px; align-items:center; }
-        .nav-signin { display: inline; }
-        .nav-cta { display: inline; }
-
-        /* ─── HAMBURGER ──────────────────────────── */
-        .hamburger {
-          display: none;
-          flex-direction: column;
-          gap: 5px;
-          background: none;
-          border: none;
-          cursor: pointer;
-          padding: 6px;
-        }
-        .hamburger span {
-          display: block;
-          width: 22px;
-          height: 2px;
-          background: #fff;
-          border-radius: 2px;
-          transition: transform 0.2s, opacity 0.2s;
-        }
-
-        /* ─── MOBILE MENU ────────────────────────── */
-        .mobile-menu {
-          display: none;
-          flex-direction: column;
-          gap: 4px;
-          position: fixed;
-          top: 64px;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: rgba(8,0,20,0.97);
-          padding: 32px 24px;
-          z-index: 999;
-          overflow-y: auto;
-        }
-        .mobile-menu.open { display: flex; }
-        .mobile-menu a {
-          color: rgba(255,255,255,0.85);
-          font-size: 18px;
-          font-weight: 600;
-          padding: 16px 0;
-          border-bottom: 1px solid rgba(124,58,237,0.15);
-          text-decoration: none;
-          display: block;
-          font-family: 'Inter', sans-serif;
-          transition: color 0.15s;
-        }
-        .mobile-menu a:hover { color: #a78bfa; }
 
         /* ─── DECORATIVE SECTIONS ────────────────── */
         .deco-section { position: relative; overflow: hidden; }
@@ -564,23 +1073,6 @@ export default function LandingPage() {
 
         /* ─── TABLET 768px ───────────────────────── */
         @media (max-width: 768px) {
-          .nav-desktop { display: none !important; }
-          .nav-signin        { display: none !important; }
-          .nav-cta           { display: none !important; }
-          .hamburger         { display: flex !important; }
-          .hero-overlay {
-            background: linear-gradient(to right, rgba(5,0,20,0.95) 0%, rgba(10,0,40,0.92) 50%, rgba(10,0,40,0.75) 100%) !important;
-          }
-          .hero-content {
-            padding: 100px 20px 60px 20px !important;
-            max-width: 100% !important;
-          }
-          .hero-buttons { flex-direction: column; align-items: flex-start; }
-          .hero-buttons > * { width: 100% !important; justify-content: center; }
-          .stats-grid {
-            grid-template-columns: repeat(2,1fr) !important;
-            max-width: 100% !important;
-          }
           .testimonials-grid { grid-template-columns: repeat(2,1fr) !important; }
         }
 
@@ -592,19 +1084,6 @@ export default function LandingPage() {
           .reel-grid        { grid-template-columns: repeat(2,1fr) !important; }
           .testimonials-grid { grid-template-columns: 1fr !important; }
           .footer-inner     { grid-template-columns: 1fr !important; gap: 24px !important; padding: 32px 24px 24px !important; }
-          /* ─── HERO MOBILE MINIMIZE ─── */
-          .hero-section-wrap { align-items: flex-end !important; min-height: 85vh !important; }
-          .hero-content      { padding-bottom: 48px !important; padding-top: 0 !important; }
-          .hero-headline     { font-size: 30px !important; }
-          .hero-subheadline  { font-size: 14px !important; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
-          .hero-tags         { display: none !important; }
-          .hero-badge        { display: none !important; }
-        }
-
-        /* ─── MOBILE 480px ───────────────────────── */
-        @media (max-width: 480px) {
-          .hero-content { padding: 60px 16px 40px 16px !important; }
-          .stats-grid   { gap: 16px !important; }
         }
       `}</style>
     </div>
