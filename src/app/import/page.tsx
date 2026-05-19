@@ -648,7 +648,7 @@ export default function ImportPage() {
                 }),
               }).catch(() => {});
             } else if (event.status === "failed") {
-              setError((event.error_message as string) ?? "Reka job failed");
+              setError((event.error_message as string) ?? "Processing failed");
               setLoading(false);
             }
           } catch {
@@ -722,7 +722,7 @@ export default function ImportPage() {
   return (
     <DashboardLayout
       title="Import Video"
-      subtitle="Paste a YouTube URL and Reka AI will extract your best moments."
+      subtitle="Paste a YouTube URL and AI will extract your best moments."
     >
       <div style={{ maxWidth: 900 }}>
         <div
@@ -920,9 +920,13 @@ export default function ImportPage() {
                     }}
                   />
                   {rekaStatus === "preprocessing"
-                    ? "⚡ Downloading and analysing your video..."
+                    ? "⚡ Downloading audio from your video..."
+                    : rekaStatus === "transcribing"
+                    ? "🎙 Transcribing with AI..."
+                    : rekaStatus === "analyzing"
+                    ? "🧠 Analysing for viral moments..."
                     : rekaStatus === "processing"
-                    ? "🎬 Finding the best moments..."
+                    ? "🎬 Ranking clips by virality score..."
                     : rekaStatus === "completed"
                     ? "✅ Your clips are ready!"
                     : "⏳ Processing... this takes 2-4 minutes. Please wait."}
