@@ -17,6 +17,7 @@ export default function AuthPage() {
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [resendLoading, setResendLoading] = useState(false);
   const [resendDone, setResendDone] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -45,45 +46,79 @@ export default function AuthPage() {
     e.preventDefault();
     setLoading(true);
     setError('');
-    const { error: err } = await supabase.auth.signInWithPassword({ email, password });
-    if (err) {
-      setError(err.message);
+
+    try {
+      const { data, error: err } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      });
+
+      if (err) {
+        if (err.message.includes('Email not confirmed')) {
+          setError('Please check your email and confirm your account first.');
+        } else if (err.message.includes('Invalid login credentials')) {
+          setError('Incorrect email or password. Please try again.');
+        } else {
+          setError(err.message);
+        }
+        return;
+      }
+
+      if (data?.user) {
+        router.push('/dashboard');
+      }
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to sign in');
+    } finally {
       setLoading(false);
-      return;
     }
-    router.push('/dashboard');
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
-    const { data, error: err } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { full_name: name },
-        emailRedirectTo: `${window.location.origin}/dashboard`,
-      },
-    });
-    if (err) {
-      setError(err.message);
-      setLoading(false);
-      return;
-    }
-    // Create profile row
-    if (data.user) {
-      await supabase.from('profiles').upsert({
-        id: data.user.id,
-        email,
-        full_name: name,
-        plan: 'free',
-        credits: 720,
-        created_at: new Date().toISOString(),
+    setSuccess('');
+
+    try {
+      const { data, error: err } = await supabase.auth.signUp({
+        email: email.trim(),
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/api/auth/callback`,
+          data: { full_name: name || '' },
+        },
       });
+
+      if (err) {
+        setError(err.message);
+        return;
+      }
+
+      if (data?.user?.identities?.length === 0) {
+        setError('An account with this email already exists. Please sign in instead.');
+        return;
+      }
+
+      // Create profile row for new users
+      if (data.user) {
+        await supabase.from('profiles').upsert({
+          id: data.user.id,
+          email: email.trim(),
+          full_name: name,
+          plan: 'free',
+          credits: 720,
+          created_at: new Date().toISOString(),
+        });
+      }
+
+      setSuccess('Account created! Check your email to confirm your account before signing in.');
+      setView('verify');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to create account');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
-    setView('verify');
   };
 
   const handleForgotPassword = async (e: React.FormEvent) => {
@@ -110,21 +145,40 @@ export default function AuthPage() {
   };
 
   // SUPABASE DASHBOARD SETUP REQUIRED:
-  // 1. Authentication → URL Configuration → Redirect URLs → add:
+  // 1. Authentication → URL Configuration → Site URL:
+  //    https://contentclip-app-w2hf.vercel.app
+  // 2. Authentication → URL Configuration → Redirect URLs — add ALL:
   //    http://localhost:3000/api/auth/callback
-  //    https://hookclip-app-w2hf.vercel.app/api/auth/callback
-  // 2. Authentication → Providers → Google → enable with valid Client ID & Secret
-  const handleGoogle = async () => {
+  //    https://contentclip-app-w2hf.vercel.app/api/auth/callback
+  //    https://*.vercel.app/api/auth/callback
+  // 3. Authentication → Providers → Google → ENABLED with valid Client ID & Secret
+  //    - Go to console.cloud.google.com → create OAuth 2.0 credentials
+  //    - Add authorised redirect URI: https://[project-ref].supabase.co/auth/v1/callback
+  //    - Copy Client ID and Secret to Supabase
+  // 4. Authentication → Settings → Email confirmations:
+  //    Turn OFF for testing (turn back ON before going live)
+  const handleGoogleSignIn = async () => {
     setLoading(true);
     setError('');
-    const { error: err } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/api/auth/callback`,
-      },
-    });
-    if (err) {
-      setError(err.message);
+
+    try {
+      const { error: err } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/api/auth/callback`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
+        },
+      });
+
+      if (err) {
+        setError(err.message);
+      }
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to sign in with Google');
+    } finally {
       setLoading(false);
     }
   };
@@ -262,14 +316,36 @@ export default function AuthPage() {
           </p>
 
           {/* Google */}
-          <button onClick={handleGoogle} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, padding: 12, borderRadius: radius.md, background: colors.surfaceContainerHigh, border: `1px solid ${colors.outlineVariant}`, color: colors.onSurface, fontWeight: 600, fontSize: 14, cursor: 'pointer', marginBottom: 24, fontFamily: "'Inter',sans-serif" }}>
+          <button
+            onClick={handleGoogleSignIn}
+            disabled={loading}
+            type="button"
+            style={{
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 10,
+              padding: '12px 16px',
+              borderRadius: radius.md,
+              background: 'rgba(255,255,255,0.06)',
+              border: '1px solid rgba(255,255,255,0.2)',
+              color: '#ffffff',
+              fontWeight: 600,
+              fontSize: 15,
+              cursor: loading ? 'not-allowed' : 'pointer',
+              marginBottom: 20,
+              fontFamily: "'Inter',sans-serif",
+              transition: 'background 0.2s',
+            }}
+          >
             <svg width="18" height="18" viewBox="0 0 24 24">
-              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/>
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
               <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
               <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
               <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
             </svg>
-            Continue with Google
+            {loading ? 'Connecting...' : 'Continue with Google'}
           </button>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24 }}>
@@ -280,8 +356,33 @@ export default function AuthPage() {
 
           {/* Error */}
           {error && (
-            <div style={{ padding: '12px 16px', borderRadius: radius.md, background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#ef4444', fontSize: 13, marginBottom: 16, lineHeight: 1.5 }}>
+            <div style={{
+              background: 'rgba(239,68,68,0.15)',
+              border: '1px solid rgba(239,68,68,0.4)',
+              borderRadius: '8px',
+              padding: '12px 16px',
+              color: '#fca5a5',
+              fontSize: '14px',
+              marginBottom: '16px',
+              lineHeight: 1.5,
+            }}>
               {error}
+            </div>
+          )}
+
+          {/* Success */}
+          {success && (
+            <div style={{
+              background: 'rgba(16,185,129,0.15)',
+              border: '1px solid rgba(16,185,129,0.4)',
+              borderRadius: '8px',
+              padding: '12px 16px',
+              color: '#6ee7b7',
+              fontSize: '14px',
+              marginBottom: '16px',
+              lineHeight: 1.5,
+            }}>
+              {success}
             </div>
           )}
 
