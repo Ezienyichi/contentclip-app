@@ -970,17 +970,8 @@ export default function LandingPage() {
 
       {/* FOOTER */}
       <footer style={{ position: 'relative', overflow: 'hidden', borderTop: '1px solid rgba(124,58,237,0.3)' }}>
-        {/* YouTube video background */}
-        <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '177.78vh', minWidth: '100%', height: '56.25vw', minHeight: '100%', zIndex: 0, pointerEvents: 'none', overflow: 'hidden' }}>
-          <iframe
-            src="https://www.youtube.com/embed/ifIR8cdrbkY?autoplay=1&mute=1&loop=1&playlist=ifIR8cdrbkY&controls=0&showinfo=0&rel=0&modestbranding=1&playsinline=1&iv_load_policy=3&disablekb=1"
-            style={{ position: 'absolute', top: '-80px', left: 0, width: '100%', height: 'calc(100% + 160px)', border: 'none', pointerEvents: 'none' }}
-            allow="autoplay; encrypted-media"
-            title="Footer background video"
-          />
-          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '80px', background: '#0a0014', zIndex: 2, pointerEvents: 'none' }} />
-          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '80px', background: '#0a0014', zIndex: 2, pointerEvents: 'none' }} />
-        </div>
+        {/* Footer gradient background */}
+        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 50% 120%, rgba(124,58,237,0.18) 0%, rgba(10,0,40,0.95) 60%, rgba(5,0,15,0.98) 100%)', zIndex: 0 }} />
         {/* Dark overlay */}
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(5,0,20,0.92) 0%, rgba(10,0,40,0.96) 60%, rgba(5,0,15,0.98) 100%)', zIndex: 1 }} />
         {/* Purple glow top center */}
@@ -1067,7 +1058,10 @@ export default function LandingPage() {
         <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(12px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }} onClick={() => setShowDemo(false)}>
           <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 900, borderRadius: radius.xl, overflow: 'hidden', background: '#000', position: 'relative' }}>
             <button onClick={() => setShowDemo(false)} style={{ position: 'absolute', top: 12, right: 12, zIndex: 10, width: 36, height: 36, borderRadius: '50%', background: 'rgba(255,255,255,0.1)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="close" size={20} style={{ color: '#fff' }} /></button>
-            <div style={{ aspectRatio: '16/9' }}><iframe width="100%" height="100%" src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1&rel=0" title="Demo" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen style={{ border: 'none' }} /></div>
+            <div style={{ aspectRatio: '16/9', background: 'linear-gradient(135deg, #0d0021 0%, #1a0a3a 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 16 }}>
+              <span style={{ fontSize: 48 }}>🎬</span>
+              <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 16, fontWeight: 600, margin: 0 }}>Demo coming soon</p>
+            </div>
           </div>
         </div>
       )}
