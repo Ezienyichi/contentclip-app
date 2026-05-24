@@ -7,7 +7,7 @@ import { colors, gradients, radius, inputField } from '@/lib/tokens';
 
 const supabase = createClient();
 
-type View = 'signin' | 'signup' | 'verify' | 'forgot' | 'forgot_sent';
+type View = 'signin' | 'signup' | 'forgot' | 'forgot_sent';
 
 export default function AuthPage() {
   const router = useRouter();
@@ -18,8 +18,6 @@ export default function AuthPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [resendLoading, setResendLoading] = useState(false);
-  const [resendDone, setResendDone] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
   // Show error if the OAuth callback redirected back with ?error=
@@ -46,29 +44,49 @@ export default function AuthPage() {
     e.preventDefault();
     setLoading(true);
     setError('');
+    setSuccess('');
 
     try {
-      const { data, error: err } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
-        password,
-      });
+      const { data, error } =
+        await supabase.auth.signInWithPassword({
+          email: email.trim().toLowerCase(),
+          password: password,
+        });
 
-      if (err) {
-        if (err.message.includes('Email not confirmed')) {
-          setError('Please check your email and confirm your account first.');
-        } else if (err.message.includes('Invalid login credentials')) {
-          setError('Incorrect email or password. Please try again.');
+      if (error) {
+        if (
+          error.message.includes('Email not confirmed') ||
+          error.message.includes('not confirmed')
+        ) {
+          setError(
+            'Your email is not confirmed. ' +
+            'Please contact support at ' +
+            'adminvangelclip@gmail.com to ' +
+            'activate your account manually.'
+          );
+        } else if (
+          error.message.includes('Invalid login') ||
+          error.message.includes('invalid credentials') ||
+          error.message.includes('Invalid credentials')
+        ) {
+          setError(
+            'Wrong email or password. Please try again.'
+          );
         } else {
-          setError(err.message);
+          setError(error.message);
         }
         return;
       }
 
-      if (data?.user) {
+      if (data.session) {
         router.push('/dashboard');
+        return;
       }
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to sign in');
+
+      setError('Sign in failed. Please try again.');
+
+    } catch (err: any) {
+      setError(err.message || 'Sign in failed.');
     } finally {
       setLoading(false);
     }
@@ -81,22 +99,28 @@ export default function AuthPage() {
     setSuccess('');
 
     try {
-      const { data, error: err } = await supabase.auth.signUp({
-        email: email.trim(),
-        password,
+      const { data, error } = await supabase.auth.signUp({
+        email: email.trim().toLowerCase(),
+        password: password,
         options: {
-          emailRedirectTo: `${window.location.origin}/api/auth/callback`,
-          data: { full_name: name || '' },
+          emailRedirectTo: undefined,
+          data: {
+            full_name: name || '',
+          },
         },
       });
 
-      if (err) {
-        setError(err.message);
-        return;
-      }
-
-      if (data?.user?.identities?.length === 0) {
-        setError('An account with this email already exists. Please sign in instead.');
+      if (error) {
+        if (error.message.includes('already registered') ||
+            error.message.includes('already exists') ||
+            error.message.includes('User already')) {
+          setError(
+            'This email is already registered. ' +
+            'Please sign in instead.'
+          );
+        } else {
+          setError(error.message);
+        }
         return;
       }
 
@@ -104,7 +128,7 @@ export default function AuthPage() {
       if (data.user) {
         await supabase.from('profiles').upsert({
           id: data.user.id,
-          email: email.trim(),
+          email: email.trim().toLowerCase(),
           full_name: name,
           plan: 'free',
           credits: 720,
@@ -112,10 +136,42 @@ export default function AuthPage() {
         });
       }
 
-      setSuccess('Account created! Check your email to confirm your account before signing in.');
-      setView('verify');
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to create account');
+      // If we have a session go straight to dashboard
+      if (data.session) {
+        await supabase.auth.setSession(data.session);
+        router.push('/dashboard');
+        return;
+      }
+
+      // If we have a user but no session, try to sign in immediately
+      if (data.user) {
+        const { data: signInData, error: signInError } =
+          await supabase.auth.signInWithPassword({
+            email: email.trim().toLowerCase(),
+            password: password,
+          });
+
+        if (signInData.session) {
+          router.push('/dashboard');
+          return;
+        }
+
+        if (signInError) {
+          setError(
+            'Account created but email confirmation ' +
+            'is still enabled in settings. ' +
+            'Please contact support or ' +
+            'sign in after confirming your email.'
+          );
+          return;
+        }
+      }
+
+      // Fallback
+      router.push('/dashboard');
+
+    } catch (err: any) {
+      setError(err.message || 'Failed to create account.');
     } finally {
       setLoading(false);
     }
@@ -135,13 +191,6 @@ export default function AuthPage() {
     }
     setLoading(false);
     setView('forgot_sent');
-  };
-
-  const handleResendVerification = async () => {
-    setResendLoading(true);
-    await supabase.auth.resend({ type: 'signup', email });
-    setResendLoading(false);
-    setResendDone(true);
   };
 
   // SUPABASE DASHBOARD SETUP REQUIRED:
@@ -188,40 +237,6 @@ export default function AuthPage() {
     width: '100%',
     boxSizing: 'border-box' as const,
   };
-
-  // ── Verify Email Screen ──────────────────────────────────────────────────────
-  if (view === 'verify') return (
-    <main style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: colors.background, fontFamily: "'Inter',sans-serif" }}>
-      <div style={{ textAlign: 'center', maxWidth: 420, padding: 40 }}>
-        <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'rgba(74,222,128,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px' }}>
-          <Icon name="mark_email_read" size={40} style={{ color: '#4ade80' }} />
-        </div>
-        <h2 style={{ fontSize: 26, fontWeight: 800, marginBottom: 10, color: colors.onSurface }}>Check your email</h2>
-        <p style={{ color: colors.onSurfaceVariant, fontSize: 14, marginBottom: 8, lineHeight: 1.7 }}>
-          We sent a verification link to
-        </p>
-        <p style={{ color: colors.onSurface, fontWeight: 700, fontSize: 15, marginBottom: 24 }}>{email}</p>
-        <p style={{ color: colors.onSurfaceVariant, fontSize: 13, marginBottom: 32, lineHeight: 1.6 }}>
-          Click the link in the email to activate your account and access your dashboard. Check your spam folder if you do not see it.
-        </p>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <button
-            onClick={handleResendVerification}
-            disabled={resendLoading || resendDone}
-            style={{ background: resendDone ? 'rgba(74,222,128,0.1)' : colors.surfaceContainerHigh, border: `1px solid ${resendDone ? '#4ade80' : colors.outlineVariant}`, color: resendDone ? '#4ade80' : colors.onSurface, fontWeight: 600, padding: 12, borderRadius: radius.md, cursor: resendDone ? 'default' : 'pointer', fontSize: 14, fontFamily: "'Inter',sans-serif" }}
-          >
-            {resendDone ? '✓ Verification email resent!' : resendLoading ? 'Sending...' : 'Resend verification email'}
-          </button>
-          <button
-            onClick={() => setView('signin')}
-            style={{ background: 'none', border: 'none', color: colors.primary, fontWeight: 600, cursor: 'pointer', fontSize: 13, fontFamily: "'Inter',sans-serif", padding: 8 }}
-          >
-            Back to Sign In
-          </button>
-        </div>
-      </div>
-    </main>
-  );
 
   // ── Forgot Password Sent Screen ───────────────────────────────────────────────
   if (view === 'forgot_sent') return (
