@@ -1,265 +1,256 @@
-import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
-import { createServerClient } from "@supabase/ssr";
-import { cookies } from "next/headers";
-import { detectClips } from "@/lib/clipDetection";
+import { NextRequest, NextResponse } from 'next/server';
+import { createServerClient } from '@supabase/ssr';
+import { cookies } from 'next/headers';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+export const dynamic = 'force-dynamic';
+export const maxDuration = 300;
 
-async function getSessionUser() {
-  const cookieStore = await cookies();
-  const client = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() { return cookieStore.getAll(); },
-        setAll(cookiesToSet) {
-          try {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
-            );
-          } catch {}
-        },
-      },
-    }
-  );
-  const { data: { user }, error } = await client.auth.getUser();
-  return { user, error };
-}
-
-const PLAN_WINDOW_LIMITS: Record<string, number> = {
-  free: 300,
-  starter: 900,
-  solo: 900,
-  pro: 2700,
+const PLAN_WINDOWS: Record<string, number> = {
+  free:         300,
+  starter:      900,
+  pro:          2700,
+  agency:       5400,
+  solo:         900,
   professional: 2700,
-  agency: 5400,
 };
-
-export interface ProcessRequest {
-  videoUrl: string;
-  userId?: string;
-  prompt?: string;
-  numClips?: number;
-  minDuration?: number;
-  maxDuration?: number;
-  aspectRatio?: "9:16" | "16:9" | "4:5" | "1:1";
-  subtitles?: boolean;
-  timeRange?: { start: number; end: number } | null;
-  template?: "moments" | "compilation";
-}
 
 export async function POST(req: NextRequest) {
   try {
-    const { user, error: sessionError } = await getSessionUser();
+    // ── AUTH CHECK ──
+    const cookieStore = await cookies();
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() { return cookieStore.getAll(); },
+          setAll(cookiesToSet) {
+            try {
+              cookiesToSet.forEach(({ name, value, options }) =>
+                cookieStore.set(name, value, options)
+              );
+            } catch {}
+          },
+        },
+      }
+    );
 
-    if (sessionError || !user) {
-      console.error("[/api/process] Auth error:", sessionError?.message ?? "No session");
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) {
       return NextResponse.json(
-        { error: "You must be logged in. Please sign in.", code: "UNAUTHORIZED" },
+        { error: 'Please sign in to continue.' },
         { status: 401 }
       );
     }
 
-    console.log("[/api/process] Authenticated user:", user.id);
+    // ── GET USER PROFILE ──
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('credits, plan')
+      .eq('id', user.id)
+      .single();
 
-    const body: ProcessRequest = await req.json();
-    const { videoUrl } = body;
-    // Always use the verified session user — never trust userId from the body
-    const userId = user.id;
+    const plan = profile?.plan || 'free';
+    const credits = profile?.credits || 0;
+    const maxWindow = PLAN_WINDOWS[plan] || 300;
 
+    // ── PARSE REQUEST ──
+    const body = await req.json();
+    const {
+      videoUrl,
+      numClips = 5,
+      timeStart = 0,
+      timeEnd = maxWindow,
+      category = 'gospel',
+      prompt = 'Find the most engaging viral moments with high impact',
+    } = body;
+
+    // ── VALIDATE URL ──
     if (!videoUrl) {
-      return NextResponse.json({ error: "videoUrl is required" }, { status: 400 });
-    }
-    if (!process.env.OPENAI_API_KEY) {
       return NextResponse.json(
-        { error: "OPENAI_API_KEY is not configured" },
-        { status: 500 }
+        { error: 'Video URL is required.' },
+        { status: 400 }
       );
     }
 
-    const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .select("credits, plan")
-      .eq("id", userId)
-      .single();
-
-    if (profileError || !profile) {
-      return NextResponse.json({ error: "User profile not found" }, { status: 404 });
-    }
-
-    if (body.timeRange) {
-      const windowSeconds = body.timeRange.end - body.timeRange.start;
-      const planLimit = PLAN_WINDOW_LIMITS[profile.plan] ?? 180;
-      if (windowSeconds > planLimit) {
+    try {
+      const parsed = new URL(videoUrl);
+      const allowedHosts = [
+        'youtube.com', 'www.youtube.com',
+        'youtu.be', 'www.youtu.be',
+        'vimeo.com', 'www.vimeo.com',
+        'tiktok.com', 'www.tiktok.com',
+        'vm.tiktok.com',
+      ];
+      if (!allowedHosts.includes(parsed.hostname)) {
         return NextResponse.json(
-          {
-            error: "Video window exceeds your plan limit. Please upgrade.",
-            planLimit,
-            windowSeconds,
-            upgradeUrl: "/pricing",
-          },
-          { status: 403 }
+          { error: 'Only YouTube, Vimeo, and TikTok URLs are supported.' },
+          { status: 400 }
         );
       }
+    } catch {
+      return NextResponse.json(
+        { error: 'Invalid video URL.' },
+        { status: 400 }
+      );
     }
 
-    const numClips = Math.min(body.numClips ?? 3, 10);
-    const creditCost = numClips * 10;
+    // ── CALCULATE CREDITS ──
+    const windowSeconds = Math.min(timeEnd - timeStart, maxWindow);
+    const creditsNeeded = Math.ceil(windowSeconds / 60);
 
-    if (profile.credits < creditCost) {
+    // ── CHECK CREDITS ──
+    if (credits < creditsNeeded) {
       return NextResponse.json(
         {
-          error: "Insufficient credits",
-          required: creditCost,
-          available: profile.credits,
-          upgradeUrl: "/pricing",
+          error: `Not enough credits. You need ${creditsNeeded} but have ${credits} remaining.`,
+          credits_remaining: credits,
+          credits_required: creditsNeeded,
         },
         { status: 402 }
       );
     }
 
-    // Deduct credits upfront
-    await supabase
-      .from("profiles")
-      .update({ credits: profile.credits - creditCost })
-      .eq("id", userId);
+    // ── DEDUCT CREDITS ──
+    const { error: deductError } = await supabase
+      .from('profiles')
+      .update({ credits: credits - creditsNeeded })
+      .eq('id', user.id)
+      .eq('credits', credits);
 
-    const { data: clipJob } = await supabase
-      .from("clip_jobs")
-      .insert({
-        user_id: userId,
-        source_url: videoUrl,
-        status: "processing",
-        prompt: body.prompt,
-        num_clips: numClips,
-        aspect_ratio: body.aspectRatio ?? "9:16",
-        subtitles: body.subtitles ?? true,
-        reka_job_id: null,
-        created_at: new Date().toISOString(),
-      })
-      .select()
-      .single();
+    if (deductError) {
+      return NextResponse.json(
+        { error: 'Failed to deduct credits. Please try again.' },
+        { status: 409 }
+      );
+    }
 
-    const creditsRemaining = profile.credits - creditCost;
+    // ── SET UP SSE STREAM ──
     const encoder = new TextEncoder();
-
     const stream = new ReadableStream({
       async start(controller) {
-        const send = (data: Record<string, unknown>) => {
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
-        };
-
-        send({ status: "queued", creditsUsed: creditCost, creditsRemaining });
+        function send(data: object) {
+          controller.enqueue(
+            encoder.encode(`data: ${JSON.stringify(data)}\n\n`)
+          );
+        }
 
         try {
-          const clips = await detectClips(
-            videoUrl,
-            body.prompt ?? "Find the most engaging, hook-worthy moments with high energy and emotional impact.",
-            numClips,
-            body.minDuration ?? 15,
-            body.maxDuration ?? 60,
-            body.timeRange ?? null,
-            userId,
-            clipJob?.id ?? randomId(),
-            (status) => send({ status })
+          send({
+            status: 'queued',
+            creditsUsed: creditsNeeded,
+            creditsRemaining: credits - creditsNeeded,
+          });
+
+          send({ status: 'preprocessing' });
+
+          // ── CALL REKA API ──
+          const rekaResponse = await fetch(
+            'https://vision-agent.api.reka.ai/api/v1/clip',
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-Api-Key': process.env.REKA_API_KEY!,
+              },
+              body: JSON.stringify({
+                url: videoUrl,
+                num_clips: Math.min(numClips, 10),
+                start_time: timeStart,
+                end_time: timeEnd,
+                prompt,
+                category,
+              }),
+            }
           );
 
-          if (clipJob) {
-            await supabase
-              .from("clip_jobs")
-              .update({ status: "completed" })
-              .eq("id", clipJob.id);
+          if (!rekaResponse.ok) {
+            const rekaError = await rekaResponse.text();
+            console.error('Reka API error:', rekaError);
 
-            const clipInserts = clips.map((clip, index) => ({
-              job_id: clipJob.id,
-              user_id: userId,
-              clip_index: index,
-              video_url: clip.video_url,
-              title: clip.title,
-              caption: clip.caption,
-              duration: clip.duration,
-              thumbnail_url: clip.thumbnail_url ?? null,
-              status: "ready",
-              created_at: new Date().toISOString(),
-            }));
-            await supabase.from("clips").insert(clipInserts);
+            await supabase
+              .from('profiles')
+              .update({ credits })
+              .eq('id', user.id);
+
+            send({
+              status: 'failed',
+              error_message:
+                'Video processing failed. Your credits have been refunded. Please try again.',
+            });
+            controller.close();
+            return;
           }
 
-          send({ status: "completed", output: clips });
-        } catch (err) {
-          const message = err instanceof Error ? err.message : "Processing failed";
+          const rekaData = await rekaResponse.json();
 
-          // Refund credits on failure
+          // ── FORMAT CLIPS ──
+          const clips = (rekaData.clips || []).map(
+            (clip: any, index: number) => ({
+              id: `clip_${Date.now()}_${index}`,
+              start_time: clip.start_time || 0,
+              end_time: clip.end_time || 60,
+              duration: (clip.end_time || 60) - (clip.start_time || 0),
+              title: clip.title || clip.caption || `Clip ${index + 1}`,
+              caption: clip.caption || clip.title || '',
+              hashtags: clip.hashtags || [],
+              ai_score: clip.virality_score || clip.score || clip.ai_score || 80,
+              video_url: clip.video_url || '',
+              thumbnail_url: clip.thumbnail_url || '',
+              transcript: clip.transcript || '',
+            })
+          );
+
+          // ── SAVE TO DATABASE ──
+          await supabase.from('clip_jobs').insert({
+            user_id: user.id,
+            video_url: videoUrl,
+            status: 'completed',
+            clips,
+            credits_used: creditsNeeded,
+            created_at: new Date().toISOString(),
+          });
+
+          send({
+            status: 'completed',
+            clips,
+            credits_used: creditsNeeded,
+            credits_remaining: credits - creditsNeeded,
+          });
+
+        } catch (error: any) {
+          console.error('Processing error:', error);
+
           await supabase
-            .from("profiles")
-            .update({ credits: profile.credits })
-            .eq("id", userId);
+            .from('profiles')
+            .update({ credits })
+            .eq('id', user.id);
 
-          if (clipJob) {
-            await supabase
-              .from("clip_jobs")
-              .update({ status: "failed" })
-              .eq("id", clipJob.id);
-          }
-
-          send({ status: "failed", error_message: message });
-        } finally {
-          controller.close();
+          send({
+            status: 'failed',
+            error_message:
+              'Processing failed. Your credits have been refunded. Please try again.',
+          });
         }
+
+        controller.close();
       },
     });
 
     return new Response(stream, {
       headers: {
-        "Content-Type": "text/event-stream",
-        "Cache-Control": "no-cache",
-        Connection: "keep-alive",
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        Connection: 'keep-alive',
       },
     });
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Unknown error";
-    console.error("[/api/process] Error:", message);
-    return NextResponse.json({ error: message }, { status: 500 });
-  }
-}
 
-function randomId() {
-  return Math.random().toString(36).slice(2);
-}
-
-export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url);
-  const jobId = searchParams.get("jobId");
-  const userId = searchParams.get("userId");
-
-  if (!jobId || !userId) {
+  } catch (error: any) {
+    console.error('API error:', error);
     return NextResponse.json(
-      { error: "jobId and userId are required" },
-      { status: 400 }
+      { error: 'Something went wrong. Please try again.' },
+      { status: 500 }
     );
   }
-
-  const { data: job, error: jobError } = await supabase
-    .from("clip_jobs")
-    .select("*")
-    .eq("id", jobId)
-    .eq("user_id", userId)
-    .single();
-
-  if (jobError || !job) {
-    return NextResponse.json({ error: "Job not found" }, { status: 404 });
-  }
-
-  const { data: clips } = await supabase
-    .from("clips")
-    .select("*")
-    .eq("job_id", jobId)
-    .order("clip_index");
-
-  return NextResponse.json({ job, clips: clips ?? [] });
 }

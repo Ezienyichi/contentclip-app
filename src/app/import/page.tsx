@@ -613,9 +613,9 @@ export default function ImportPage() {
 
             if (event.status) setRekaStatus(event.status as string);
 
-            if (event.status === "completed" && Array.isArray(event.output)) {
+            if (event.status === "completed" && Array.isArray(event.clips)) {
               const clips: RekaClip[] = (
-                event.output as Record<string, unknown>[]
+                event.clips as Record<string, unknown>[]
               ).map((c, i) => ({
                 video_url: (c.video_url ?? "") as string,
                 title: (c.title ?? `Clip ${i + 1}`) as string,
@@ -917,14 +917,12 @@ export default function ImportPage() {
                       flexShrink: 0,
                     }}
                   />
-                  {rekaStatus === "preprocessing"
-                    ? "⚡ Downloading audio from your video..."
-                    : rekaStatus === "transcribing"
-                    ? "🎙 Transcribing with AI..."
-                    : rekaStatus === "analyzing"
-                    ? "🧠 Analysing for viral moments..."
+                  {rekaStatus === "queued"
+                    ? "⚡ Preparing your video..."
+                    : rekaStatus === "preprocessing"
+                    ? "🎬 Reka AI is analysing your video..."
                     : rekaStatus === "processing"
-                    ? "🎬 Ranking clips by virality score..."
+                    ? "🧠 Finding your best viral moments..."
                     : rekaStatus === "completed"
                     ? "✅ Your clips are ready!"
                     : "⏳ Processing... this takes 2-4 minutes. Please wait."}
