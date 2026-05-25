@@ -4,7 +4,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Icon from './Icon';
 import { colors, gradients, radius } from '@/lib/tokens';
-import { createBrowserClient } from '@supabase/ssr';
+import { createClient } from '@/lib/supabase-browser';
 
 const ADMIN_EMAIL = 'adminvangelclip@gmail.com';
 const NAV = [
@@ -23,10 +23,7 @@ export default function Sidebar() {
   const isActive = (href: string) => href === '/dashboard' ? pathname === '/dashboard' : pathname.startsWith(href);
 
   useEffect(() => {
-    const supabase = createBrowserClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    );
+    const supabase = createClient();
     supabase.auth.getUser().then(({ data: { user } }) => {
       setIsAdmin(user?.email === ADMIN_EMAIL);
     });

@@ -1,13 +1,10 @@
 'use client';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from '@/lib/supabase-browser';
 import { useRouter } from 'next/navigation';
 import { colors, radius } from '@/lib/tokens';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+const supabase = createClient();
 
 interface AppNotification {
   id: string;

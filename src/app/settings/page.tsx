@@ -1,14 +1,11 @@
 ﻿'use client';
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from '@/lib/supabase-browser';
 import React, { useState, useRef } from 'react';
 import DashboardLayout from '@/components/DashboardLayout';
 import Icon from '@/components/Icon';
 import { useRouter } from 'next/navigation';
 import { colors, gradients, radius, inputField } from '@/lib/tokens';
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+const supabase = createClient();
 const PLANS=[{n:'Starter',p:29,id:'starter',f:['2000 credits/mo','20 clip jobs','1080p','No watermark']},{n:'Creator',p:59,id:'creator',f:['5000 credits/mo','50 clip jobs','1080p','Priority queue']},{n:'Business',p:99,id:'business',f:['15000 credits/mo','150 clip jobs','4K','API access']}];
 export default function SettingsPage(){
   const router=useRouter();

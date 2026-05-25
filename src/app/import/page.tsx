@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { createBrowserClient } from "@supabase/ssr";
+import { createClient } from "@/lib/supabase-browser";
 import DashboardLayout from "@/components/DashboardLayout";
 import { colors, gradients, radius } from "@/lib/tokens";
 
@@ -15,10 +15,7 @@ const PLAN_LIMITS: Record<string, number> = {
   agency: 5400,       // 90 min
 };
 
-const supabase = createBrowserClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+const supabase = createClient();
 
 interface RekaClip {
   video_url: string;
