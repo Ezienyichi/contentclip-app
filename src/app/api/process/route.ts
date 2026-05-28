@@ -146,6 +146,13 @@ export async function POST(req: NextRequest) {
           send({ status: 'preprocessing' });
 
           // ── CALL REKA API ──
+          console.log('=== REKA DEBUG START ===');
+          console.log('Video URL:', videoUrl);
+          console.log('Reka key exists:', !!process.env.REKA_API_KEY);
+          console.log('Reka key preview:', process.env.REKA_API_KEY?.slice(0, 8));
+          console.log('Time start:', timeStart);
+          console.log('Time end:', timeEnd);
+          console.log('Num clips:', numClips);
           const rekaResponse = await fetch(
             'https://vision-agent.api.reka.ai/api/v1/clip',
             {
@@ -165,8 +172,14 @@ export async function POST(req: NextRequest) {
             }
           );
 
+          console.log('Reka response status:', rekaResponse.status);
+          console.log('Reka response ok:', rekaResponse.ok);
+
           if (!rekaResponse.ok) {
-            const rekaError = await rekaResponse.text();
+            const errorText = await rekaResponse.text();
+            console.log('Reka error body:', errorText);
+            console.log('=== REKA DEBUG END ===');
+            const rekaError = errorText;
             console.error('Reka API error:', rekaError);
 
             await supabase
