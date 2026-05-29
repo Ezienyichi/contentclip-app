@@ -6,11 +6,11 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-const REKA_API_KEY = process.env.REKA_API_KEY!;
-// CORRECT endpoint per official Reka docs
-const REKA_BASE = "https://vision-agent.api.reka.ai/v1/clips";
+const  = process.env.!;
+// CORRECT endpoint per official  docs
+const _BASE = "https://vision-agent.api./v1/clips";
 
-interface RekaClip {
+interface Clip {
   video_url: string;
   title: string;
   caption: string;
@@ -18,22 +18,22 @@ interface RekaClip {
   ai_score?: number;
 }
 
-// GET /api/poll?rekaJobId=xxx&userId=xxx
+// GET /api/poll?JobId=xxx&userId=xxx
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
-  const rekaJobId = searchParams.get("rekaJobId");
+  const JobId = searchParams.get("JobId");
   const userId = searchParams.get("userId");
 
-  if (!rekaJobId || !userId) {
+  if (!JobId || !userId) {
     return NextResponse.json(
-      { error: "rekaJobId and userId are required" },
+      { error: "JobId and userId are required" },
       { status: 400 }
     );
   }
 
-  const res = await fetch(`${REKA_BASE}/${rekaJobId}`, {
+  const res = await fetch(`${_BASE}/${JobId}`, {
     headers: {
-      "X-Api-Key": REKA_API_KEY,
+      "X-Api-Key": ,
       "Content-Type": "application/json",
     },
   });
@@ -42,7 +42,7 @@ export async function GET(req: NextRequest) {
 
   if (!res.ok) {
     return NextResponse.json(
-      { error: `Reka poll error: ${data?.error?.message ?? JSON.stringify(data)}` },
+      { error: ` poll error: ${data?.error?.message ?? JSON.stringify(data)}` },
       { status: 500 }
     );
   }
@@ -59,7 +59,7 @@ export async function GET(req: NextRequest) {
     const { data: clipJob } = await supabase
       .from("clip_jobs")
       .select("num_clips")
-      .eq("reka_job_id", rekaJobId)
+      .eq("_job_id", JobId)
       .single();
 
     if (clipJob) {
@@ -81,9 +81,9 @@ export async function GET(req: NextRequest) {
     await supabase
       .from("clip_jobs")
       .update({ status: "failed" })
-      .eq("reka_job_id", rekaJobId);
+      .eq("_job_id", JobId);
 
-    const errMsg = data.error_message ?? "Reka job failed";
+    const errMsg = data.error_message ?? " job failed";
     return NextResponse.json({ error: errMsg }, { status: 422 });
   }
 
@@ -95,13 +95,13 @@ export async function GET(req: NextRequest) {
 
     if (rawClips.length === 0) {
       return NextResponse.json(
-        { error: "Reka completed but returned no clips for this video" },
+        { error: " completed but returned no clips for this video" },
         { status: 422 }
       );
     }
 
     // Per docs, output clips use video_url directly
-    const clips: RekaClip[] = rawClips.map(
+    const clips: Clip[] = rawClips.map(
       (clip: Record<string, unknown>, index: number) => ({
         video_url: (clip.video_url ?? "") as string,
         title: (clip.title ?? `Clip ${index + 1}`) as string,
@@ -115,7 +115,7 @@ export async function GET(req: NextRequest) {
     const { data: clipJob } = await supabase
       .from("clip_jobs")
       .update({ status: "completed" })
-      .eq("reka_job_id", rekaJobId)
+      .eq("_job_id", JobId)
       .select()
       .single();
 

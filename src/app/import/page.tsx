@@ -17,7 +17,7 @@ const PLAN_LIMITS: Record<string, number> = {
 
 const supabase = createClient();
 
-interface RekaClip {
+interface Clip {
   video_url: string;
   title: string;
   caption: string;
@@ -30,7 +30,7 @@ interface RekaClip {
 interface ProcessResult {
   success: boolean;
   jobId: string;
-  clips: RekaClip[];
+  clips: Clip[];
   creditsUsed: number;
   creditsRemaining: number;
 }
@@ -242,7 +242,7 @@ function ClipCard({
   onDownload,
   onPost,
 }: {
-  clip: RekaClip;
+  clip: Clip;
   index: number;
   onDownload: () => void;
   onPost: () => void;
@@ -487,7 +487,7 @@ export default function ImportPage() {
   const [timeStart, setTimeStart] = useState(0);
   const [timeEnd, setTimeEnd] = useState(300);
   const [loading, setLoading] = useState(false);
-  const [rekaStatus, setRekaStatus] = useState<string>("idle");
+  const [Status, setStatus] = useState<string>("idle");
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<ProcessResult | null>(null);
 
@@ -536,7 +536,7 @@ export default function ImportPage() {
     }
 
     setLoading(true);
-    setRekaStatus("queued");
+    setStatus("queued");
     setError(null);
     setResult(null);
 
@@ -611,10 +611,10 @@ export default function ImportPage() {
               creditsRemaining = (event.creditsRemaining as number) ?? 0;
             }
 
-            if (event.status) setRekaStatus(event.status as string);
+            if (event.status) setStatus(event.status as string);
 
             if (event.status === "completed" && Array.isArray(event.clips)) {
-              const clips: RekaClip[] = (
+              const clips: Clip[] = (
                 event.clips as Record<string, unknown>[]
               ).map((c, i) => ({
                 video_url: (c.video_url ?? "") as string,
@@ -675,7 +675,7 @@ export default function ImportPage() {
     userPlan,
   ]);
 
-  const handleDownload = (clip: RekaClip) => {
+  const handleDownload = (clip: Clip) => {
     const a = document.createElement('a');
     a.href = clip.video_url;
     a.target = '_blank';
@@ -685,7 +685,7 @@ export default function ImportPage() {
     document.body.removeChild(a);
   };
 
-  const handlePost = (clip: RekaClip, index: number) => {
+  const handlePost = (clip: Clip, index: number) => {
     // Save all clips to sessionStorage for clips page
     const clipsToSave = result?.clips.map((c, i) => ({
       title: c.title,
@@ -917,13 +917,13 @@ export default function ImportPage() {
                       flexShrink: 0,
                     }}
                   />
-                  {rekaStatus === "queued"
+                  {Status === "queued"
                     ? "⚡ Preparing your video..."
-                    : rekaStatus === "preprocessing"
-                    ? "🎬 Reka AI is analysing your video..."
-                    : rekaStatus === "processing"
+                    : Status === "preprocessing"
+                    ? "🎬  AI is analysing your video..."
+                    : Status === "processing"
                     ? "🧠 Finding your best viral moments..."
-                    : rekaStatus === "completed"
+                    : Status === "completed"
                     ? "✅ Your clips are ready!"
                     : "⏳ Processing... this takes 2-4 minutes. Please wait."}
                 </>
