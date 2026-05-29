@@ -536,138 +536,59 @@ export default function ImportPage() {
     }
 
     setLoading(true);
-    setStatus("queued");
+    setStatus("processing");
     setError(null);
     setResult(null);
 
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (!user) {
-        setError("You must be logged in to generate clips. Please sign in.");
-        setLoading(false);
-        return;
-      }
-
-      const res = await fetch("/api/process", {
+      const response = await fetch("/api/process", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
           videoUrl,
-          userId: user.id,
-          prompt,
           numClips,
-          minDuration,
-          maxDuration,
-          aspectRatio,
-          subtitles,
-          template,
-          timeRange: timeRangeEnabled
-            ? { start: timeStart, end: timeEnd }
-            : null,
+          timeStart,
+          timeEnd,
+          category: "gospel",
         }),
       });
 
-      // Non-2xx = JSON error (credit check failed, auth error, etc.)
-      if (!res.ok) {
-        const data = await res.json();
-        if (res.status === 402) {
+      const data = await response.json();
+
+      if (!response.ok) {
+        if (response.status === 402) {
           setError(
-            `Not enough credits. Need ${data.required}, have ${data.available}.`
+            `Not enough credits. Need ${data.credits_required}, have ${data.credits_remaining}.`
           );
         } else {
-          setError(data.error ?? "Failed to process video");
+          setError(data.error || "Processing failed.");
         }
-        setLoading(false);
         return;
       }
 
-      // 2xx = SSE stream — read live status events
-      const reader = res.body!.getReader();
-      const decoder = new TextDecoder();
-      let sseBuffer = "";
-      let creditsUsed = numClips * 10;
-      let creditsRemaining = 0;
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        sseBuffer += decoder.decode(value, { stream: true });
-        const lines = sseBuffer.split("\n");
-        sseBuffer = lines.pop() ?? "";
-
-        for (const line of lines) {
-          if (!line.startsWith("data: ")) continue;
-          try {
-            const event = JSON.parse(line.slice(6)) as Record<string, unknown>;
-
-            // Capture credit info from the initial "queued" event
-            if (typeof event.creditsUsed === "number") {
-              creditsUsed = event.creditsUsed;
-              creditsRemaining = (event.creditsRemaining as number) ?? 0;
-            }
-
-            if (event.status) setStatus(event.status as string);
-
-            if (event.status === "completed" && Array.isArray(event.clips)) {
-              const clips: Clip[] = (
-                event.clips as Record<string, unknown>[]
-              ).map((c, i) => ({
-                video_url: (c.video_url ?? "") as string,
-                title: (c.title ?? `Clip ${i + 1}`) as string,
-                caption: (c.caption ?? "") as string,
-                hashtags: c.hashtags as string[] | undefined,
-                ai_score: c.ai_score as number | undefined,
-                duration: c.duration as number | undefined,
-                thumbnail_url: c.thumbnail_url as string | undefined,
-              }));
-              setResult({
-                success: true,
-                jobId: "",
-                clips,
-                creditsUsed,
-                creditsRemaining,
-              });
-              setLoading(false);
-              // Fire in-app notification (non-blocking)
-              fetch("/api/notifications", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  userId: user.id,
-                  title: "🎬 Clips Ready!",
-                  body: `${clips.length} clip${clips.length !== 1 ? "s" : ""} generated successfully.`,
-                  type: "clip_ready",
-                  link: "/clips",
-                }),
-              }).catch(() => {});
-            } else if (event.status === "failed") {
-              setError((event.error_message as string) ?? "Processing failed");
-              setLoading(false);
-            }
-          } catch {
-            // Skip malformed SSE lines
-          }
-        }
+      if (data.clips && data.clips.length > 0) {
+        setResult({
+          success: true,
+          jobId: "",
+          clips: data.clips,
+          creditsUsed: data.credits_used,
+          creditsRemaining: data.credits_remaining,
+        });
+        setUserCredits(data.credits_remaining);
+      } else {
+        setError("No clips found. Try a different video or time range.");
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Network error");
+    } finally {
       setLoading(false);
+      setStatus("idle");
     }
   }, [
     isValidUrl,
     videoUrl,
-    prompt,
     numClips,
-    minDuration,
-    maxDuration,
-    aspectRatio,
-    subtitles,
-    template,
     timeRangeEnabled,
     timeStart,
     timeEnd,
