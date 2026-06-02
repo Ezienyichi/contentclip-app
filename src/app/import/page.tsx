@@ -17,6 +17,18 @@ const PLAN_LIMITS: Record<string, number> = {
 
 const supabase = createClient();
 
+const CLIPS_STORAGE_KEY = 'vangelclip_cached_clips';
+
+function extractVideoId(url: string): string {
+  const shortMatch = url.match(/youtu\.be\/([a-zA-Z0-9_-]+)/);
+  const longMatch = url.match(/[?&]v=([a-zA-Z0-9_-]+)/);
+  const embedMatch = url.match(/embed\/([a-zA-Z0-9_-]+)/);
+  if (shortMatch) return shortMatch[1];
+  if (longMatch) return longMatch[1];
+  if (embedMatch) return embedMatch[1];
+  return '';
+}
+
 interface Clip {
   video_url: string;
   title: string;
@@ -490,6 +502,12 @@ export default function ImportPage() {
   const [Status, setStatus] = useState<string>("idle");
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<ProcessResult | null>(null);
+  const [videoPreview, setVideoPreview] = useState<{
+    title: string;
+    thumbnail: string;
+    videoId: string;
+  } | null>(null);
+  const [clips, setClips] = useState<any[]>([]);
 
   const planLimit = PLAN_LIMITS[userPlan] ?? 300;
   const creditCost = timeRangeEnabled ? Math.ceil((timeEnd - timeStart) / 60) : numClips * 10;
@@ -517,9 +535,47 @@ export default function ImportPage() {
     });
   }, []);
 
+  // Load cached clips from localStorage on mount
+  useEffect(() => {
+    try {
+      const cached = localStorage.getItem(CLIPS_STORAGE_KEY);
+      if (cached) {
+        const data = JSON.parse(cached);
+        if (data.clips && data.clips.length > 0) {
+          setClips(data.clips);
+          if (data.videoUrl) {
+            setVideoUrl(data.videoUrl);
+            const vid = extractVideoId(data.videoUrl);
+            if (vid) {
+              setVideoPreview({
+                title: '',
+                thumbnail: `https://img.youtube.com/vi/${vid}/maxresdefault.jpg`,
+                videoId: vid,
+              });
+            }
+          }
+        }
+      }
+    } catch(e) {}
+  }, []);
+
   const isValidUrl = videoUrl.startsWith("http");
   const isYouTube =
     videoUrl.includes("youtube.com") || videoUrl.includes("youtu.be");
+
+  const handleUrlChange = (url: string) => {
+    setVideoUrl(url);
+    const videoId = extractVideoId(url);
+    if (videoId) {
+      setVideoPreview({
+        title: '',
+        thumbnail: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
+        videoId: videoId,
+      });
+    } else {
+      setVideoPreview(null);
+    }
+  };
 
   const handleProcess = useCallback(async () => {
     if (!isValidUrl) return;
@@ -575,7 +631,13 @@ export default function ImportPage() {
           creditsUsed: data.credits_used,
           creditsRemaining: data.credits_remaining,
         });
+        setClips(data.clips);
         setUserCredits(data.credits_remaining);
+        localStorage.setItem(CLIPS_STORAGE_KEY, JSON.stringify({
+          clips: data.clips,
+          videoUrl: videoUrl,
+          generatedAt: new Date().toISOString(),
+        }));
       } else {
         setError("No clips found. Try a different video or time range.");
       }
@@ -667,7 +729,7 @@ export default function ImportPage() {
                   type="url"
                   placeholder="https://youtube.com/watch?v=..."
                   value={videoUrl}
-                  onChange={(e) => setVideoUrl(e.target.value)}
+                  onChange={(e) => handleUrlChange(e.target.value)}
                   style={inputStyle}
                 />
                 {isYouTube && (
@@ -686,6 +748,46 @@ export default function ImportPage() {
                   </span>
                 )}
               </div>
+              {videoPreview && (
+                <div style={{
+                  display: 'flex',
+                  gap: '14px',
+                  padding: '14px',
+                  background: 'rgba(255,255,255,0.04)',
+                  border: '1px solid rgba(124,58,237,0.25)',
+                  borderRadius: '12px',
+                  marginTop: '12px',
+                  alignItems: 'center',
+                }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={videoPreview.thumbnail}
+                    alt="Video preview"
+                    style={{
+                      width: '160px',
+                      height: '90px',
+                      objectFit: 'cover',
+                      borderRadius: '8px',
+                      flexShrink: 0,
+                    }}
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src =
+                        `https://img.youtube.com/vi/${videoPreview.videoId}/hqdefault.jpg`;
+                    }}
+                  />
+                  <div>
+                    <div style={{ fontSize: '13px', fontWeight: 600, color: '#ffffff', marginBottom: '4px' }}>
+                      Video detected
+                    </div>
+                    <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)' }}>
+                      ID: {videoPreview.videoId}
+                    </div>
+                    <div style={{ fontSize: '11px', color: '#10b981', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      ✓ Ready to clip
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Prompt */}
@@ -1114,76 +1216,189 @@ export default function ImportPage() {
         </div>
 
         {/* Results */}
-        {result && (
+        {clips.length > 0 && (
           <div style={{ marginTop: 40 }}>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                marginBottom: 20,
-              }}
-            >
+            {/* Header */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
               <div>
-                <h2
-                  style={{
-                    margin: 0,
-                    fontSize: 20,
-                    fontWeight: 800,
-                    color: colors.onSurface,
-                  }}
-                >
-                  {result.clips.length} Clips Ready ✓
+                <h2 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: colors.onSurface }}>
+                  {clips.length} Clips Ready ✓
                 </h2>
-                <p
-                  style={{
-                    margin: "4px 0 0",
-                    fontSize: 13,
-                    color: colors.onSurfaceVariant,
-                  }}
-                >
-                  Used {result.creditsUsed} credits ·{" "}
-                  {result.creditsRemaining} remaining
-                </p>
+                {result && (
+                  <p style={{ margin: '4px 0 0', fontSize: 13, color: colors.onSurfaceVariant }}>
+                    Used {result.creditsUsed} credits · {result.creditsRemaining} remaining
+                  </p>
+                )}
               </div>
               <button
                 onClick={() => {
+                  setClips([]);
                   setResult(null);
-                  setVideoUrl("");
+                  setVideoUrl('');
+                  setVideoPreview(null);
+                  localStorage.removeItem(CLIPS_STORAGE_KEY);
                 }}
                 style={{
-                  height: 36,
-                  padding: "0 16px",
-                  borderRadius: radius.md,
-                  border: `1px solid ${colors.outlineVariant}`,
-                  background: "transparent",
-                  color: colors.onSurface,
-                  fontSize: 13,
+                  padding: '8px 16px',
+                  background: 'rgba(239,68,68,0.12)',
+                  border: '1px solid rgba(239,68,68,0.3)',
+                  borderRadius: '8px',
+                  color: '#fca5a5',
+                  fontSize: '12px',
                   fontWeight: 600,
-                  cursor: "pointer",
+                  cursor: 'pointer',
                 }}
               >
-                New Import
+                ✕ Clear & Start New
               </button>
             </div>
 
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
-                gap: 16,
-              }}
-            >
-              {result.clips.map((clip, i) => (
-                <ClipCard
-                  key={i}
-                  clip={clip}
-                  index={i}
-                  onDownload={() => handleDownload(clip)}
-                  onPost={() => handlePost(clip, i)}
-                />
-              ))}
-            </div>
+            {/* Clip cards */}
+            {clips.map((clip: any, index: number) => {
+              const videoId = extractVideoId(videoUrl);
+              const startSeconds = Math.floor(clip.start_time || 0);
+              const endSeconds = Math.floor(clip.end_time || 60);
+
+              return (
+                <div
+                  key={clip.id || index}
+                  style={{
+                    background: 'rgba(255,255,255,0.04)',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    borderRadius: '16px',
+                    overflow: 'hidden',
+                    marginBottom: '16px',
+                  }}
+                >
+                  {/* Video Preview */}
+                  {videoId ? (
+                    <div style={{ position: 'relative', width: '100%', aspectRatio: '16/9', background: '#000' }}>
+                      <iframe
+                        src={`https://www.youtube.com/embed/${videoId}?start=${startSeconds}&end=${endSeconds}&autoplay=0&rel=0&modestbranding=1`}
+                        style={{ width: '100%', height: '100%', border: 'none' }}
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                        loading="lazy"
+                        title={clip.title}
+                      />
+                    </div>
+                  ) : clip.video_url ? (
+                    <video
+                      src={clip.video_url}
+                      style={{ width: '100%', aspectRatio: '16/9', objectFit: 'cover', display: 'block' }}
+                      controls
+                      preload="metadata"
+                    />
+                  ) : null}
+
+                  {/* Clip Info */}
+                  <div style={{ padding: '16px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                      <span style={{ fontSize: '11px', fontWeight: 700, color: '#a78bfa', background: 'rgba(124,58,237,0.15)', padding: '3px 10px', borderRadius: '100px' }}>
+                        Clip {index + 1}
+                      </span>
+                      {clip.ai_score !== undefined && (
+                        <span style={{ fontSize: '13px', fontWeight: 700, color: clip.ai_score >= 90 ? '#10b981' : clip.ai_score >= 80 ? '#f59e0b' : '#ef4444' }}>
+                          🔥 {clip.ai_score}/100
+                        </span>
+                      )}
+                    </div>
+
+                    <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#ffffff', margin: '0 0 8px', lineHeight: 1.3 }}>
+                      {clip.title}
+                    </h3>
+
+                    {(clip.start_time !== undefined || clip.end_time !== undefined) && (
+                      <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', marginBottom: '8px', display: 'flex', gap: '12px' }}>
+                        <span>
+                          ⏱ {Math.floor((clip.start_time || 0) / 60)}:{String(Math.floor((clip.start_time || 0) % 60)).padStart(2, '0')}
+                          {' → '}
+                          {Math.floor((clip.end_time || 60) / 60)}:{String(Math.floor((clip.end_time || 60) % 60)).padStart(2, '0')}
+                        </span>
+                        <span>📏 {clip.duration || (endSeconds - startSeconds)}s</span>
+                      </div>
+                    )}
+
+                    {clip.hook_text && (
+                      <div style={{ fontSize: '12px', color: '#fcd34d', fontStyle: 'italic', marginBottom: '8px', padding: '6px 10px', background: 'rgba(252,211,77,0.08)', borderRadius: '6px' }}>
+                        🎣 Hook: &ldquo;{clip.hook_text}&rdquo;
+                      </div>
+                    )}
+
+                    {clip.caption && (
+                      <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.7)', lineHeight: 1.6, margin: '0 0 10px' }}>
+                        {clip.caption}
+                      </p>
+                    )}
+
+                    {clip.reason && (
+                      <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', lineHeight: 1.5, margin: '0 0 12px', fontStyle: 'italic' }}>
+                        💡 {clip.reason}
+                      </p>
+                    )}
+
+                    {clip.hashtags && clip.hashtags.length > 0 && (
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '14px' }}>
+                        {clip.hashtags.map((tag: string, i: number) => (
+                          <span key={i} style={{ fontSize: '11px', color: '#a78bfa', background: 'rgba(124,58,237,0.12)', padding: '2px 8px', borderRadius: '100px' }}>
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                      <a
+                        href={`/editor?videoUrl=${encodeURIComponent(videoUrl)}&start=${startSeconds}&end=${endSeconds}&title=${encodeURIComponent(clip.title || '')}`}
+                        style={{
+                          flex: 1,
+                          padding: '10px 14px',
+                          background: 'linear-gradient(135deg, #7c3aed, #5b21b6)',
+                          borderRadius: '8px',
+                          color: '#ffffff',
+                          fontSize: '13px',
+                          fontWeight: 600,
+                          textAlign: 'center',
+                          textDecoration: 'none',
+                          cursor: 'pointer',
+                          display: 'block',
+                        }}
+                      >
+                        ✂ Open in Editor
+                      </a>
+                      <button
+                        onClick={() => {
+                          const text = (clip.caption || '') + (clip.hashtags?.length ? '\n\n' + clip.hashtags.join(' ') : '');
+                          navigator.clipboard.writeText(text);
+                          alert('Caption and hashtags copied!');
+                        }}
+                        style={{ padding: '10px 14px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '8px', color: 'rgba(255,255,255,0.7)', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}
+                      >
+                        📋 Copy Caption
+                      </button>
+                      <button
+                        onClick={async () => {
+                          try {
+                            await fetch('/api/clips/save', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              credentials: 'include',
+                              body: JSON.stringify({ ...clip, video_url: videoUrl }),
+                            });
+                            alert('Saved to your clips!');
+                          } catch(e) {
+                            alert('Failed to save');
+                          }
+                        }}
+                        style={{ padding: '10px 14px', background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.3)', borderRadius: '8px', color: '#6ee7b7', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}
+                      >
+                        💾 Save Clip
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
