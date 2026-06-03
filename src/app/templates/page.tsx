@@ -34,7 +34,7 @@ const TMPLS: Template[] = [
     icon: 'bolt',
     platforms: ['TikTok','Reels','Shorts'],
     duration: '15–30s',
-    badge: '🔥 Viral',
+    badge: 'Viral',
     prompt: 'Extract the most attention-grabbing opening hook from this video. Start with the boldest claim or shocking statement, then cut to the core message. Maximum 30 seconds.',
   },
   {
@@ -48,7 +48,7 @@ const TMPLS: Template[] = [
     icon: 'auto_stories',
     platforms: ['TikTok','Reels'],
     duration: '45–60s',
-    badge: '❤️ Emotional',
+    badge: 'Emotional',
     prompt: 'Find a compelling story arc in this video with a clear beginning, rising tension, and resolution. Edit for maximum emotional impact in 45-60 seconds.',
   },
   {
@@ -62,7 +62,7 @@ const TMPLS: Template[] = [
     icon: 'local_fire_department',
     platforms: ['TikTok','Reels','Shorts'],
     duration: '15–30s',
-    badge: '💬 Debate',
+    badge: 'Debate',
     prompt: 'Extract the most controversial or debate-sparking moment from this video. The clip should make viewers feel strongly enough to argue in the comments. Under 30 seconds.',
   },
   {
@@ -76,7 +76,7 @@ const TMPLS: Template[] = [
     icon: 'sentiment_very_satisfied',
     platforms: ['TikTok','Reels','Shorts'],
     duration: '15–30s',
-    badge: '😂 Comedy',
+    badge: 'Comedy',
     prompt: 'Find the funniest moments with the best comedic timing. Preserve the full setup and punchline. Cut anything that breaks the joke momentum. Under 30 seconds.',
   },
   {
@@ -90,7 +90,7 @@ const TMPLS: Template[] = [
     icon: 'tips_and_updates',
     platforms: ['TikTok','Reels','LinkedIn'],
     duration: '30–45s',
-    badge: '💡 Insightful',
+    badge: 'Insightful',
     prompt: 'Extract the single most valuable insight or piece of actionable advice from this video. The clip should make viewers want to save and share it immediately. 30-45 seconds.',
   },
   {
@@ -104,7 +104,7 @@ const TMPLS: Template[] = [
     icon: 'music_note',
     platforms: ['TikTok','Reels'],
     duration: '15–30s',
-    badge: '🌍 African',
+    badge: 'African',
     prompt: 'Find the highest energy, most visually vibrant moments in this video that would pair perfectly with Afrobeats music. Prioritize dancing, celebrations, and cultural moments. Under 30 seconds.',
   },
   {
@@ -118,7 +118,7 @@ const TMPLS: Template[] = [
     icon: 'mic',
     platforms: ['TikTok','Reels','Shorts'],
     duration: '30–60s',
-    badge: '🎙️ Podcast',
+    badge: 'Podcast',
     prompt: 'Find the single most insightful, surprising, or controversial moment from this podcast or interview. The clip should work as a standalone without the full episode context. 30-60 seconds.',
   },
   {
@@ -132,7 +132,7 @@ const TMPLS: Template[] = [
     icon: 'school',
     platforms: ['TikTok','Reels','Shorts'],
     duration: '30–60s',
-    badge: '📚 Tutorial',
+    badge: 'Tutorial',
     prompt: 'Extract a clear, concise tutorial or how-to segment from this video. Include every key step at a fast pace. Cut filler words and repetition. 30-60 seconds.',
   },
   {
@@ -146,7 +146,7 @@ const TMPLS: Template[] = [
     icon: 'emoji_emotions',
     platforms: ['TikTok','Reels'],
     duration: '15–30s',
-    badge: '😮 Reaction',
+    badge: 'Reaction',
     prompt: 'Find the most surprising, shocking, or awe-inspiring moment in this video. The clip should provoke a strong enough reaction that viewers immediately share it. Under 30 seconds.',
   },
   {
@@ -160,7 +160,7 @@ const TMPLS: Template[] = [
     icon: 'theater_comedy',
     platforms: ['TikTok','Reels'],
     duration: '30–60s',
-    badge: '🇳🇬 Naija',
+    badge: 'Naija',
     prompt: 'Extract the most entertaining skit or comedy segment from this video. Preserve the comedic timing, dialogue rhythm, and cultural humor. Keep it punchy and relatable to Nigerian and African audiences. 30-60 seconds.',
   },
   {
@@ -174,7 +174,7 @@ const TMPLS: Template[] = [
     icon: 'rocket_launch',
     platforms: ['TikTok','Reels','Shorts','LinkedIn'],
     duration: '30–60s',
-    badge: '💪 Motivation',
+    badge: 'Motivation',
     prompt: 'Find the most inspiring, motivating speech or monologue from this video. Cut for maximum emotional build-up and energy that crescendos at the end. 30-60 seconds.',
   },
   {
@@ -188,7 +188,7 @@ const TMPLS: Template[] = [
     icon: 'bar_chart',
     platforms: ['TikTok','Reels','LinkedIn'],
     duration: '15–30s',
-    badge: '📊 Data',
+    badge: 'Data',
     prompt: 'Extract the most surprising or counterintuitive statistics and facts from this video. Present them in a rapid-fire format that makes viewers pause and rewatch. Under 30 seconds.',
   },
   {
@@ -202,7 +202,7 @@ const TMPLS: Template[] = [
     icon: 'compare',
     platforms: ['TikTok','Reels','Shorts'],
     duration: '30–45s',
-    badge: '✨ Transform',
+    badge: 'Transform',
     prompt: 'Find the transformation or before/after reveal moment in this video. Build tension before the reveal, then let the result land hard. 30-45 seconds.',
   },
   {
@@ -216,7 +216,7 @@ const TMPLS: Template[] = [
     icon: 'record_voice_over',
     platforms: ['TikTok','Reels','LinkedIn'],
     duration: '45–60s',
-    badge: '🎤 Interview',
+    badge: 'Interview',
     prompt: 'Extract the most compelling interview exchange where the subject gives an unexpected, vulnerable, or highly quotable answer. 45-60 seconds.',
   },
   {
@@ -230,7 +230,7 @@ const TMPLS: Template[] = [
     icon: 'videocam',
     platforms: ['TikTok','Reels','Shorts'],
     duration: '30–60s',
-    badge: '🎬 Authentic',
+    badge: 'Authentic',
     prompt: 'Find the most authentic, unscripted, or behind-the-scenes moments from this video. Prioritize genuine reactions and candid moments over polished content. 30-60 seconds.',
   },
   {
@@ -244,7 +244,7 @@ const TMPLS: Template[] = [
     icon: 'shopping_bag',
     platforms: ['TikTok','Reels','Shorts'],
     duration: '30–45s',
-    badge: '⭐ Review',
+    badge: 'Review',
     prompt: 'Extract the product reveal, key feature demonstration, and final verdict from this review. Include the most visually impactful moment of the product in action. 30-45 seconds.',
   },
   {
@@ -258,7 +258,7 @@ const TMPLS: Template[] = [
     icon: 'campaign',
     platforms: ['TikTok','Reels'],
     duration: '30–45s',
-    badge: '🎤 Street',
+    badge: 'Street',
     prompt: 'Find the most entertaining, unexpected, or hilarious public interview or reaction in this video. The clip should feel authentic and make viewers feel like they were there. 30-45 seconds.',
   },
   {
@@ -272,7 +272,7 @@ const TMPLS: Template[] = [
     icon: 'newspaper',
     platforms: ['TikTok','Reels','LinkedIn'],
     duration: '30–60s',
-    badge: '📰 Commentary',
+    badge: 'Commentary',
     prompt: 'Extract the creator\'s most insightful or provocative commentary on current events. The clip should offer a clear perspective that adds meaningfully to the conversation. 30-60 seconds.',
   },
   {
@@ -286,7 +286,7 @@ const TMPLS: Template[] = [
     icon: 'auto_awesome',
     platforms: ['TikTok','Reels','Shorts'],
     duration: '30–60s',
-    badge: '🙏 Faith',
+    badge: 'Faith',
     prompt: 'Find the most spiritually moving, faith-affirming, or inspirational moment in this video. The clip should provide comfort, renewed purpose, or spiritual encouragement. 30-60 seconds.',
   },
   {
@@ -300,7 +300,7 @@ const TMPLS: Template[] = [
     icon: 'business_center',
     platforms: ['LinkedIn','TikTok','Reels'],
     duration: '30–45s',
-    badge: '💼 Business',
+    badge: 'Business',
     prompt: 'Extract the clearest, most compelling business pitch or value proposition from this video. The clip should communicate the problem, solution, and opportunity in under 45 seconds.',
   },
 ];
