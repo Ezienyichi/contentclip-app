@@ -61,10 +61,15 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const {
       videoUrl,
+      videoUrl2 = '',
+      dualMode = false,
       numClips = 5,
       timeStart = 0,
       timeEnd = maxWindow,
       category = 'gospel',
+      contentMode = 'auto',
+      contentTypes = [],
+      prompt = '',
     } = body;
 
     // ── VALIDATE URL ──
@@ -136,12 +141,17 @@ export async function POST(req: NextRequest) {
         },
         body: JSON.stringify({
           videoUrl,
+          videoUrl2: dualMode ? videoUrl2 : '',
+          dualMode,
           userId: user.id,
           userEmail: user.email,
           numClips: Math.min(numClips, 10),
           timeStart,
           timeEnd,
           category,
+          contentMode,
+          contentTypes,
+          prompt,
           creditsNeeded,
           creditsRemaining: credits - creditsNeeded,
           plan,

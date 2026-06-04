@@ -29,6 +29,128 @@ function extractVideoId(url: string): string {
   return '';
 }
 
+const CONTENT_TYPES = [
+  {
+    id: 'testimony',
+    label: 'Testimony',
+    emoji: 'T1',
+    color: '#7c3aed',
+    bgColor: 'rgba(124,58,237,0.12)',
+    borderColor: 'rgba(124,58,237,0.4)',
+    stat: '1,200% more shares',
+    description: 'Real stories of transformation. One person sharing what God did in their life.',
+    prompt: 'Find moments where someone shares a personal testimony, transformation story, life-changing experience, or before-and-after moment. Look for emotional peaks, vulnerability, breakthrough declarations, and specific details about what changed. These clips generate 1200% more shares than text and image content.',
+    tips: [
+      'Works best with 1-3 real people telling their story',
+      'Emotional peaks get the most saves',
+      'Specific details beat vague statements',
+    ],
+  },
+  {
+    id: 'truth',
+    label: 'Truth',
+    emoji: 'T2',
+    color: '#0ea5e9',
+    bgColor: 'rgba(14,165,233,0.12)',
+    borderColor: 'rgba(14,165,233,0.4)',
+    stat: 'Highest comment rate',
+    description: 'Short biblical insight delivered fast. One pastor answering one honest question. No graphics, no announcements, just truth.',
+    prompt: 'Find moments of clear, powerful biblical teaching. Look for when the speaker delivers a sharp insight, answers a real question, breaks down a scripture in a fresh way, or says something that makes the listener rethink what they believed. Short punchy truth statements that feel like a revelation. No announcements, no church logistics, just raw truth delivered with conviction.',
+    tips: [
+      'Under 60 seconds works best',
+      'One question one answer format',
+      'Bold statements that challenge assumptions',
+    ],
+  },
+  {
+    id: 'team',
+    label: 'Team',
+    emoji: 'T3',
+    color: '#10b981',
+    bgColor: 'rgba(16,185,129,0.12)',
+    borderColor: 'rgba(16,185,129,0.4)',
+    stat: 'Kills fear of the unknown',
+    description: 'Behind-the-scenes content featuring real people. The number one reason people do not try a new church is fear of the unknown.',
+    prompt: 'Find behind-the-scenes moments showing real people being authentic. Look for laughter, casual conversations, team interactions, setup moments, candid reactions, or any moment that shows the human side of the church or organisation. These clips make viewers feel like they already know the people and reduce the fear barrier that stops people from engaging.',
+    tips: [
+      'Candid moments beat staged content',
+      'Show real personality and laughter',
+      'Makes strangers feel welcome before they arrive',
+    ],
+  },
+  {
+    id: 'transcendence',
+    label: 'Transcendence',
+    emoji: 'T4',
+    color: '#f59e0b',
+    bgColor: 'rgba(245,158,11,0.12)',
+    borderColor: 'rgba(245,158,11,0.4)',
+    stat: 'Reaches most non-Christians',
+    description: 'A worship moment. A baptism. The second a song breaks the room open. Worship clips reach more non-Christians than sermon clips.',
+    prompt: 'Find transcendent worship moments, baptisms, powerful prayer moments, or any point where the atmosphere shifts. Look for the exact second the room breaks open emotionally. Musical peaks, congregational responses, moments of visible emotion, hands raised, tears, breakthrough worship. These clips reach more non-Christians than any sermon clip because they capture something words cannot explain.',
+    tips: [
+      'Capture the exact moment the atmosphere shifts',
+      'Baptism moments get massive engagement',
+      'Music peaks with congregational response',
+    ],
+  },
+];
+
+const AUDIENCE_PRESETS = [
+  {
+    id: 'church',
+    label: 'Church / Christian',
+    description: 'Optimised for gospel, worship, and faith content',
+    defaultTs: ['testimony', 'truth', 'team', 'transcendence'],
+  },
+  {
+    id: 'podcast',
+    label: 'Podcaster',
+    description: 'Optimised for interviews, insights, and hot takes',
+    defaultTs: ['truth', 'testimony'],
+  },
+  {
+    id: 'marketing',
+    label: 'Marketing / Brand',
+    description: 'Optimised for testimonials, BTS, and brand moments',
+    defaultTs: ['testimony', 'team'],
+  },
+  {
+    id: 'education',
+    label: 'Education',
+    description: 'Optimised for teaching moments and key insights',
+    defaultTs: ['truth'],
+  },
+];
+
+function buildSmartPrompt(
+  category: string,
+  selectedTs: string[],
+  mode: string,
+): string {
+  if (mode === 'auto') {
+    return 'Automatically detect and categorise every clip as one of: Testimony (personal transformation stories), Truth (biblical insight or teaching moment), Team (behind-the-scenes authentic moments), or Transcendence (worship, baptism, or atmosphere-shifting moments). Prioritise clips with the highest emotional impact and viral potential. For each clip indicate which of the 4T categories it falls into.';
+  }
+
+  const typeMap: Record<string, string> = {
+    testimony: 'Find moments where someone shares a personal testimony, transformation story, life-changing experience, or before-and-after moment. Look for emotional peaks, vulnerability, breakthrough declarations, and specific details about what changed. These clips generate 1200% more shares than text and image content.',
+    truth: 'Find moments of clear powerful biblical teaching or insight. Look for when the speaker delivers a sharp insight, answers a real question, breaks down a scripture in a fresh way, or says something that makes the listener rethink what they believed. Short punchy truth statements that feel like a revelation.',
+    team: 'Find behind-the-scenes moments showing real people being authentic. Look for laughter, casual conversations, team interactions, setup moments, candid reactions, or any moment that shows the human side of the people. These clips make viewers feel like they already know the people and reduce the fear barrier.',
+    transcendence: 'Find transcendent worship moments, baptisms, powerful prayer moments, or any point where the atmosphere shifts. Look for the exact second the room breaks open emotionally. Musical peaks, congregational responses, moments of visible emotion. These clips reach more non-Christians than any sermon clip.',
+  };
+
+  const prompts: string[] = [];
+  selectedTs.forEach(id => {
+    if (typeMap[id]) prompts.push(typeMap[id]);
+  });
+
+  if (prompts.length === 0) {
+    return 'Find the most engaging hook-worthy moments with high energy and emotional impact.';
+  }
+
+  return prompts.join('\n\n') + '\n\nFor each clip indicate which category it belongs to: Testimony, Truth, Team, or Transcendence. Rank clips by viral potential with testimony moments weighted highest as they generate 1200% more shares.';
+}
+
 interface Clip {
   video_url: string;
   title: string;
@@ -508,6 +630,11 @@ export default function ImportPage() {
     videoId: string;
   } | null>(null);
   const [clips, setClips] = useState<any[]>([]);
+  const [category, setCategory] = useState('gospel');
+  const [contentMode, setContentMode] = useState('auto');
+  const [selectedTs, setSelectedTs] = useState<string[]>([]);
+  const [dualMode] = useState(false);
+  const [videoUrl2] = useState('');
 
   const planLimit = PLAN_LIMITS[userPlan] ?? 300;
   const creditCost = timeRangeEnabled ? Math.ceil((timeEnd - timeStart) / 60) : numClips * 10;
@@ -603,10 +730,15 @@ export default function ImportPage() {
         credentials: "include",
         body: JSON.stringify({
           videoUrl,
+          videoUrl2: dualMode ? videoUrl2 : '',
+          dualMode,
           numClips,
           timeStart,
           timeEnd,
-          category: "gospel",
+          category,
+          contentMode,
+          contentTypes: selectedTs,
+          prompt: buildSmartPrompt(category, selectedTs, contentMode),
         }),
       });
 
@@ -650,12 +782,17 @@ export default function ImportPage() {
   }, [
     isValidUrl,
     videoUrl,
+    videoUrl2,
+    dualMode,
     numClips,
     timeRangeEnabled,
     timeStart,
     timeEnd,
     planLimit,
     userPlan,
+    category,
+    contentMode,
+    selectedTs,
   ]);
 
   const handleDownload = (clip: Clip) => {
@@ -882,6 +1019,161 @@ export default function ImportPage() {
               maxAllowed={planLimit}
               upgradeable={userPlan !== "agency"}
             />
+
+            {/* ── CONTENT INTELLIGENCE ── */}
+            <div style={{
+              marginTop: '20px',
+              padding: '18px',
+              background: 'rgba(255,255,255,0.03)',
+              border: '1px solid rgba(255,255,255,0.08)',
+              borderRadius: '14px',
+            }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginBottom: '12px',
+              }}>
+                <div>
+                  <div style={{ fontSize: '14px', fontWeight: 700, color: '#ffffff' }}>
+                    Content intelligence
+                  </div>
+                  <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginTop: '2px' }}>
+                    Based on 12-month church social media study
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: '4px' }}>
+                  <button
+                    onClick={() => setContentMode('auto')}
+                    style={{
+                      padding: '4px 12px',
+                      borderRadius: '6px',
+                      border: '1px solid',
+                      borderColor: contentMode === 'auto' ? 'rgba(124,58,237,0.5)' : 'rgba(255,255,255,0.1)',
+                      background: contentMode === 'auto' ? 'rgba(124,58,237,0.15)' : 'transparent',
+                      color: contentMode === 'auto' ? '#a78bfa' : 'rgba(255,255,255,0.4)',
+                      fontSize: '11px',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Auto detect
+                  </button>
+                  <button
+                    onClick={() => setContentMode('manual')}
+                    style={{
+                      padding: '4px 12px',
+                      borderRadius: '6px',
+                      border: '1px solid',
+                      borderColor: contentMode === 'manual' ? 'rgba(124,58,237,0.5)' : 'rgba(255,255,255,0.1)',
+                      background: contentMode === 'manual' ? 'rgba(124,58,237,0.15)' : 'transparent',
+                      color: contentMode === 'manual' ? '#a78bfa' : 'rgba(255,255,255,0.4)',
+                      fontSize: '11px',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Choose types
+                  </button>
+                </div>
+              </div>
+
+              {/* Audience presets */}
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '14px' }}>
+                {AUDIENCE_PRESETS.map(preset => (
+                  <button
+                    key={preset.id}
+                    onClick={() => {
+                      setCategory(preset.id);
+                      setSelectedTs(preset.defaultTs);
+                      setContentMode('manual');
+                    }}
+                    style={{
+                      padding: '8px 14px',
+                      borderRadius: '8px',
+                      border: '1px solid',
+                      borderColor: category === preset.id ? 'rgba(124,58,237,0.5)' : 'rgba(255,255,255,0.1)',
+                      background: category === preset.id ? 'rgba(124,58,237,0.12)' : 'rgba(255,255,255,0.03)',
+                      cursor: 'pointer',
+                      textAlign: 'left' as const,
+                    }}
+                  >
+                    <div style={{ fontSize: '12px', fontWeight: 600, color: category === preset.id ? '#ffffff' : 'rgba(255,255,255,0.7)' }}>
+                      {preset.label}
+                    </div>
+                    <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', marginTop: '2px' }}>
+                      {preset.description}
+                    </div>
+                  </button>
+                ))}
+              </div>
+
+              {/* 4T Content Type Cards */}
+              {contentMode === 'manual' && (
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                  {CONTENT_TYPES.map(type => {
+                    const isSelected = selectedTs.includes(type.id);
+                    return (
+                      <button
+                        key={type.id}
+                        onClick={() => {
+                          setSelectedTs(prev =>
+                            prev.includes(type.id)
+                              ? prev.filter(t => t !== type.id)
+                              : [...prev, type.id]
+                          );
+                        }}
+                        style={{
+                          padding: '12px 14px',
+                          borderRadius: '10px',
+                          border: '1px solid',
+                          borderColor: isSelected ? type.borderColor : 'rgba(255,255,255,0.08)',
+                          background: isSelected ? type.bgColor : 'rgba(255,255,255,0.02)',
+                          cursor: 'pointer',
+                          textAlign: 'left' as const,
+                        }}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                          <span style={{ fontSize: '13px', fontWeight: 700, color: isSelected ? type.color : 'rgba(255,255,255,0.6)' }}>
+                            {type.label}
+                          </span>
+                          <span style={{ fontSize: '10px', fontWeight: 600, color: type.color, opacity: isSelected ? 1 : 0.5 }}>
+                            {isSelected ? 'Selected' : type.emoji}
+                          </span>
+                        </div>
+                        <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.45)', lineHeight: 1.4, marginBottom: '6px' }}>
+                          {type.description}
+                        </div>
+                        <div style={{ fontSize: '10px', fontWeight: 600, color: type.color, opacity: 0.8 }}>
+                          {type.stat}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Tips for selected types */}
+              {contentMode === 'manual' && selectedTs.length > 0 && (
+                <div style={{
+                  marginTop: '12px',
+                  padding: '10px 14px',
+                  background: 'rgba(124,58,237,0.06)',
+                  border: '1px solid rgba(124,58,237,0.15)',
+                  borderRadius: '8px',
+                }}>
+                  <div style={{ fontSize: '11px', fontWeight: 600, color: '#a78bfa', marginBottom: '6px' }}>
+                    VangelClip will prioritise finding:
+                  </div>
+                  <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', lineHeight: 1.6 }}>
+                    {selectedTs.map(id => {
+                      const type = CONTENT_TYPES.find(t => t.id === id);
+                      return type ? `${type.label} moments` : '';
+                    }).filter(Boolean).join(' + ')}
+                  </div>
+                </div>
+              )}
+            </div>
 
             {/* Error */}
             {error && (
@@ -1304,6 +1596,39 @@ export default function ImportPage() {
                       )}
                     </div>
 
+                    {clip.category && (
+                      <span style={{
+                        fontSize: '10px',
+                        fontWeight: 700,
+                        padding: '2px 8px',
+                        borderRadius: '100px',
+                        display: 'inline-block',
+                        marginBottom: '8px',
+                        background:
+                          clip.category === 'testimony' || clip.category === 'Testimony'
+                            ? 'rgba(124,58,237,0.15)'
+                          : clip.category === 'truth' || clip.category === 'Truth'
+                            ? 'rgba(14,165,233,0.15)'
+                          : clip.category === 'team' || clip.category === 'Team'
+                            ? 'rgba(16,185,129,0.15)'
+                          : clip.category === 'transcendence' || clip.category === 'Transcendence'
+                            ? 'rgba(245,158,11,0.15)'
+                          : 'rgba(255,255,255,0.08)',
+                        color:
+                          clip.category === 'testimony' || clip.category === 'Testimony'
+                            ? '#a78bfa'
+                          : clip.category === 'truth' || clip.category === 'Truth'
+                            ? '#38bdf8'
+                          : clip.category === 'team' || clip.category === 'Team'
+                            ? '#6ee7b7'
+                          : clip.category === 'transcendence' || clip.category === 'Transcendence'
+                            ? '#fcd34d'
+                          : 'rgba(255,255,255,0.5)',
+                      }}>
+                        {clip.category}
+                      </span>
+                    )}
+
                     <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#ffffff', margin: '0 0 8px', lineHeight: 1.3 }}>
                       {clip.title}
                     </h3>
@@ -1344,6 +1669,31 @@ export default function ImportPage() {
                             {tag}
                           </span>
                         ))}
+                      </div>
+                    )}
+
+                    {clip.category && (
+                      <div style={{
+                        marginTop: '8px',
+                        marginBottom: '12px',
+                        padding: '8px 12px',
+                        background: 'rgba(124,58,237,0.06)',
+                        border: '1px solid rgba(124,58,237,0.12)',
+                        borderRadius: '8px',
+                        fontSize: '11px',
+                        color: 'rgba(255,255,255,0.5)',
+                        lineHeight: 1.5,
+                      }}>
+                        {(clip.category === 'testimony' || clip.category === 'Testimony')
+                          ? 'Testimony clips generate 1,200% more shares than text and image content combined. Share this on all platforms.'
+                        : (clip.category === 'truth' || clip.category === 'Truth')
+                          ? 'Truth clips get the highest comment rates. Post this as a question to drive discussion.'
+                        : (clip.category === 'team' || clip.category === 'Team')
+                          ? 'Team content kills the fear of the unknown. This makes new people feel welcome before they arrive.'
+                        : (clip.category === 'transcendence' || clip.category === 'Transcendence')
+                          ? 'Worship and transcendence clips reach more non-Christians than sermon clips. Let this speak for itself.'
+                        : 'Share this clip across all your platforms for maximum reach.'
+                        }
                       </div>
                     )}
 
