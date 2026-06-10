@@ -635,6 +635,11 @@ export default function ImportPage() {
   const [selectedTs, setSelectedTs] = useState<string[]>([]);
   const [dualMode] = useState(false);
   const [videoUrl2] = useState('');
+  const [scheduleModal, setScheduleModal] = useState<any | null>(null);
+  const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
+  const [scheduleDate, setScheduleDate] = useState('');
+  const [scheduleTime, setScheduleTime] = useState('');
+  const [scheduling, setScheduling] = useState(false);
 
   const planLimit = PLAN_LIMITS[userPlan] ?? 300;
   const creditCost = timeRangeEnabled ? Math.ceil((timeEnd - timeStart) / 60) : numClips * 10;
@@ -1744,6 +1749,18 @@ export default function ImportPage() {
                       >
                         💾 Save Clip
                       </button>
+                      <button
+                        onClick={() => {
+                          setScheduleModal(clip);
+                          setSelectedPlatforms([]);
+                          const now = new Date();
+                          setScheduleDate(now.toISOString().split('T')[0]);
+                          setScheduleTime('10:00');
+                        }}
+                        style={{ padding: '10px 14px', background: 'rgba(14,165,233,0.12)', border: '1px solid rgba(14,165,233,0.3)', borderRadius: '8px', color: '#38bdf8', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}
+                      >
+                        📅 Schedule
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -1754,6 +1771,85 @@ export default function ImportPage() {
       </div>
 
       <style>{`@keyframes spin { to { transform: rotate(360deg); } } @media (max-width: 768px) { .import-settings-panel { display: none !important; } }`}</style>
+
+      {scheduleModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <div style={{ background: '#0d0021', border: '1px solid rgba(124,58,237,0.3)', borderRadius: '16px', padding: '24px', width: '100%', maxWidth: '480px', maxHeight: '90vh', overflowY: 'auto' }}>
+            <div style={{ fontSize: '18px', fontWeight: 700, color: '#ffffff', marginBottom: '6px' }}>Schedule Clip</div>
+            <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.45)', marginBottom: '20px' }}>{scheduleModal.title}</div>
+
+            <div style={{ fontSize: '13px', fontWeight: 600, color: 'rgba(255,255,255,0.6)', marginBottom: '10px' }}>Select platforms:</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '20px' }}>
+              {[
+                { id: 'tiktok', label: 'TikTok', icon: '🎵' },
+                { id: 'instagram', label: 'Instagram Reels', icon: '📸' },
+                { id: 'youtube', label: 'YouTube Shorts', icon: '▶' },
+                { id: 'facebook', label: 'Facebook', icon: '📘' },
+                { id: 'twitter', label: 'X (Twitter)', icon: '𝕏' },
+              ].map(p => (
+                <label key={p.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 14px', background: selectedPlatforms.includes(p.id) ? 'rgba(124,58,237,0.15)' : 'rgba(255,255,255,0.04)', border: '1px solid', borderColor: selectedPlatforms.includes(p.id) ? 'rgba(124,58,237,0.4)' : 'rgba(255,255,255,0.08)', borderRadius: '10px', cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={selectedPlatforms.includes(p.id)}
+                    onChange={e => setSelectedPlatforms(prev => e.target.checked ? [...prev, p.id] : prev.filter(x => x !== p.id))}
+                    style={{ width: '16px', height: '16px' }}
+                  />
+                  <span style={{ fontSize: '18px' }}>{p.icon}</span>
+                  <span style={{ fontSize: '13px', fontWeight: 600, color: '#ffffff' }}>{p.label}</span>
+                </label>
+              ))}
+            </div>
+
+            <div style={{ fontSize: '13px', fontWeight: 600, color: 'rgba(255,255,255,0.6)', marginBottom: '10px' }}>Schedule date and time:</div>
+            <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
+              <input type="date" value={scheduleDate} onChange={e => setScheduleDate(e.target.value)} style={{ flex: 1, padding: '10px 14px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '8px', color: '#ffffff', fontSize: '13px', outline: 'none' }} />
+              <input type="time" value={scheduleTime} onChange={e => setScheduleTime(e.target.value)} style={{ flex: 1, padding: '10px 14px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '8px', color: '#ffffff', fontSize: '13px', outline: 'none' }} />
+            </div>
+
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button
+                onClick={async () => {
+                  if (selectedPlatforms.length === 0) { alert('Select at least one platform'); return; }
+                  setScheduling(true);
+                  try {
+                    const scheduledAt = new Date(`${scheduleDate}T${scheduleTime}:00`).toISOString();
+                    const res = await fetch('/api/social/schedule', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      credentials: 'include',
+                      body: JSON.stringify({
+                        clipId: scheduleModal.id,
+                        platforms: selectedPlatforms,
+                        caption: scheduleModal.caption,
+                        hashtags: scheduleModal.hashtags,
+                        scheduleTime: scheduledAt,
+                        videoUrl: scheduleModal.video_url || videoUrl,
+                        title: scheduleModal.title,
+                      }),
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                      alert(`Clip scheduled for ${scheduleDate} at ${scheduleTime} on ${selectedPlatforms.join(', ')}`);
+                      setScheduleModal(null);
+                    } else {
+                      alert(data.error || 'Scheduling failed');
+                    }
+                  } catch (e) {
+                    alert('Scheduling failed');
+                  } finally {
+                    setScheduling(false);
+                  }
+                }}
+                disabled={scheduling}
+                style={{ flex: 1, padding: '13px', background: 'linear-gradient(135deg, #7c3aed, #5b21b6)', border: 'none', borderRadius: '10px', color: '#ffffff', fontSize: '14px', fontWeight: 700, cursor: scheduling ? 'not-allowed' : 'pointer', opacity: scheduling ? 0.7 : 1 }}
+              >
+                {scheduling ? 'Scheduling...' : '📅 Schedule Post'}
+              </button>
+              <button onClick={() => setScheduleModal(null)} style={{ padding: '13px 20px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', color: 'rgba(255,255,255,0.6)', fontSize: '14px', cursor: 'pointer' }}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
     </DashboardLayout>
   );
 }
