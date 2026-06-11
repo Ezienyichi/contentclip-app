@@ -5,7 +5,7 @@ import { cookies } from 'next/headers';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 300;
 
-const N8N_WEBHOOK_URL = 'https://vangelclip-ai.app.n8n.cloud/webhook/vangelclip-process';
+const PROCESS_API_URL = 'http://137.184.75.47:8000/api/process';
 
 const PLAN_WINDOWS: Record<string, number> = {
   free:         300,
@@ -133,8 +133,8 @@ export async function POST(req: NextRequest) {
     }
 
     try {
-      // ── CALL N8N WEBHOOK ──
-      const n8nResponse = await fetch(N8N_WEBHOOK_URL, {
+      // ── CALL DIGITALOCEAN API SERVER ──
+      const serverResponse = await fetch(PROCESS_API_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -158,18 +158,18 @@ export async function POST(req: NextRequest) {
         }),
       });
 
-      if (!n8nResponse.ok) {
-        throw new Error(`n8n error: ${n8nResponse.status}`);
+      if (!serverResponse.ok) {
+        throw new Error(`Server error: ${serverResponse.status}`);
       }
 
-      const n8nData = await n8nResponse.json();
+      const serverData = await serverResponse.json();
 
       // ── RETURN RESULTS ──
       return NextResponse.json({
         success: true,
-        clips: n8nData.clips || [],
-        credits_used: creditsNeeded,
-        credits_remaining: credits - creditsNeeded,
+        clips: serverData.clips || [],
+        credits_used: serverData.credits_used ?? creditsNeeded,
+        credits_remaining: serverData.credits_remaining ?? (credits - creditsNeeded),
       });
 
     } catch (processingError: any) {
