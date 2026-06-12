@@ -1757,7 +1757,7 @@ export default function ImportPage() {
                           setScheduleDate(now.toISOString().split('T')[0]);
                           setScheduleTime('10:00');
                         }}
-                        style={{ padding: '10px 14px', background: 'rgba(14,165,233,0.12)', border: '1px solid rgba(14,165,233,0.3)', borderRadius: '8px', color: '#38bdf8', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}
+                        style={{ padding: '10px 14px', background: 'rgba(124,58,237,0.12)', border: '1px solid rgba(124,58,237,0.3)', borderRadius: '8px', color: '#a78bfa', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}
                       >
                         📅 Schedule
                       </button>
