@@ -640,6 +640,10 @@ export default function ImportPage() {
   const [scheduleDate, setScheduleDate] = useState('');
   const [scheduleTime, setScheduleTime] = useState('');
   const [scheduling, setScheduling] = useState(false);
+  const [inputTab, setInputTab] = useState<'youtube' | 'upload'>('youtube');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isDragOver, setIsDragOver] = useState(false);
 
   const planLimit = PLAN_LIMITS[userPlan] ?? 300;
   const creditCost = timeRangeEnabled ? Math.ceil((timeEnd - timeStart) / 60) : numClips * 10;
@@ -800,6 +804,65 @@ export default function ImportPage() {
     selectedTs,
   ]);
 
+  const handleUpload = useCallback(async () => {
+    if (!selectedFile) return;
+
+    setLoading(true);
+    setStatus('processing');
+    setError(null);
+    setResult(null);
+    setUploadProgress(0);
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { setError('Please sign in.'); setLoading(false); return; }
+
+      const creditsNeeded = Math.ceil((timeEnd - timeStart) / 60);
+      const creditsRemaining = userCredits - creditsNeeded;
+
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+      formData.append('userId', user.id);
+      formData.append('numClips', String(numClips));
+      formData.append('category', category);
+      formData.append('prompt', buildSmartPrompt(category, selectedTs, contentMode));
+      formData.append('creditsNeeded', String(creditsNeeded));
+      formData.append('creditsRemaining', String(creditsRemaining));
+
+      await new Promise<void>((resolve) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', 'http://137.184.75.47:8000/api/process-upload');
+        xhr.upload.onprogress = (e) => {
+          if (e.lengthComputable) {
+            setUploadProgress(Math.round((e.loaded / e.total) * 100));
+          }
+        };
+        xhr.onload = () => {
+          try {
+            const data = JSON.parse(xhr.responseText);
+            if (xhr.status >= 200 && xhr.status < 300 && data.clips?.length > 0) {
+              setResult({ success: true, jobId: '', clips: data.clips, creditsUsed: data.credits_used ?? creditsNeeded, creditsRemaining: data.credits_remaining ?? creditsRemaining });
+              setClips(data.clips);
+              setUserCredits(data.credits_remaining ?? creditsRemaining);
+              localStorage.setItem(CLIPS_STORAGE_KEY, JSON.stringify({ clips: data.clips, videoUrl: selectedFile.name, generatedAt: new Date().toISOString() }));
+            } else {
+              setError(data.error || 'No clips found. Try a different video.');
+            }
+          } catch { setError('Failed to parse server response.'); }
+          resolve();
+        };
+        xhr.onerror = () => { setError('Upload failed. Check your connection and try again.'); resolve(); };
+        xhr.send(formData);
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Upload error');
+    } finally {
+      setLoading(false);
+      setStatus('idle');
+      setUploadProgress(0);
+    }
+  }, [selectedFile, numClips, category, selectedTs, contentMode, timeStart, timeEnd, userCredits]);
+
   const handleDownload = (clip: Clip) => {
     const a = document.createElement('a');
     a.href = clip.video_url;
@@ -853,82 +916,108 @@ export default function ImportPage() {
         >
           {/* Left: Form */}
           <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-            {/* URL */}
+            {/* Input tab switcher */}
             <div>
-              <label
-                style={{
-                  fontSize: 13,
-                  fontWeight: 600,
-                  color: colors.onSurface,
-                  display: "block",
-                  marginBottom: 8,
-                }}
-              >
-                Video URL
-              </label>
-              <div style={{ position: "relative" }}>
-                <input
-                  type="url"
-                  placeholder="https://youtube.com/watch?v=..."
-                  value={videoUrl}
-                  onChange={(e) => handleUrlChange(e.target.value)}
-                  style={inputStyle}
-                />
-                {isYouTube && (
-                  <span
-                    style={{
-                      position: "absolute",
-                      right: 12,
-                      top: "50%",
-                      transform: "translateY(-50%)",
-                      fontSize: 11,
-                      color: colors.primary,
-                      fontWeight: 600,
-                    }}
+              <div style={{ display: 'flex', gap: '4px', marginBottom: '12px', background: colors.surfaceContainerHigh, borderRadius: radius.md, padding: '4px' }}>
+                {(['youtube', 'upload'] as const).map(tab => (
+                  <button
+                    key={tab}
+                    onClick={() => setInputTab(tab)}
+                    style={{ flex: 1, padding: '8px 0', borderRadius: '6px', border: 'none', fontSize: '13px', fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s', background: inputTab === tab ? 'linear-gradient(135deg,#7c3aed,#5b21b6)' : 'transparent', color: inputTab === tab ? '#ffffff' : colors.onSurfaceVariant }}
                   >
-                    ✓ YouTube
-                  </span>
-                )}
+                    {tab === 'youtube' ? '🔗 YouTube Link' : '📁 Upload Video'}
+                  </button>
+                ))}
               </div>
-              {videoPreview && (
-                <div style={{
-                  display: 'flex',
-                  gap: '14px',
-                  padding: '14px',
-                  background: 'rgba(255,255,255,0.04)',
-                  border: '1px solid rgba(124,58,237,0.25)',
-                  borderRadius: '12px',
-                  marginTop: '12px',
-                  alignItems: 'center',
-                }}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={videoPreview.thumbnail}
-                    alt="Video preview"
-                    style={{
-                      width: '160px',
-                      height: '90px',
-                      objectFit: 'cover',
-                      borderRadius: '8px',
-                      flexShrink: 0,
-                    }}
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src =
-                        `https://img.youtube.com/vi/${videoPreview.videoId}/hqdefault.jpg`;
-                    }}
-                  />
-                  <div>
-                    <div style={{ fontSize: '13px', fontWeight: 600, color: '#ffffff', marginBottom: '4px' }}>
-                      Video detected
-                    </div>
-                    <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)' }}>
-                      ID: {videoPreview.videoId}
-                    </div>
-                    <div style={{ fontSize: '11px', color: '#10b981', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      ✓ Ready to clip
-                    </div>
+
+              {inputTab === 'youtube' ? (
+                <>
+                  <div style={{ position: 'relative' }}>
+                    <input
+                      type="url"
+                      placeholder="https://youtube.com/watch?v=..."
+                      value={videoUrl}
+                      onChange={(e) => handleUrlChange(e.target.value)}
+                      style={inputStyle}
+                    />
+                    {isYouTube && (
+                      <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 11, color: colors.primary, fontWeight: 600 }}>
+                        ✓ YouTube
+                      </span>
+                    )}
                   </div>
-                </div>
+                  {videoPreview && (
+                    <div style={{ display: 'flex', gap: '14px', padding: '14px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(124,58,237,0.25)', borderRadius: '12px', marginTop: '12px', alignItems: 'center' }}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={videoPreview.thumbnail} alt="Video preview" style={{ width: '160px', height: '90px', objectFit: 'cover', borderRadius: '8px', flexShrink: 0 }} onError={(e) => { (e.target as HTMLImageElement).src = `https://img.youtube.com/vi/${videoPreview.videoId}/hqdefault.jpg`; }} />
+                      <div>
+                        <div style={{ fontSize: '13px', fontWeight: 600, color: '#ffffff', marginBottom: '4px' }}>Video detected</div>
+                        <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)' }}>ID: {videoPreview.videoId}</div>
+                        <div style={{ fontSize: '11px', color: '#10b981', marginTop: '4px' }}>✓ Ready to clip</div>
+                      </div>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <>
+                  <div
+                    onDragOver={e => { e.preventDefault(); setIsDragOver(true); }}
+                    onDragLeave={() => setIsDragOver(false)}
+                    onDrop={e => {
+                      e.preventDefault();
+                      setIsDragOver(false);
+                      const file = e.dataTransfer.files[0];
+                      if (!file) return;
+                      if (!file.type.startsWith('video/')) { setError('Please select a video file.'); return; }
+                      if (file.size > 1024 * 1024 * 1024) { setError('File exceeds 1 GB limit.'); return; }
+                      setError(null);
+                      setSelectedFile(file);
+                    }}
+                    onClick={() => document.getElementById('file-upload-input')?.click()}
+                    style={{ border: `2px dashed ${isDragOver ? '#7c3aed' : 'rgba(124,58,237,0.35)'}`, borderRadius: radius.lg, padding: '36px 20px', textAlign: 'center', cursor: 'pointer', background: isDragOver ? 'rgba(124,58,237,0.08)' : colors.surfaceContainerLowest, transition: 'all 0.2s' }}
+                  >
+                    <input
+                      id="file-upload-input"
+                      type="file"
+                      accept="video/mp4,video/quicktime,video/x-matroska"
+                      style={{ display: 'none' }}
+                      onChange={e => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        if (file.size > 1024 * 1024 * 1024) { setError('File exceeds 1 GB limit.'); return; }
+                        setError(null);
+                        setSelectedFile(file);
+                      }}
+                    />
+                    <div style={{ fontSize: '32px', marginBottom: '10px' }}>🎬</div>
+                    <div style={{ fontSize: '14px', fontWeight: 600, color: '#ffffff', marginBottom: '6px' }}>
+                      {isDragOver ? 'Drop your video here' : 'Drag & drop or click to upload'}
+                    </div>
+                    <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)' }}>MP4 · MOV · MKV · Max 1 GB</div>
+                  </div>
+
+                  {selectedFile && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 14px', background: 'rgba(124,58,237,0.08)', border: '1px solid rgba(124,58,237,0.25)', borderRadius: '10px', marginTop: '10px' }}>
+                      <span style={{ fontSize: '20px' }}>📄</span>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: '13px', fontWeight: 600, color: '#ffffff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{selectedFile.name}</div>
+                        <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.45)', marginTop: '2px' }}>{(selectedFile.size / (1024 * 1024)).toFixed(1)} MB</div>
+                      </div>
+                      <button onClick={e => { e.stopPropagation(); setSelectedFile(null); }} style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '6px', color: '#fca5a5', fontSize: '11px', padding: '4px 8px', cursor: 'pointer' }}>✕ Remove</button>
+                    </div>
+                  )}
+
+                  {loading && uploadProgress > 0 && uploadProgress < 100 && (
+                    <div style={{ marginTop: '12px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: 'rgba(255,255,255,0.6)', marginBottom: '6px' }}>
+                        <span>Uploading...</span><span>{uploadProgress}%</span>
+                      </div>
+                      <div style={{ width: '100%', height: '6px', background: 'rgba(255,255,255,0.08)', borderRadius: '3px', overflow: 'hidden' }}>
+                        <div style={{ width: `${uploadProgress}%`, height: '100%', background: 'linear-gradient(90deg,#7c3aed,#5b21b6)', borderRadius: '3px', transition: 'width 0.3s' }} />
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
             </div>
 
@@ -1199,23 +1288,23 @@ export default function ImportPage() {
 
             {/* Generate Button */}
             <button
-              onClick={handleProcess}
-              disabled={!isValidUrl || loading}
+              onClick={inputTab === 'upload' ? handleUpload : handleProcess}
+              disabled={(inputTab === 'youtube' ? !isValidUrl : !selectedFile) || loading}
               style={{
                 height: 52,
                 borderRadius: radius.lg,
                 border: "none",
                 background:
-                  !isValidUrl || loading
+                  ((inputTab === 'youtube' ? !isValidUrl : !selectedFile) || loading)
                     ? colors.surfaceContainerHigh
                     : gradients.primary,
                 color:
-                  !isValidUrl || loading
+                  ((inputTab === 'youtube' ? !isValidUrl : !selectedFile) || loading)
                     ? colors.onSurfaceVariant
                     : colors.onPrimary,
                 fontSize: 15,
                 fontWeight: 700,
-                cursor: !isValidUrl || loading ? "not-allowed" : "pointer",
+                cursor: ((inputTab === 'youtube' ? !isValidUrl : !selectedFile) || loading) ? "not-allowed" : "pointer",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
