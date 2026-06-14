@@ -1792,8 +1792,11 @@ export default function ImportPage() {
                     )}
 
                     <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                      <a
-                        href={`/editor?videoUrl=${encodeURIComponent(videoUrl)}&start=${startSeconds}&end=${endSeconds}&title=${encodeURIComponent(clip.title || '')}`}
+                      <button
+                        onClick={() => router.push(
+                          '/editor?videoUrl=' + encodeURIComponent(clip.video_url || '') +
+                          '&title=' + encodeURIComponent(clip.title || '')
+                        )}
                         style={{
                           flex: 1,
                           padding: '10px 14px',
@@ -1803,13 +1806,13 @@ export default function ImportPage() {
                           fontSize: '13px',
                           fontWeight: 600,
                           textAlign: 'center',
-                          textDecoration: 'none',
+                          border: 'none',
                           cursor: 'pointer',
                           display: 'block',
                         }}
                       >
                         ✂ Open in Editor
-                      </a>
+                      </button>
                       <button
                         onClick={() => {
                           const text = (clip.caption || '') + (clip.hashtags?.length ? '\n\n' + clip.hashtags.join(' ') : '');
