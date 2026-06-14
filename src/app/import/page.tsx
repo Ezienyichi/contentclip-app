@@ -1061,7 +1061,7 @@ export default function ImportPage() {
                       setIsDragOver(false);
                       const file = e.dataTransfer.files[0];
                       if (!file) return;
-                      if (!file.type.startsWith('video/')) { setError('Please select a video file.'); return; }
+                      if (!file.type.startsWith('video/') && !file.type.startsWith('audio/')) { setError('Please select a video or audio file.'); return; }
                       if (file.size > 1024 * 1024 * 1024) { setError('File exceeds 1 GB limit.'); return; }
                       setError(null);
                       setSelectedFile(file);
@@ -1075,7 +1075,7 @@ export default function ImportPage() {
                     <input
                       id="file-upload-input"
                       type="file"
-                      accept="video/mp4,video/quicktime,video/x-matroska"
+                      accept="video/mp4,video/quicktime,video/x-matroska,video/webm,video/x-msvideo,audio/mpeg,audio/wav,audio/x-m4a,audio/aac"
                       style={{ display: 'none' }}
                       onChange={async e => {
                         const file = e.target.files?.[0];
@@ -1092,7 +1092,7 @@ export default function ImportPage() {
                     <div style={{ fontSize: '14px', fontWeight: 600, color: '#ffffff', marginBottom: '6px' }}>
                       {isDragOver ? 'Drop your video here' : 'Drag & drop or click to upload'}
                     </div>
-                    <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)' }}>MP4 · MOV · MKV · Max 1 GB</div>
+                    <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)' }}>MP4 · MOV · MKV · WebM · AVI · MP3 · WAV · M4A · AAC · Max 1 GB</div>
                   </div>
 
                   {selectedFile && (
