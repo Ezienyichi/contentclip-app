@@ -98,28 +98,33 @@ const CONTENT_TYPES = [
 
 const AUDIENCE_PRESETS = [
   {
-    id: 'church',
-    label: 'Church / Christian',
-    description: 'Optimised for gospel, worship, and faith content',
+    id: 'faith',
+    icon: '✝',
+    label: 'Sermons & Faith',
+    description: 'Gospel, worship, testimony, and church content',
     defaultTs: ['testimony', 'truth', 'team', 'transcendence'],
   },
   {
     id: 'podcast',
-    label: 'Podcaster',
-    description: 'Optimised for interviews, insights, and hot takes',
-    defaultTs: ['truth', 'testimony'],
+    icon: '🎙',
+    label: 'Podcasts',
+    description: 'Hooks, hot takes, stories, and quotable moments',
+    defaultTs: [],
   },
   {
-    id: 'marketing',
-    label: 'Marketing / Brand',
-    description: 'Optimised for testimonials, BTS, and brand moments',
-    defaultTs: ['testimony', 'team'],
+    id: 'music',
+    icon: '🎵',
+    label: 'Music',
+    description: 'Hook, chorus drop, emotive verse, sing-along moments',
+    defaultTs: [],
   },
   {
-    id: 'education',
-    label: 'Education',
-    description: 'Optimised for teaching moments and key insights',
-    defaultTs: ['truth'],
+    id: 'film',
+    icon: '🎬',
+    label: 'Film & Media Marketing',
+    description: 'Trailer-style promos for your own content',
+    defaultTs: [],
+    requiresRights: true,
   },
 ];
 
@@ -128,6 +133,19 @@ function buildSmartPrompt(
   selectedTs: string[],
   mode: string,
 ): string {
+  if (category === 'podcast') {
+    return 'Find the most engaging conversational moments: strong hooks, hot takes, surprising stories, debate moments, quotable one-liners, emotional peaks. Prioritise clips that feel punchy and shareable as short-form vertical video. Each clip should be able to stand alone without context from the rest of the episode.';
+  }
+
+  if (category === 'music') {
+    return 'Find the most shareable musical moments: the hook or chorus, the beat drop, the most emotive verse, sing-along moments, standout instrumental sections. Prioritise the exact moments that create a strong emotional or physical response in the listener. Clips should capture the peak energy of the performance.';
+  }
+
+  if (category === 'film') {
+    return 'Find the most compelling trailer-style moments for promotional use: character introductions, tension and cliffhanger beats, emotional highs, quotable lines, and visual spectacle moments. These clips should work as promo reels that make audiences want to watch the full piece. Avoid spoilers — tease, do not reveal.';
+  }
+
+  // faith / gospel — 4T framework
   if (mode === 'auto') {
     return 'Automatically detect and categorise every clip as one of: Testimony (personal transformation stories), Truth (biblical insight or teaching moment), Team (behind-the-scenes authentic moments), or Transcendence (worship, baptism, or atmosphere-shifting moments). Prioritise clips with the highest emotional impact and viral potential. For each clip indicate which of the 4T categories it falls into.';
   }
@@ -630,9 +648,10 @@ export default function ImportPage() {
     videoId: string;
   } | null>(null);
   const [clips, setClips] = useState<any[]>([]);
-  const [category, setCategory] = useState('gospel');
+  const [category, setCategory] = useState('faith');
   const [contentMode, setContentMode] = useState('auto');
   const [selectedTs, setSelectedTs] = useState<string[]>([]);
+  const [rightsAcknowledged, setRightsAcknowledged] = useState(false);
   const [dualMode] = useState(false);
   const [videoUrl2] = useState('');
   const [scheduleModal, setScheduleModal] = useState<any | null>(null);
@@ -748,6 +767,7 @@ export default function ImportPage() {
           contentMode,
           contentTypes: selectedTs,
           prompt: buildSmartPrompt(category, selectedTs, contentMode),
+          rightsAcknowledged: category === 'film' ? rightsAcknowledged : undefined,
         }),
       });
 
@@ -802,6 +822,7 @@ export default function ImportPage() {
     category,
     contentMode,
     selectedTs,
+    rightsAcknowledged,
   ]);
 
   const handleUpload = useCallback(async () => {
@@ -828,6 +849,7 @@ export default function ImportPage() {
       formData.append('prompt', buildSmartPrompt(category, selectedTs, contentMode));
       formData.append('creditsNeeded', String(creditsNeeded));
       formData.append('creditsRemaining', String(creditsRemaining));
+      if (category === 'film') formData.append('rightsAcknowledged', String(rightsAcknowledged));
 
       await new Promise<void>((resolve) => {
         const xhr = new XMLHttpRequest();
@@ -861,7 +883,7 @@ export default function ImportPage() {
       setStatus('idle');
       setUploadProgress(0);
     }
-  }, [selectedFile, numClips, category, selectedTs, contentMode, timeStart, timeEnd, userCredits]);
+  }, [selectedFile, numClips, category, selectedTs, contentMode, timeStart, timeEnd, userCredits, rightsAcknowledged]);
 
   const handleDownload = (clip: Clip) => {
     const a = document.createElement('a');
@@ -1122,150 +1144,170 @@ export default function ImportPage() {
               border: '1px solid rgba(255,255,255,0.08)',
               borderRadius: '14px',
             }}>
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                marginBottom: '12px',
-              }}>
-                <div>
-                  <div style={{ fontSize: '14px', fontWeight: 700, color: '#ffffff' }}>
-                    Content intelligence
-                  </div>
-                  <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginTop: '2px' }}>
-                    Based on 12-month church social media study
-                  </div>
+              <div style={{ marginBottom: '14px' }}>
+                <div style={{ fontSize: '14px', fontWeight: 700, color: '#ffffff' }}>
+                  Content type
                 </div>
-                <div style={{ display: 'flex', gap: '4px' }}>
-                  <button
-                    onClick={() => setContentMode('auto')}
-                    style={{
-                      padding: '4px 12px',
-                      borderRadius: '6px',
-                      border: '1px solid',
-                      borderColor: contentMode === 'auto' ? 'rgba(124,58,237,0.5)' : 'rgba(255,255,255,0.1)',
-                      background: contentMode === 'auto' ? 'rgba(124,58,237,0.15)' : 'transparent',
-                      color: contentMode === 'auto' ? '#a78bfa' : 'rgba(255,255,255,0.4)',
-                      fontSize: '11px',
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                    }}
-                  >
-                    Auto detect
-                  </button>
-                  <button
-                    onClick={() => setContentMode('manual')}
-                    style={{
-                      padding: '4px 12px',
-                      borderRadius: '6px',
-                      border: '1px solid',
-                      borderColor: contentMode === 'manual' ? 'rgba(124,58,237,0.5)' : 'rgba(255,255,255,0.1)',
-                      background: contentMode === 'manual' ? 'rgba(124,58,237,0.15)' : 'transparent',
-                      color: contentMode === 'manual' ? '#a78bfa' : 'rgba(255,255,255,0.4)',
-                      fontSize: '11px',
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                    }}
-                  >
-                    Choose types
-                  </button>
+                <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginTop: '2px' }}>
+                  Select what you are clipping so the AI knows what to look for
                 </div>
               </div>
 
-              {/* Audience presets */}
-              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '14px' }}>
-                {AUDIENCE_PRESETS.map(preset => (
-                  <button
-                    key={preset.id}
-                    onClick={() => {
-                      setCategory(preset.id);
-                      setSelectedTs(preset.defaultTs);
-                      setContentMode('manual');
-                    }}
-                    style={{
-                      padding: '8px 14px',
-                      borderRadius: '8px',
-                      border: '1px solid',
-                      borderColor: category === preset.id ? 'rgba(124,58,237,0.5)' : 'rgba(255,255,255,0.1)',
-                      background: category === preset.id ? 'rgba(124,58,237,0.12)' : 'rgba(255,255,255,0.03)',
-                      cursor: 'pointer',
-                      textAlign: 'left' as const,
-                    }}
-                  >
-                    <div style={{ fontSize: '12px', fontWeight: 600, color: category === preset.id ? '#ffffff' : 'rgba(255,255,255,0.7)' }}>
-                      {preset.label}
-                    </div>
-                    <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', marginTop: '2px' }}>
-                      {preset.description}
-                    </div>
-                  </button>
-                ))}
+              {/* Audience presets — 2-column grid */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '14px' }}>
+                {AUDIENCE_PRESETS.map(preset => {
+                  const isActive = category === preset.id;
+                  return (
+                    <button
+                      key={preset.id}
+                      onClick={() => {
+                        setCategory(preset.id);
+                        setSelectedTs(preset.defaultTs);
+                        if (preset.id === 'faith') setContentMode('auto');
+                        if (preset.id !== 'faith') setRightsAcknowledged(false);
+                      }}
+                      style={{
+                        padding: '12px 14px',
+                        borderRadius: '10px',
+                        border: '1.5px solid',
+                        borderColor: isActive ? '#7c3aed' : 'rgba(255,255,255,0.08)',
+                        background: isActive ? 'rgba(124,58,237,0.14)' : 'rgba(255,255,255,0.02)',
+                        cursor: 'pointer',
+                        textAlign: 'left' as const,
+                        transition: 'all 0.15s',
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                        <span style={{ fontSize: '14px' }}>{preset.icon}</span>
+                        <span style={{ fontSize: '12px', fontWeight: 700, color: isActive ? '#ffffff' : 'rgba(255,255,255,0.65)' }}>
+                          {preset.label}
+                        </span>
+                      </div>
+                      <div style={{ fontSize: '10px', color: isActive ? 'rgba(167,139,250,0.9)' : 'rgba(255,255,255,0.35)', lineHeight: 1.4 }}>
+                        {preset.description}
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
 
-              {/* 4T Content Type Cards */}
-              {contentMode === 'manual' && (
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                  {CONTENT_TYPES.map(type => {
-                    const isSelected = selectedTs.includes(type.id);
-                    return (
-                      <button
-                        key={type.id}
-                        onClick={() => {
-                          setSelectedTs(prev =>
-                            prev.includes(type.id)
-                              ? prev.filter(t => t !== type.id)
-                              : [...prev, type.id]
-                          );
-                        }}
-                        style={{
-                          padding: '12px 14px',
-                          borderRadius: '10px',
-                          border: '1px solid',
-                          borderColor: isSelected ? type.borderColor : 'rgba(255,255,255,0.08)',
-                          background: isSelected ? type.bgColor : 'rgba(255,255,255,0.02)',
-                          cursor: 'pointer',
-                          textAlign: 'left' as const,
-                        }}
-                      >
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                          <span style={{ fontSize: '13px', fontWeight: 700, color: isSelected ? type.color : 'rgba(255,255,255,0.6)' }}>
-                            {type.label}
-                          </span>
-                          <span style={{ fontSize: '10px', fontWeight: 600, color: type.color, opacity: isSelected ? 1 : 0.5 }}>
-                            {isSelected ? 'Selected' : type.emoji}
-                          </span>
-                        </div>
-                        <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.45)', lineHeight: 1.4, marginBottom: '6px' }}>
-                          {type.description}
-                        </div>
-                        <div style={{ fontSize: '10px', fontWeight: 600, color: type.color, opacity: 0.8 }}>
-                          {type.stat}
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
+              {/* Film rights acknowledgement */}
+              {category === 'film' && (
+                <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', padding: '12px 14px', background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: '10px', marginBottom: '14px', cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={rightsAcknowledged}
+                    onChange={e => setRightsAcknowledged(e.target.checked)}
+                    style={{ marginTop: '1px', accentColor: '#7c3aed', width: '15px', height: '15px', flexShrink: 0 }}
+                  />
+                  <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.7)', lineHeight: 1.5 }}>
+                    I own or have the rights to clip and share this content.
+                  </span>
+                </label>
               )}
 
-              {/* Tips for selected types */}
-              {contentMode === 'manual' && selectedTs.length > 0 && (
-                <div style={{
-                  marginTop: '12px',
-                  padding: '10px 14px',
-                  background: 'rgba(124,58,237,0.06)',
-                  border: '1px solid rgba(124,58,237,0.15)',
-                  borderRadius: '8px',
-                }}>
-                  <div style={{ fontSize: '11px', fontWeight: 600, color: '#a78bfa', marginBottom: '6px' }}>
-                    VangelClip will prioritise finding:
+              {/* 4T Content Type Cards — faith only */}
+              {category === 'faith' && (
+                <>
+                  <div style={{ display: 'flex', gap: '4px', marginBottom: '12px' }}>
+                    <button
+                      onClick={() => setContentMode('auto')}
+                      style={{
+                        padding: '4px 12px',
+                        borderRadius: '6px',
+                        border: '1px solid',
+                        borderColor: contentMode === 'auto' ? 'rgba(124,58,237,0.5)' : 'rgba(255,255,255,0.1)',
+                        background: contentMode === 'auto' ? 'rgba(124,58,237,0.15)' : 'transparent',
+                        color: contentMode === 'auto' ? '#a78bfa' : 'rgba(255,255,255,0.4)',
+                        fontSize: '11px',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Auto detect
+                    </button>
+                    <button
+                      onClick={() => setContentMode('manual')}
+                      style={{
+                        padding: '4px 12px',
+                        borderRadius: '6px',
+                        border: '1px solid',
+                        borderColor: contentMode === 'manual' ? 'rgba(124,58,237,0.5)' : 'rgba(255,255,255,0.1)',
+                        background: contentMode === 'manual' ? 'rgba(124,58,237,0.15)' : 'transparent',
+                        color: contentMode === 'manual' ? '#a78bfa' : 'rgba(255,255,255,0.4)',
+                        fontSize: '11px',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Choose types
+                    </button>
                   </div>
-                  <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', lineHeight: 1.6 }}>
-                    {selectedTs.map(id => {
-                      const type = CONTENT_TYPES.find(t => t.id === id);
-                      return type ? `${type.label} moments` : '';
-                    }).filter(Boolean).join(' + ')}
-                  </div>
-                </div>
+
+                  {contentMode === 'manual' && (
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                      {CONTENT_TYPES.map(type => {
+                        const isSelected = selectedTs.includes(type.id);
+                        return (
+                          <button
+                            key={type.id}
+                            onClick={() => {
+                              setSelectedTs(prev =>
+                                prev.includes(type.id)
+                                  ? prev.filter(t => t !== type.id)
+                                  : [...prev, type.id]
+                              );
+                            }}
+                            style={{
+                              padding: '12px 14px',
+                              borderRadius: '10px',
+                              border: '1px solid',
+                              borderColor: isSelected ? type.borderColor : 'rgba(255,255,255,0.08)',
+                              background: isSelected ? type.bgColor : 'rgba(255,255,255,0.02)',
+                              cursor: 'pointer',
+                              textAlign: 'left' as const,
+                            }}
+                          >
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                              <span style={{ fontSize: '13px', fontWeight: 700, color: isSelected ? type.color : 'rgba(255,255,255,0.6)' }}>
+                                {type.label}
+                              </span>
+                              <span style={{ fontSize: '10px', fontWeight: 600, color: type.color, opacity: isSelected ? 1 : 0.5 }}>
+                                {isSelected ? 'Selected' : type.emoji}
+                              </span>
+                            </div>
+                            <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.45)', lineHeight: 1.4, marginBottom: '6px' }}>
+                              {type.description}
+                            </div>
+                            <div style={{ fontSize: '10px', fontWeight: 600, color: type.color, opacity: 0.8 }}>
+                              {type.stat}
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {contentMode === 'manual' && selectedTs.length > 0 && (
+                    <div style={{
+                      marginTop: '12px',
+                      padding: '10px 14px',
+                      background: 'rgba(124,58,237,0.06)',
+                      border: '1px solid rgba(124,58,237,0.15)',
+                      borderRadius: '8px',
+                    }}>
+                      <div style={{ fontSize: '11px', fontWeight: 600, color: '#a78bfa', marginBottom: '6px' }}>
+                        VangelClip will prioritise finding:
+                      </div>
+                      <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', lineHeight: 1.6 }}>
+                        {selectedTs.map(id => {
+                          const type = CONTENT_TYPES.find(t => t.id === id);
+                          return type ? `${type.label} moments` : '';
+                        }).filter(Boolean).join(' + ')}
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
             </div>
 
@@ -1289,22 +1331,22 @@ export default function ImportPage() {
             {/* Generate Button */}
             <button
               onClick={inputTab === 'upload' ? handleUpload : handleProcess}
-              disabled={(inputTab === 'youtube' ? !isValidUrl : !selectedFile) || loading}
+              disabled={(inputTab === 'youtube' ? !isValidUrl : !selectedFile) || loading || (category === 'film' && !rightsAcknowledged)}
               style={{
                 height: 52,
                 borderRadius: radius.lg,
                 border: "none",
                 background:
-                  ((inputTab === 'youtube' ? !isValidUrl : !selectedFile) || loading)
+                  ((inputTab === 'youtube' ? !isValidUrl : !selectedFile) || loading || (category === 'film' && !rightsAcknowledged))
                     ? colors.surfaceContainerHigh
                     : gradients.primary,
                 color:
-                  ((inputTab === 'youtube' ? !isValidUrl : !selectedFile) || loading)
+                  ((inputTab === 'youtube' ? !isValidUrl : !selectedFile) || loading || (category === 'film' && !rightsAcknowledged))
                     ? colors.onSurfaceVariant
                     : colors.onPrimary,
                 fontSize: 15,
                 fontWeight: 700,
-                cursor: ((inputTab === 'youtube' ? !isValidUrl : !selectedFile) || loading) ? "not-allowed" : "pointer",
+                cursor: ((inputTab === 'youtube' ? !isValidUrl : !selectedFile) || loading || (category === 'film' && !rightsAcknowledged)) ? "not-allowed" : "pointer",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
