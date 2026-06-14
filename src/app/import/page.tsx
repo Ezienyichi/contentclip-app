@@ -936,7 +936,7 @@ export default function ImportPage() {
                     <input
                       type="url"
                       placeholder="https://youtube.com/watch?v=..."
-                      value={videoUrl}
+                      value={videoUrl || ''}
                       onChange={(e) => handleUrlChange(e.target.value)}
                       style={inputStyle}
                     />
@@ -1035,7 +1035,7 @@ export default function ImportPage() {
                 Clip Instruction
               </label>
               <textarea
-                value={prompt}
+                value={prompt || ''}
                 onChange={(e) => setPrompt(e.target.value)}
                 rows={3}
                 style={{
@@ -1891,8 +1891,8 @@ export default function ImportPage() {
 
             <div style={{ fontSize: '13px', fontWeight: 600, color: 'rgba(255,255,255,0.6)', marginBottom: '10px' }}>Schedule date and time:</div>
             <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
-              <input type="date" value={scheduleDate} onChange={e => setScheduleDate(e.target.value)} style={{ flex: 1, padding: '10px 14px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '8px', color: '#ffffff', fontSize: '13px', outline: 'none' }} />
-              <input type="time" value={scheduleTime} onChange={e => setScheduleTime(e.target.value)} style={{ flex: 1, padding: '10px 14px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '8px', color: '#ffffff', fontSize: '13px', outline: 'none' }} />
+              <input type="date" value={scheduleDate || ''} onChange={e => setScheduleDate(e.target.value)} style={{ flex: 1, padding: '10px 14px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '8px', color: '#ffffff', fontSize: '13px', outline: 'none' }} />
+              <input type="time" value={scheduleTime || ''} onChange={e => setScheduleTime(e.target.value)} style={{ flex: 1, padding: '10px 14px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '8px', color: '#ffffff', fontSize: '13px', outline: 'none' }} />
             </div>
 
             <div style={{ display: 'flex', gap: '10px' }}>
