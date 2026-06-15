@@ -29,14 +29,33 @@ function extractVideoId(url: string): string {
   return '';
 }
 
-function getVideoDuration(file: File): Promise<number> {
+function getVideoDuration(file: File): Promise<number | null> {
   return new Promise((resolve) => {
-    const url = URL.createObjectURL(file);
-    const video = document.createElement('video');
-    video.preload = 'metadata';
-    video.onloadedmetadata = () => { URL.revokeObjectURL(url); resolve(video.duration); };
-    video.onerror = () => { URL.revokeObjectURL(url); resolve(0); };
-    video.src = url;
+    try {
+      const url = URL.createObjectURL(file);
+      const video = document.createElement('video');
+      video.preload = 'metadata';
+
+      let settled = false;
+      const finish = (result: number | null) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        try { URL.revokeObjectURL(url); } catch {}
+        video.src = '';
+        resolve(result);
+      };
+
+      const timer = setTimeout(() => finish(null), 4000);
+      video.onloadedmetadata = () => {
+        const d = video.duration;
+        finish(isFinite(d) && d > 0 ? d : null);
+      };
+      video.onerror = () => finish(null);
+      video.src = url;
+    } catch {
+      resolve(null);
+    }
   });
 }
 
@@ -675,6 +694,8 @@ export default function ImportPage() {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isDragOver, setIsDragOver] = useState(false);
   const [uploadDuration, setUploadDuration] = useState<number | null>(null);
+  const [durationLoading, setDurationLoading] = useState(false);
+  const [durationUnknown, setDurationUnknown] = useState(false);
 
   const planLimit = PLAN_LIMITS[userPlan] ?? 300;
   const creditCost = timeRangeEnabled ? Math.ceil((timeEnd - timeStart) / 60) : numClips * 10;
@@ -735,6 +756,7 @@ export default function ImportPage() {
     (inputTab === 'youtube' ? !isValidUrl : !selectedFile) ||
     loading ||
     (category === 'film' && !rightsAcknowledged) ||
+    (inputTab === 'upload' && durationLoading) ||
     (inputTab === 'upload' && uploadInsufficientCredits);
 
   const handleUrlChange = (url: string) => {
@@ -845,7 +867,7 @@ export default function ImportPage() {
   ]);
 
   const handleUpload = useCallback(async () => {
-    if (!selectedFile || uploadCreditsNeeded === null) return;
+    if (!selectedFile || durationLoading) return;
 
     setLoading(true);
     setStatus('processing');
@@ -854,27 +876,33 @@ export default function ImportPage() {
     setUploadProgress(0);
 
     let creditDeducted = false;
+    let creditsDeductedAmount = 0;
+    let creditsAfterDeduct = userCredits;
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { setError('Please sign in.'); setLoading(false); return; }
 
-      // ── DEDUCT CREDITS BEFORE UPLOADING ──
-      const deductRes = await fetch('/api/upload-credits', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ creditsNeeded: uploadCreditsNeeded }),
-      });
-      const deductData = await deductRes.json();
+      // ── DEDUCT CREDITS (only when duration is known) ──
+      if (!durationUnknown && uploadCreditsNeeded !== null) {
+        const deductRes = await fetch('/api/upload-credits', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ creditsNeeded: uploadCreditsNeeded }),
+        });
+        const deductData = await deductRes.json();
 
-      if (!deductRes.ok) {
-        setError(deductData.error || 'Not enough credits.');
-        return;
+        if (!deductRes.ok) {
+          setError(deductData.error || 'Not enough credits.');
+          return;
+        }
+
+        creditDeducted = true;
+        creditsDeductedAmount = uploadCreditsNeeded;
+        creditsAfterDeduct = deductData.credits_remaining;
+        setUserCredits(deductData.credits_remaining);
       }
-
-      creditDeducted = true;
-      setUserCredits(deductData.credits_remaining);
 
       // ── UPLOAD TO PROCESSING SERVER ──
       const formData = new FormData();
@@ -883,14 +911,14 @@ export default function ImportPage() {
       formData.append('numClips', String(numClips));
       formData.append('category', category);
       formData.append('prompt', buildSmartPrompt(category, selectedTs, contentMode));
-      formData.append('creditsNeeded', String(uploadCreditsNeeded));
+      formData.append('creditsNeeded', String(uploadCreditsNeeded ?? 0));
       if (category === 'film') formData.append('rightsAcknowledged', String(rightsAcknowledged));
 
       let uploadSucceeded = false;
 
       await new Promise<void>((resolve) => {
         const xhr = new XMLHttpRequest();
-        xhr.open('POST', 'http://137.184.75.47:8000/api/process-upload');
+        xhr.open('POST', 'http://178.62.215.67:8000/api/process-upload');
         xhr.upload.onprogress = (e) => {
           if (e.lengthComputable) {
             setUploadProgress(Math.round((e.loaded / e.total) * 100));
@@ -905,8 +933,8 @@ export default function ImportPage() {
                 success: true,
                 jobId: '',
                 clips: data.clips,
-                creditsUsed: uploadCreditsNeeded,
-                creditsRemaining: deductData.credits_remaining,
+                creditsUsed: creditsDeductedAmount,
+                creditsRemaining: creditsAfterDeduct,
               });
               setClips(data.clips);
               localStorage.setItem(CLIPS_STORAGE_KEY, JSON.stringify({ clips: data.clips, videoUrl: selectedFile.name, generatedAt: new Date().toISOString() }));
@@ -921,29 +949,26 @@ export default function ImportPage() {
       });
 
       // ── REFUND IF UPLOAD FAILED ──
-      if (!uploadSucceeded) {
+      if (!uploadSucceeded && creditDeducted) {
         const refundRes = await fetch('/api/upload-credits', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
-          body: JSON.stringify({ action: 'refund', amount: uploadCreditsNeeded }),
+          body: JSON.stringify({ action: 'refund', amount: creditsDeductedAmount }),
         });
         const refundData = await refundRes.json();
-        if (refundData.credits_remaining !== undefined) {
-          setUserCredits(refundData.credits_remaining);
-        }
+        if (refundData.credits_remaining !== undefined) setUserCredits(refundData.credits_remaining);
       }
 
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Upload error');
-      // Refund if we already deducted before the unexpected error
       if (creditDeducted) {
         try {
           const refundRes = await fetch('/api/upload-credits', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
-            body: JSON.stringify({ action: 'refund', amount: uploadCreditsNeeded }),
+            body: JSON.stringify({ action: 'refund', amount: creditsDeductedAmount }),
           });
           const refundData = await refundRes.json();
           if (refundData.credits_remaining !== undefined) setUserCredits(refundData.credits_remaining);
@@ -954,7 +979,7 @@ export default function ImportPage() {
       setStatus('idle');
       setUploadProgress(0);
     }
-  }, [selectedFile, uploadCreditsNeeded, numClips, category, selectedTs, contentMode, rightsAcknowledged]);
+  }, [selectedFile, uploadCreditsNeeded, durationLoading, durationUnknown, numClips, category, selectedTs, contentMode, rightsAcknowledged, userCredits]);
 
   const handleDownload = (clip: Clip) => {
     const a = document.createElement('a');
@@ -1066,8 +1091,11 @@ export default function ImportPage() {
                       setError(null);
                       setSelectedFile(file);
                       setUploadDuration(null);
+                      setDurationLoading(true);
+                      setDurationUnknown(false);
                       const dur = await getVideoDuration(file);
-                      setUploadDuration(isFinite(dur) && dur > 0 ? dur : null);
+                      setDurationLoading(false);
+                      if (dur === null) { setDurationUnknown(true); } else { setUploadDuration(dur); }
                     }}
                     onClick={() => document.getElementById('file-upload-input')?.click()}
                     style={{ border: `2px dashed ${isDragOver ? '#7c3aed' : 'rgba(124,58,237,0.35)'}`, borderRadius: radius.lg, padding: '36px 20px', textAlign: 'center', cursor: 'pointer', background: isDragOver ? 'rgba(124,58,237,0.08)' : colors.surfaceContainerLowest, transition: 'all 0.2s' }}
@@ -1084,8 +1112,11 @@ export default function ImportPage() {
                         setError(null);
                         setSelectedFile(file);
                         setUploadDuration(null);
+                        setDurationLoading(true);
+                        setDurationUnknown(false);
                         const dur = await getVideoDuration(file);
-                        setUploadDuration(isFinite(dur) && dur > 0 ? dur : null);
+                        setDurationLoading(false);
+                        if (dur === null) { setDurationUnknown(true); } else { setUploadDuration(dur); }
                       }}
                     />
                     <div style={{ fontSize: '32px', marginBottom: '10px' }}>🎬</div>
@@ -1103,13 +1134,16 @@ export default function ImportPage() {
                           <div style={{ fontSize: '13px', fontWeight: 600, color: '#ffffff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{selectedFile.name}</div>
                           <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.45)', marginTop: '2px' }}>
                             {(selectedFile.size / (1024 * 1024)).toFixed(1)} MB
-                            {uploadDuration !== null && ` · ${Math.ceil(uploadDuration / 60)} min`}
+                            {uploadDuration !== null && uploadDuration > 0 && ` · ${Math.ceil(uploadDuration / 60)} min`}
                           </div>
                         </div>
-                        <button onClick={e => { e.stopPropagation(); setSelectedFile(null); setUploadDuration(null); }} style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '6px', color: '#fca5a5', fontSize: '11px', padding: '4px 8px', cursor: 'pointer', flexShrink: 0 }}>✕ Remove</button>
+                        <button onClick={e => { e.stopPropagation(); setSelectedFile(null); setUploadDuration(null); setDurationLoading(false); setDurationUnknown(false); }} style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '6px', color: '#fca5a5', fontSize: '11px', padding: '4px 8px', cursor: 'pointer', flexShrink: 0 }}>✕ Remove</button>
                       </div>
-                      {uploadDuration === null && (
+                      {durationLoading && (
                         <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginTop: '8px' }}>Reading duration...</div>
+                      )}
+                      {durationUnknown && (
+                        <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginTop: '8px' }}>Cost calculated after upload</div>
                       )}
                       {uploadCreditsNeeded !== null && (
                         <div style={{ marginTop: '8px', fontSize: '12px', fontWeight: 600, color: uploadInsufficientCredits ? '#fca5a5' : '#a78bfa' }}>
@@ -1556,7 +1590,7 @@ export default function ImportPage() {
                 type="range"
                 min={1}
                 max={10}
-                value={numClips}
+                value={numClips ?? 3}
                 onChange={(e) => setNumClips(Number(e.target.value))}
                 style={{ width: "100%", accentColor: colors.primary }}
               />
@@ -1580,7 +1614,7 @@ export default function ImportPage() {
                 <input
                   type="number"
                   min={5}
-                  value={minDuration}
+                  value={minDuration ?? 15}
                   onChange={(e) => setMinDuration(Number(e.target.value))}
                   style={{
                     width: "100%",
@@ -1602,7 +1636,7 @@ export default function ImportPage() {
                 <input
                   type="number"
                   max={180}
-                  value={maxDuration}
+                  value={maxDuration ?? 60}
                   onChange={(e) => setMaxDuration(Number(e.target.value))}
                   style={{
                     width: "100%",
@@ -1685,7 +1719,8 @@ export default function ImportPage() {
               const isUpload = inputTab === 'upload';
               const cost = isUpload ? uploadCreditsNeeded : creditCost;
               const notEnough = isUpload ? uploadInsufficientCredits : insufficientCredits;
-              const loading_ = isUpload && selectedFile && uploadDuration === null;
+              const loading_ = isUpload && !!selectedFile && durationLoading;
+              const unknown_ = isUpload && !!selectedFile && durationUnknown;
               return (
                 <div
                   style={{
@@ -1699,13 +1734,16 @@ export default function ImportPage() {
                     Cost estimate
                   </p>
                   <p style={{ margin: "4px 0 0", fontSize: 20, fontWeight: 800, color: colors.onSurface }}>
-                    {loading_ ? '—' : (cost ?? '—')}{" "}
+                    {(loading_ || unknown_) ? '—' : (cost ?? '—')}{" "}
                     <span style={{ fontSize: 13, fontWeight: 500, color: colors.onSurfaceVariant }}>credits</span>
                   </p>
                   {loading_ && (
                     <p style={{ margin: "6px 0 0", fontSize: 11, color: colors.onSurfaceVariant }}>Reading video duration...</p>
                   )}
-                  {!loading_ && userCredits > 0 && cost !== null && (
+                  {unknown_ && (
+                    <p style={{ margin: "6px 0 0", fontSize: 11, color: colors.onSurfaceVariant }}>Cost calculated after upload</p>
+                  )}
+                  {!loading_ && !unknown_ && userCredits > 0 && cost !== null && (
                     <p style={{ margin: "6px 0 0", fontSize: 11, color: notEnough ? colors.error : colors.onSurfaceVariant }}>
                       {notEnough
                         ? <><span>Not enough credits — </span><a href="/pricing" style={{ color: colors.primary, fontWeight: 700 }}>upgrade to continue</a></>
