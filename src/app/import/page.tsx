@@ -1128,7 +1128,7 @@ export default function ImportPage() {
 
                   {/* Upload speed tip */}
                   <div style={{ marginTop: '10px', fontSize: '11px', color: 'rgba(255,255,255,0.35)', lineHeight: 1.5 }}>
-                    💡 Tip: For faster uploads, export your video at 720p — quality stays great for vertical clips, and uploads finish much faster on slower connections.
+                    💡 Tip: 720p exports upload faster and look great as clips.
                   </div>
 
                   {selectedFile && (
@@ -1145,21 +1145,14 @@ export default function ImportPage() {
                         <button onClick={e => { e.stopPropagation(); setSelectedFile(null); setUploadDuration(null); setDurationLoading(false); setDurationUnknown(false); }} style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '6px', color: '#fca5a5', fontSize: '11px', padding: '4px 8px', cursor: 'pointer', flexShrink: 0 }}>✕ Remove</button>
                       </div>
                       {durationLoading && (
-                        <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginTop: '8px' }}>Reading duration...</div>
+                        <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginTop: '8px' }}>Estimating cost...</div>
                       )}
-                      {durationUnknown && (
-                        <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginTop: '8px' }}>Cost calculated after upload</div>
-                      )}
+                      {durationUnknown && null}
                       {uploadCreditsNeeded !== null && (
                         <div style={{ marginTop: '8px', fontSize: '12px', fontWeight: 600, color: uploadInsufficientCredits ? '#fca5a5' : '#a78bfa' }}>
                           {uploadInsufficientCredits
                             ? `Not enough credits — needs ${uploadCreditsNeeded}, you have ${userCredits}`
                             : `This video will cost ${uploadCreditsNeeded} credit${uploadCreditsNeeded === 1 ? '' : 's'} (${Math.ceil(uploadDuration! / 60)} min)`}
-                        </div>
-                      )}
-                      {selectedFile.size > 150 * 1024 * 1024 && (
-                        <div style={{ marginTop: '8px', fontSize: '11px', color: '#f59e0b', lineHeight: 1.5 }}>
-                          ⚠ This file is large ({(selectedFile.size / (1024 * 1024)).toFixed(0)} MB) and may take a while to upload on slower connections. A 720p version would upload faster.
                         </div>
                       )}
                     </div>
@@ -1752,9 +1745,6 @@ export default function ImportPage() {
                   </p>
                   {loading_ && (
                     <p style={{ margin: "6px 0 0", fontSize: 11, color: colors.onSurfaceVariant }}>Reading video duration...</p>
-                  )}
-                  {unknown_ && (
-                    <p style={{ margin: "6px 0 0", fontSize: 11, color: colors.onSurfaceVariant }}>Cost calculated after upload</p>
                   )}
                   {!loading_ && !unknown_ && userCredits > 0 && cost !== null && (
                     <p style={{ margin: "6px 0 0", fontSize: 11, color: notEnough ? colors.error : colors.onSurfaceVariant }}>
