@@ -1126,6 +1126,11 @@ export default function ImportPage() {
                     <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)' }}>MP4 · MOV · MKV · WebM · AVI · MP3 · WAV · M4A · AAC · Max 1 GB</div>
                   </div>
 
+                  {/* Upload speed tip */}
+                  <div style={{ marginTop: '10px', fontSize: '11px', color: 'rgba(255,255,255,0.35)', lineHeight: 1.5 }}>
+                    💡 Tip: For faster uploads, export your video at 720p — quality stays great for vertical clips, and uploads finish much faster on slower connections.
+                  </div>
+
                   {selectedFile && (
                     <div style={{ padding: '12px 14px', background: uploadInsufficientCredits ? 'rgba(239,68,68,0.06)' : 'rgba(124,58,237,0.08)', border: `1px solid ${uploadInsufficientCredits ? 'rgba(239,68,68,0.3)' : 'rgba(124,58,237,0.25)'}`, borderRadius: '10px', marginTop: '10px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -1152,6 +1157,11 @@ export default function ImportPage() {
                             : `This video will cost ${uploadCreditsNeeded} credit${uploadCreditsNeeded === 1 ? '' : 's'} (${Math.ceil(uploadDuration! / 60)} min)`}
                         </div>
                       )}
+                      {selectedFile.size > 150 * 1024 * 1024 && (
+                        <div style={{ marginTop: '8px', fontSize: '11px', color: '#f59e0b', lineHeight: 1.5 }}>
+                          ⚠ This file is large ({(selectedFile.size / (1024 * 1024)).toFixed(0)} MB) and may take a while to upload on slower connections. A 720p version would upload faster.
+                        </div>
+                      )}
                     </div>
                   )}
 
@@ -1162,6 +1172,9 @@ export default function ImportPage() {
                       </div>
                       <div style={{ width: '100%', height: '6px', background: 'rgba(255,255,255,0.08)', borderRadius: '3px', overflow: 'hidden' }}>
                         <div style={{ width: `${uploadProgress}%`, height: '100%', background: 'linear-gradient(90deg,#7c3aed,#5b21b6)', borderRadius: '3px', transition: 'width 0.3s' }} />
+                      </div>
+                      <div style={{ marginTop: '8px', fontSize: '11px', color: 'rgba(255,255,255,0.4)', textAlign: 'center' }}>
+                        Uploading... {uploadProgress}% — please keep this tab open.
                       </div>
                     </div>
                   )}
