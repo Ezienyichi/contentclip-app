@@ -19,6 +19,7 @@ export default function AuthPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
 
   // Show error if the OAuth callback redirected back with ?error=
   useEffect(() => {
@@ -94,6 +95,10 @@ export default function AuthPage() {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!termsAccepted) {
+      setError('Please accept the Terms of Service to create an account.');
+      return;
+    }
     setLoading(true);
     setError('');
     setSuccess('');
@@ -441,14 +446,31 @@ export default function AuthPage() {
                 </div>
               )}
             </div>
-            <button type="submit" disabled={loading} style={{ background: gradients.primary, color: '#FAF7FF', fontWeight: 700, padding: 14, borderRadius: radius.md, border: 'none', cursor: loading ? 'wait' : 'pointer', fontSize: 14, opacity: loading ? 0.7 : 1, marginTop: 8, fontFamily: "'Inter',sans-serif" }}>
+            {isSignUp && (
+              <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer', marginTop: 4 }}>
+                <input
+                  type="checkbox"
+                  checked={termsAccepted}
+                  onChange={e => setTermsAccepted(e.target.checked)}
+                  style={{ marginTop: 2, accentColor: '#7c3aed', width: 15, height: 15, flexShrink: 0, cursor: 'pointer' }}
+                />
+                <span style={{ fontSize: 12, color: colors.onSurfaceVariant, lineHeight: 1.6 }}>
+                  I agree to the{' '}
+                  <a href="/legal/terms" target="_blank" rel="noopener noreferrer" style={{ color: '#a78bfa', textDecoration: 'none', fontWeight: 600 }}>Terms of Service</a>
+                  {' '}and{' '}
+                  <a href="/legal/privacy" target="_blank" rel="noopener noreferrer" style={{ color: '#a78bfa', textDecoration: 'none', fontWeight: 600 }}>Privacy Policy</a>
+                  , and confirm that I own or have the necessary rights and permissions to any content I upload for processing.
+                </span>
+              </label>
+            )}
+            <button type="submit" disabled={loading || (isSignUp && !termsAccepted)} style={{ background: gradients.primary, color: '#FAF7FF', fontWeight: 700, padding: 14, borderRadius: radius.md, border: 'none', cursor: (loading || (isSignUp && !termsAccepted)) ? 'not-allowed' : 'pointer', fontSize: 14, opacity: (loading || (isSignUp && !termsAccepted)) ? 0.5 : 1, marginTop: 8, fontFamily: "'Inter',sans-serif" }}>
               {loading ? 'Please wait...' : isSignUp ? 'Create Account' : 'Sign In'}
             </button>
           </form>
 
           <p style={{ textAlign: 'center', fontSize: 13, color: colors.onSurfaceVariant, marginTop: 24 }}>
             {isSignUp ? 'Already have an account? ' : "Don't have an account? "}
-            <button onClick={() => { setError(''); setView(isSignUp ? 'signin' : 'signup'); }} style={{ background: 'none', border: 'none', color: colors.primary, fontWeight: 600, cursor: 'pointer', fontSize: 13, fontFamily: "'Inter',sans-serif" }}>
+            <button onClick={() => { setError(''); setTermsAccepted(false); setView(isSignUp ? 'signin' : 'signup'); }} style={{ background: 'none', border: 'none', color: colors.primary, fontWeight: 600, cursor: 'pointer', fontSize: 13, fontFamily: "'Inter',sans-serif" }}>
               {isSignUp ? 'Sign in' : 'Create one'}
             </button>
           </p>
