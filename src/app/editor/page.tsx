@@ -30,13 +30,17 @@ function EditorPageInner() {
   const [playing, setPlaying] = useState(false);
   const [capStyle, setCapStyle] = useState(0);
   const [format, setFormat] = useState('9:16');
-  const [time, setTime] = useState(12);
+  const [time, setTime] = useState(0);
+  const [duration, setDuration] = useState(0);
   const [selectedTemplate, setSelectedTemplate] = useState<string|null>(null);
   const [tab, setTab] = useState<'style'|'adjust'|'overlay'|'templates'|'export'>('style');
   const [lang, setLang] = useState('English');
   const [transition, setTransition] = useState('Cut');
   const [showExport, setShowExport] = useState(false);
   const [showSchedule, setShowSchedule] = useState(false);
+
+  // Video ref
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   // Overlay/Logo state
   const [overlays, setOverlays] = useState<Overlay[]>([]);
@@ -51,7 +55,18 @@ function EditorPageInner() {
   const [schedHashtags, setSchedHashtags] = useState('');
   const [schedPlatforms, setSchedPlatforms] = useState<string[]>(['tiktok']);
 
-  const total = 47;
+  function togglePlay() {
+    const v = videoRef.current;
+    if (!v) return;
+    if (v.paused) { v.play(); } else { v.pause(); }
+  }
+
+  function fmt(s: number) {
+    if (!isFinite(s)) return '0:00';
+    const m = Math.floor(s / 60);
+    const sec = Math.floor(s % 60);
+    return `${m}:${sec.toString().padStart(2, '0')}`;
+  }
 
   // ── Logo Upload with optional BG removal ──
   async function handleLogoUpload(file: File) {
@@ -140,10 +155,14 @@ function EditorPageInner() {
               {/* Video element if videoUrl available */}
               {videoUrl ? (
                 <video
+                  ref={videoRef}
                   key={videoUrl}
                   src={videoUrl}
-                  controls
                   style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover' }}
+                  onPlay={() => setPlaying(true)}
+                  onPause={() => setPlaying(false)}
+                  onTimeUpdate={() => setTime(videoRef.current?.currentTime ?? 0)}
+                  onLoadedMetadata={() => setDuration(videoRef.current?.duration ?? 0)}
                 />
               ) : null}
 
@@ -163,9 +182,9 @@ function EditorPageInner() {
                 </div>
               )}
 
-              {/* Play button — only when no video */}
-              {!videoUrl && (
-                <button onClick={() => setPlaying(!playing)} style={{ width:64, height:64, borderRadius:'50%', background:'rgba(255,255,255,0.12)', backdropFilter:'blur(8px)', border:'1px solid rgba(255,255,255,0.2)', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', position:'absolute' }}>
+              {/* Play button overlay — shown when video is present but paused, or when no video */}
+              {(!videoUrl || !playing) && (
+                <button onClick={videoUrl ? togglePlay : () => setPlaying(!playing)} style={{ width:64, height:64, borderRadius:'50%', background:'rgba(255,255,255,0.12)', backdropFilter:'blur(8px)', border:'1px solid rgba(255,255,255,0.2)', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', position:'absolute', pointerEvents:'auto' }}>
                   <Icon name={playing?'pause':'play_arrow'} filled size={32} style={{ color:'#fff' }}/>
                 </button>
               )}
@@ -175,13 +194,25 @@ function EditorPageInner() {
           {/* Timeline */}
           <div style={{ background:colors.surfaceContainerHigh, borderRadius:radius.lg, padding:'20px' }}>
             <div style={{ display:'flex', alignItems:'center', gap:'12px', marginBottom:'12px' }}>
-              <button onClick={() => setPlaying(!playing)} style={{ background:'none', border:'none', cursor:'pointer', color:colors.onSurface }}><Icon name={playing?'pause':'play_arrow'} filled size={24}/></button>
-              <span style={{ fontSize:'13px', fontWeight:600, fontVariantNumeric:'tabular-nums' }}>0:{time.toString().padStart(2,'0')}</span>
-              <input type="range" min={0} max={total} value={time} onChange={e => setTime(Number(e.target.value))} style={{ flex:1, accentColor:colors.primary }}/>
-              <span style={{ fontSize:'13px', color:colors.onSurfaceVariant }}>0:{total}</span>
+              <button onClick={togglePlay} style={{ background:'none', border:'none', cursor:'pointer', color:colors.onSurface }}><Icon name={playing?'pause':'play_arrow'} filled size={24}/></button>
+              <span style={{ fontSize:'13px', fontWeight:600, fontVariantNumeric:'tabular-nums' }}>{fmt(time)}</span>
+              <input
+                type="range"
+                min={0}
+                max={duration || 1}
+                step={0.1}
+                value={time}
+                onChange={e => {
+                  const t = Number(e.target.value);
+                  setTime(t);
+                  if (videoRef.current) videoRef.current.currentTime = t;
+                }}
+                style={{ flex:1, accentColor:colors.primary }}
+              />
+              <span style={{ fontSize:'13px', color:colors.onSurfaceVariant }}>{fmt(duration)}</span>
             </div>
             <div style={{ display:'flex', gap:'2px', alignItems:'end', height:'40px' }}>
-              {Array.from({length:60}).map((_,i) => { const h = Math.random()*30+10; const a = (i/60)*total<=time; return <div key={i} style={{ flex:1, height:h+'px', borderRadius:'1px', background:a?colors.primary:colors.surfaceContainer, opacity:a?1:0.4 }}/>; })}
+              {Array.from({length:60}).map((_,i) => { const h = Math.random()*30+10; const a = duration > 0 && (i/60)*duration<=time; return <div key={i} style={{ flex:1, height:h+'px', borderRadius:'1px', background:a?colors.primary:colors.surfaceContainer, opacity:a?1:0.4 }}/>; })}
             </div>
           </div>
 
