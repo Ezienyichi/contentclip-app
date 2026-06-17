@@ -456,10 +456,8 @@ export default function AuthPage() {
                 />
                 <span style={{ fontSize: 12, color: colors.onSurfaceVariant, lineHeight: 1.6 }}>
                   I agree to the{' '}
-                  <a href="/legal/terms" target="_blank" rel="noopener noreferrer" style={{ color: '#a78bfa', textDecoration: 'none', fontWeight: 600 }}>Terms of Service</a>
-                  {' '}and{' '}
-                  <a href="/legal/privacy" target="_blank" rel="noopener noreferrer" style={{ color: '#a78bfa', textDecoration: 'none', fontWeight: 600 }}>Privacy Policy</a>
-                  , and confirm that I own or have the necessary rights and permissions to any content I upload for processing.
+                  <a href="/terms" target="_blank" rel="noopener noreferrer" style={{ color: '#a78bfa', textDecoration: 'none', fontWeight: 600 }}>Terms of Service</a>
+                  {' '}and confirm I own or have the rights to any content I upload.
                 </span>
               </label>
             )}
