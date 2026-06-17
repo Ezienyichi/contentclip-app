@@ -681,7 +681,6 @@ export default function ImportPage() {
   const [category, setCategory] = useState('faith');
   const [contentMode, setContentMode] = useState('auto');
   const [selectedTs, setSelectedTs] = useState<string[]>([]);
-  const [rightsAcknowledged, setRightsAcknowledged] = useState(false);
   const [dualMode] = useState(false);
   const [videoUrl2] = useState('');
   const [scheduleModal, setScheduleModal] = useState<any | null>(null);
@@ -755,7 +754,6 @@ export default function ImportPage() {
   const isGenerateDisabled =
     (inputTab === 'youtube' ? !isValidUrl : !selectedFile) ||
     loading ||
-    (category === 'film' && !rightsAcknowledged) ||
     (inputTab === 'upload' && durationLoading) ||
     (inputTab === 'upload' && uploadInsufficientCredits);
 
@@ -808,7 +806,7 @@ export default function ImportPage() {
           contentMode,
           contentTypes: selectedTs,
           prompt: buildSmartPrompt(category, selectedTs, contentMode),
-          rightsAcknowledged: category === 'film' ? rightsAcknowledged : undefined,
+
         }),
       });
 
@@ -863,7 +861,6 @@ export default function ImportPage() {
     category,
     contentMode,
     selectedTs,
-    rightsAcknowledged,
   ]);
 
   const handleUpload = useCallback(async () => {
@@ -912,7 +909,7 @@ export default function ImportPage() {
       formData.append('category', category);
       formData.append('prompt', buildSmartPrompt(category, selectedTs, contentMode));
       formData.append('creditsNeeded', String(uploadCreditsNeeded ?? 0));
-      if (category === 'film') formData.append('rightsAcknowledged', String(rightsAcknowledged));
+
 
       let uploadSucceeded = false;
 
@@ -979,7 +976,7 @@ export default function ImportPage() {
       setStatus('idle');
       setUploadProgress(0);
     }
-  }, [selectedFile, uploadCreditsNeeded, durationLoading, durationUnknown, numClips, category, selectedTs, contentMode, rightsAcknowledged, userCredits]);
+  }, [selectedFile, uploadCreditsNeeded, durationLoading, durationUnknown, numClips, category, selectedTs, contentMode, userCredits]);
 
   const handleDownload = (clip: Clip) => {
     const a = document.createElement('a');
@@ -1296,7 +1293,7 @@ export default function ImportPage() {
                         setCategory(preset.id);
                         setSelectedTs(preset.defaultTs);
                         if (preset.id === 'faith') setContentMode('auto');
-                        if (preset.id !== 'faith') setRightsAcknowledged(false);
+
                       }}
                       style={{
                         padding: '12px 14px',
@@ -1323,20 +1320,6 @@ export default function ImportPage() {
                 })}
               </div>
 
-              {/* Film rights acknowledgement */}
-              {category === 'film' && (
-                <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', padding: '12px 14px', background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: '10px', marginBottom: '14px', cursor: 'pointer' }}>
-                  <input
-                    type="checkbox"
-                    checked={rightsAcknowledged}
-                    onChange={e => setRightsAcknowledged(e.target.checked)}
-                    style={{ marginTop: '1px', accentColor: '#7c3aed', width: '15px', height: '15px', flexShrink: 0 }}
-                  />
-                  <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.7)', lineHeight: 1.5 }}>
-                    I own or have the rights to clip and share this content.
-                  </span>
-                </label>
-              )}
 
               {/* 4T Content Type Cards — faith only */}
               {category === 'faith' && (
