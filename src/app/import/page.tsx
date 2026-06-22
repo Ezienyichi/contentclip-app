@@ -1,10 +1,21 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase-browser";
 import DashboardLayout from "@/components/DashboardLayout";
 import { colors, gradients, radius } from "@/lib/tokens";
+
+const RATIO_ENUM_MAP: Record<string, string> = {
+  '9:16': 'RATIO_9_16',
+  '16:9': 'RATIO_16_9',
+  '1:1': 'RATIO_1_1',
+  '4:5': 'RATIO_4_5',
+};
+
+function resolutionForPlan(plan: string): string {
+  return plan === 'free' ? 'HD_720' : 'FHD_1080';
+}
 
 const PLAN_LIMITS: Record<string, number> = {
   free: 300,          // 5 min
@@ -27,6 +38,10 @@ function extractVideoId(url: string): string {
   if (longMatch) return longMatch[1];
   if (embedMatch) return embedMatch[1];
   return '';
+}
+
+function stripEmoji(s: string): string {
+  return s.replace(/\p{Extended_Pictographic}/gu, '').replace(/\s+/g, ' ').trim();
 }
 
 function getVideoDuration(file: File): Promise<number | null> {
@@ -217,7 +232,7 @@ interface ProcessResult {
   creditsRemaining: number;
 }
 
-type AspectRatio = "9:16" | "16:9" | "1:1";
+type AspectRatio = "9:16" | "16:9" | "1:1" | "4:5";
 type Template = "moments" | "highlights" | "tutorial" | "promo";
 
 function TimeRangeSelector({
@@ -395,7 +410,7 @@ function TimeRangeSelector({
               }}
             >
               <span style={{ fontSize: 12, color: "#FF9500", fontWeight: 600 }}>
-                🔒 Upgrade to Pro for longer video windows
+                Upgrade to Pro for longer video windows
               </span>
               <a
                 href="/pricing"
@@ -489,7 +504,6 @@ function ClipCard({
             marginBottom: "8px",
           }}
         >
-          <span style={{ fontSize: 32 }}>🎬</span>
           <span style={{ color: colors.onPrimary, fontSize: 12, opacity: 0.8 }}>
             Clip {index + 1}
           </span>
@@ -541,7 +555,7 @@ function ClipCard({
               lineHeight: 1.5,
             }}
           >
-            {clip.caption}
+            {stripEmoji(clip.caption)}
           </p>
         )}
         {clip.hashtags && clip.hashtags.length > 0 && (
@@ -623,12 +637,16 @@ function ClipCard({
           → Save to Clips
         </button>
         <button
-          onClick={() => router.push(
-            '/editor?videoUrl=' +
-            encodeURIComponent(clip.video_url || '') +
-            '&title=' +
-            encodeURIComponent(clip.title || '')
-          )}
+          onClick={() => {
+            sessionStorage.setItem('editor_clip', JSON.stringify({
+              video_url: clip.video_url || '',
+              thumbnail_url: clip.thumbnail_url || '',
+              title: clip.title || '',
+              caption: clip.caption || '',
+              hashtags: clip.hashtags || [],
+            }));
+            router.push('/editor');
+          }}
           style={{
             width: '100%',
             padding: '10px',
@@ -688,6 +706,13 @@ export default function ImportPage() {
   const [scheduleDate, setScheduleDate] = useState('');
   const [scheduleTime, setScheduleTime] = useState('');
   const [scheduling, setScheduling] = useState(false);
+  const [importSchedCaption, setImportSchedCaption] = useState('');
+  const [importSchedHashtags, setImportSchedHashtags] = useState('');
+  const [generationSuccess, setGenerationSuccess] = useState(false);
+  const POLL_INTERVAL_MS = 5000;
+  const POLL_TIMEOUT_MS = 10 * 60 * 1000; // 10 minutes
+  const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const pollDeadlineRef = useRef<number>(0);
   const [inputTab, setInputTab] = useState<'youtube' | 'upload'>('youtube');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -699,8 +724,7 @@ export default function ImportPage() {
   const planLimit = PLAN_LIMITS[userPlan] ?? 300;
   const creditCost = timeRangeEnabled ? Math.ceil((timeEnd - timeStart) / 60) : numClips * 10;
   const insufficientCredits = userCredits > 0 && userCredits < creditCost;
-  const uploadCreditsNeeded = uploadDuration !== null && uploadDuration > 0 ? Math.ceil(uploadDuration / 60) : null;
-  const uploadInsufficientCredits = uploadCreditsNeeded !== null && userCredits > 0 && userCredits < uploadCreditsNeeded;
+  const uploadInsufficientCredits = userCredits > 0 && userCredits < numClips;
 
   // Fetch user's plan and credits on mount
   useEffect(() => {
@@ -771,6 +795,72 @@ export default function ImportPage() {
     }
   };
 
+  const stopPolling = useCallback(() => {
+    if (pollTimerRef.current) {
+      clearInterval(pollTimerRef.current);
+      pollTimerRef.current = null;
+    }
+  }, []);
+
+  useEffect(() => () => stopPolling(), [stopPolling]);
+
+  const pollClipStatus = useCallback((taskId: string) => {
+    pollDeadlineRef.current = Date.now() + POLL_TIMEOUT_MS;
+
+    pollTimerRef.current = setInterval(async () => {
+      if (Date.now() > pollDeadlineRef.current) {
+        stopPolling();
+        setLoading(false);
+        setStatus("idle");
+        setError("Processing timed out. Please try again.");
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/clip-status/${taskId}`, { credentials: "include" });
+        const data = await res.json();
+
+        if (!res.ok || data.success === false) {
+          stopPolling();
+          setLoading(false);
+          setStatus("idle");
+          setError(data.error || "Processing failed.");
+          return;
+        }
+
+        if (data.status === "SUCCEEDED") {
+          stopPolling();
+          setStatus("completed");
+          setResult({
+            success: true,
+            jobId: taskId,
+            clips: data.clips || [],
+            creditsUsed: data.cost_usage ?? 0,
+            creditsRemaining: userCredits,
+          });
+          setClips(data.clips || []);
+          setGenerationSuccess(true);
+          localStorage.setItem(CLIPS_STORAGE_KEY, JSON.stringify({
+            clips: data.clips || [],
+            videoUrl,
+            generatedAt: new Date().toISOString(),
+          }));
+          setTimeout(() => {
+            setLoading(false);
+            setStatus("idle");
+          }, 900);
+        } else {
+          setStatus("processing");
+        }
+      } catch (err) {
+        stopPolling();
+        setLoading(false);
+        setStatus("idle");
+        setError(err instanceof Error ? err.message : "Network error while checking status.");
+      }
+    }, POLL_INTERVAL_MS);
+  }, [stopPolling, userCredits, videoUrl]);
+
   const handleProcess = useCallback(async () => {
     if (!isValidUrl) return;
 
@@ -785,120 +875,89 @@ export default function ImportPage() {
       }
     }
 
+    stopPolling();
+    setGenerationSuccess(false);
     setLoading(true);
-    setStatus("processing");
+    setStatus("queued");
     setError(null);
     setResult(null);
 
     try {
-      const response = await fetch("/api/process", {
+      const response = await fetch("/api/process-youtube-v2", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
           videoUrl,
-          videoUrl2: dualMode ? videoUrl2 : '',
-          dualMode,
-          numClips,
-          timeStart,
-          timeEnd,
-          category,
-          contentMode,
-          contentTypes: selectedTs,
-          prompt: buildSmartPrompt(category, selectedTs, contentMode),
-
+          limit: numClips,
+          ratio: RATIO_ENUM_MAP[aspectRatio] || "RATIO_9_16",
+          enableCaption: subtitles,
+          enableReframe: aspectRatio !== "16:9",
+          resolution: resolutionForPlan(userPlan),
         }),
       });
 
       const data = await response.json();
 
-      if (!response.ok) {
-        if (response.status === 402) {
-          setError(
-            `Not enough credits. Need ${data.credits_required}, have ${data.credits_remaining}.`
-          );
-        } else {
-          setError(data.error || "Processing failed.");
-        }
+      if (!response.ok || data.success === false) {
+        setError(data.error || "Processing failed.");
+        setLoading(false);
+        setStatus("idle");
         return;
       }
 
-      if (data.clips && data.clips.length > 0) {
-        setResult({
-          success: true,
-          jobId: "",
-          clips: data.clips,
-          creditsUsed: data.credits_used,
-          creditsRemaining: data.credits_remaining,
-        });
-        setClips(data.clips);
+      if (typeof data.credits_remaining === "number") {
         setUserCredits(data.credits_remaining);
-        localStorage.setItem(CLIPS_STORAGE_KEY, JSON.stringify({
-          clips: data.clips,
-          videoUrl: videoUrl,
-          generatedAt: new Date().toISOString(),
-        }));
-      } else {
-        setError("No clips found. Try a different video or time range.");
       }
+
+      if (!data.task_id) {
+        setError("No task ID returned from server.");
+        setLoading(false);
+        setStatus("idle");
+        return;
+      }
+
+      setStatus("processing");
+      pollClipStatus(data.task_id);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Network error");
-    } finally {
       setLoading(false);
       setStatus("idle");
     }
   }, [
     isValidUrl,
     videoUrl,
-    videoUrl2,
-    dualMode,
-    numClips,
     timeRangeEnabled,
     timeStart,
     timeEnd,
     planLimit,
     userPlan,
-    category,
-    contentMode,
-    selectedTs,
+    numClips,
+    aspectRatio,
+    subtitles,
+    pollClipStatus,
+    stopPolling,
   ]);
 
   const handleUpload = useCallback(async () => {
     if (!selectedFile || durationLoading) return;
 
+    setGenerationSuccess(false);
     setLoading(true);
     setStatus('processing');
     setError(null);
     setResult(null);
     setUploadProgress(0);
 
-    let creditDeducted = false;
-    let creditsDeductedAmount = 0;
-    let creditsAfterDeduct = userCredits;
-
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { setError('Please sign in.'); setLoading(false); return; }
 
-      // ── DEDUCT CREDITS (only when duration is known) ──
-      if (!durationUnknown && uploadCreditsNeeded !== null) {
-        const deductRes = await fetch('/api/upload-credits', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({ creditsNeeded: uploadCreditsNeeded }),
-        });
-        const deductData = await deductRes.json();
-
-        if (!deductRes.ok) {
-          setError(deductData.error || 'Not enough credits.');
-          return;
-        }
-
-        creditDeducted = true;
-        creditsDeductedAmount = uploadCreditsNeeded;
-        creditsAfterDeduct = deductData.credits_remaining;
-        setUserCredits(deductData.credits_remaining);
+      // Guard: check balance upfront
+      if (userCredits > 0 && userCredits < numClips) {
+        setError('Not enough credits — upgrade or buy more.');
+        setLoading(false);
+        return;
       }
 
       // ── UPLOAD TO PROCESSING SERVER ──
@@ -908,10 +967,12 @@ export default function ImportPage() {
       formData.append('numClips', String(numClips));
       formData.append('category', category);
       formData.append('prompt', buildSmartPrompt(category, selectedTs, contentMode));
-      formData.append('creditsNeeded', String(uploadCreditsNeeded ?? 0));
-
+      formData.append('timeStart', String(timeStart));
+      formData.append('timeEnd', String(timeEnd));
+      formData.append('plan', userPlan);
 
       let uploadSucceeded = false;
+      let serverCreditsUsed = 0;
 
       await new Promise<void>((resolve) => {
         const xhr = new XMLHttpRequest();
@@ -926,15 +987,19 @@ export default function ImportPage() {
             const data = JSON.parse(xhr.responseText);
             if (xhr.status >= 200 && xhr.status < 300 && data.clips?.length > 0) {
               uploadSucceeded = true;
+              serverCreditsUsed = typeof data.credits_used === 'number' ? data.credits_used : numClips;
               setResult({
                 success: true,
                 jobId: '',
                 clips: data.clips,
-                creditsUsed: creditsDeductedAmount,
-                creditsRemaining: creditsAfterDeduct,
+                creditsUsed: serverCreditsUsed,
+                creditsRemaining: userCredits, // updated after deduction below
               });
               setClips(data.clips);
+              setGenerationSuccess(true);
               localStorage.setItem(CLIPS_STORAGE_KEY, JSON.stringify({ clips: data.clips, videoUrl: selectedFile.name, generatedAt: new Date().toISOString() }));
+            } else if (xhr.status === 402 || data.plan_limit_exceeded) {
+              setError(data.error || 'This range exceeds your plan limit. Upgrade to process longer videos.');
             } else {
               setError(data.error || 'No clips found. Try a different video.');
             }
@@ -945,38 +1010,29 @@ export default function ImportPage() {
         xhr.send(formData);
       });
 
-      // ── REFUND IF UPLOAD FAILED ──
-      if (!uploadSucceeded && creditDeducted) {
-        const refundRes = await fetch('/api/upload-credits', {
+      // ── DEDUCT CREDITS AFTER SUCCESSFUL PROCESSING ──
+      if (uploadSucceeded && serverCreditsUsed > 0) {
+        const deductRes = await fetch('/api/upload-credits', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
-          body: JSON.stringify({ action: 'refund', amount: creditsDeductedAmount }),
+          body: JSON.stringify({ creditsNeeded: serverCreditsUsed }),
         });
-        const refundData = await refundRes.json();
-        if (refundData.credits_remaining !== undefined) setUserCredits(refundData.credits_remaining);
+        const deductData = await deductRes.json();
+        if (deductData.credits_remaining !== undefined) {
+          setUserCredits(deductData.credits_remaining);
+          setResult(prev => prev ? { ...prev, creditsRemaining: deductData.credits_remaining } : prev);
+        }
       }
 
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Upload error');
-      if (creditDeducted) {
-        try {
-          const refundRes = await fetch('/api/upload-credits', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify({ action: 'refund', amount: creditsDeductedAmount }),
-          });
-          const refundData = await refundRes.json();
-          if (refundData.credits_remaining !== undefined) setUserCredits(refundData.credits_remaining);
-        } catch {}
-      }
     } finally {
       setLoading(false);
       setStatus('idle');
       setUploadProgress(0);
     }
-  }, [selectedFile, uploadCreditsNeeded, durationLoading, durationUnknown, numClips, category, selectedTs, contentMode, userCredits]);
+  }, [selectedFile, durationLoading, numClips, category, selectedTs, contentMode, userCredits, timeStart, timeEnd, userPlan]);
 
   const handleDownload = (clip: Clip) => {
     const a = document.createElement('a');
@@ -1000,6 +1056,7 @@ export default function ImportPage() {
       hashtags: c.hashtags?.join(' ') ?? '',
       platform: 'tiktok',
       clip_url: c.video_url,
+      thumbnail_url: c.thumbnail_url ?? '',
       duration: c.duration ?? 60,
       status: 'ready',
     })) ?? [];
@@ -1040,7 +1097,7 @@ export default function ImportPage() {
                     onClick={() => setInputTab(tab)}
                     style={{ flex: 1, padding: '8px 0', borderRadius: '6px', border: 'none', fontSize: '13px', fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s', background: inputTab === tab ? 'linear-gradient(135deg,#7c3aed,#5b21b6)' : 'transparent', color: inputTab === tab ? '#ffffff' : colors.onSurfaceVariant }}
                   >
-                    {tab === 'youtube' ? '🔗 YouTube Link' : '📁 Upload Video'}
+                    {tab === 'youtube' ? 'YouTube Link' : 'Upload Video'}
                   </button>
                 ))}
               </div>
@@ -1116,7 +1173,6 @@ export default function ImportPage() {
                         if (dur === null) { setDurationUnknown(true); } else { setUploadDuration(dur); }
                       }}
                     />
-                    <div style={{ fontSize: '32px', marginBottom: '10px' }}>🎬</div>
                     <div style={{ fontSize: '14px', fontWeight: 600, color: '#ffffff', marginBottom: '6px' }}>
                       {isDragOver ? 'Drop your video here' : 'Drag & drop or click to upload'}
                     </div>
@@ -1125,13 +1181,12 @@ export default function ImportPage() {
 
                   {/* Upload speed tip */}
                   <div style={{ marginTop: '10px', fontSize: '11px', color: 'rgba(255,255,255,0.35)', lineHeight: 1.5 }}>
-                    💡 Tip: 720p exports upload faster and look great as clips.
+                    Tip: 720p exports upload faster and look great as clips.
                   </div>
 
                   {selectedFile && (
                     <div style={{ padding: '12px 14px', background: uploadInsufficientCredits ? 'rgba(239,68,68,0.06)' : 'rgba(124,58,237,0.08)', border: `1px solid ${uploadInsufficientCredits ? 'rgba(239,68,68,0.3)' : 'rgba(124,58,237,0.25)'}`, borderRadius: '10px', marginTop: '10px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <span style={{ fontSize: '20px' }}>📄</span>
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ fontSize: '13px', fontWeight: 600, color: '#ffffff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{selectedFile.name}</div>
                           <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.45)', marginTop: '2px' }}>
@@ -1144,12 +1199,9 @@ export default function ImportPage() {
                       {durationLoading && (
                         <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginTop: '8px' }}>Estimating cost...</div>
                       )}
-                      {durationUnknown && null}
-                      {uploadCreditsNeeded !== null && (
-                        <div style={{ marginTop: '8px', fontSize: '12px', fontWeight: 600, color: uploadInsufficientCredits ? '#fca5a5' : '#a78bfa' }}>
-                          {uploadInsufficientCredits
-                            ? `Not enough credits — needs ${uploadCreditsNeeded}, you have ${userCredits}`
-                            : `This video will cost ${uploadCreditsNeeded} credit${uploadCreditsNeeded === 1 ? '' : 's'} (${Math.ceil(uploadDuration! / 60)} min)`}
+                      {uploadInsufficientCredits && (
+                        <div style={{ marginTop: '8px', fontSize: '12px', fontWeight: 600, color: '#fca5a5' }}>
+                          Not enough credits — upgrade or buy more
                         </div>
                       )}
                     </div>
@@ -1307,7 +1359,6 @@ export default function ImportPage() {
                       }}
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-                        <span style={{ fontSize: '14px' }}>{preset.icon}</span>
                         <span style={{ fontSize: '12px', fontWeight: 700, color: isActive ? '#ffffff' : 'rgba(255,255,255,0.65)' }}>
                           {preset.label}
                         </span>
@@ -1478,19 +1529,25 @@ export default function ImportPage() {
                     }}
                   />
                   {Status === "queued"
-                    ? "⚡ Preparing your video..."
+                    ? "Preparing your video..."
                     : Status === "preprocessing"
-                    ? "🎬  AI is analysing your video..."
+                    ? "AI is analysing your video..."
                     : Status === "processing"
-                    ? "🧠 Finding your best viral moments..."
+                    ? "Finding your best viral moments..."
                     : Status === "completed"
-                    ? "✅ Your clips are ready!"
-                    : "⏳ Processing... this takes 2-4 minutes. Please wait."}
+                    ? "Your clips are ready!"
+                    : "Processing... this takes 2-4 minutes. Please wait."}
                 </>
               ) : (
-                `⚡ Generate ${numClips} Clips`
+                `Generate ${numClips} Clips`
               )}
             </button>
+
+            {generationSuccess && !loading && (
+              <div style={{ padding: '12px 16px', borderRadius: radius.md, background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.3)', color: '#4ade80', fontSize: '13px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                ✓ Your clips are ready — scroll down to view them
+              </div>
+            )}
           </div>
 
           {/* Right: Settings */}
@@ -1530,7 +1587,7 @@ export default function ImportPage() {
                 Aspect Ratio
               </label>
               <div style={{ display: "flex", gap: 8 }}>
-                {(["9:16", "16:9", "1:1"] as AspectRatio[]).map((ar) => (
+                {(["9:16", "16:9", "1:1", "4:5"] as AspectRatio[]).map((ar) => (
                   <button
                     key={ar}
                     onClick={() => setAspectRatio(ar)}
@@ -1706,10 +1763,8 @@ export default function ImportPage() {
             {/* Credit cost */}
             {(() => {
               const isUpload = inputTab === 'upload';
-              const cost = isUpload ? uploadCreditsNeeded : creditCost;
+              const cost = isUpload ? numClips : creditCost;
               const notEnough = isUpload ? uploadInsufficientCredits : insufficientCredits;
-              const loading_ = isUpload && !!selectedFile && durationLoading;
-              const unknown_ = isUpload && !!selectedFile && durationUnknown;
               return (
                 <div
                   style={{
@@ -1723,17 +1778,17 @@ export default function ImportPage() {
                     Cost estimate
                   </p>
                   <p style={{ margin: "4px 0 0", fontSize: 20, fontWeight: 800, color: colors.onSurface }}>
-                    {(loading_ || unknown_) ? '—' : (cost ?? '—')}{" "}
+                    {cost}{" "}
                     <span style={{ fontSize: 13, fontWeight: 500, color: colors.onSurfaceVariant }}>credits</span>
                   </p>
-                  {loading_ && (
-                    <p style={{ margin: "6px 0 0", fontSize: 11, color: colors.onSurfaceVariant }}>Reading video duration...</p>
+                  {isUpload && (
+                    <p style={{ margin: "4px 0 0", fontSize: 11, color: colors.onSurfaceVariant }}>1 per clip generated</p>
                   )}
-                  {!loading_ && !unknown_ && userCredits > 0 && cost !== null && (
+                  {userCredits > 0 && (
                     <p style={{ margin: "6px 0 0", fontSize: 11, color: notEnough ? colors.error : colors.onSurfaceVariant }}>
                       {notEnough
                         ? <><span>Not enough credits — </span><a href="/pricing" style={{ color: colors.primary, fontWeight: 700 }}>upgrade to continue</a></>
-                        : `This will use ${cost} credits — you have ${userCredits} remaining`}
+                        : `You have ${userCredits} remaining`}
                     </p>
                   )}
                 </div>
@@ -1826,7 +1881,7 @@ export default function ImportPage() {
                       </span>
                       {clip.ai_score !== undefined && (
                         <span style={{ fontSize: '13px', fontWeight: 700, color: clip.ai_score >= 90 ? '#10b981' : clip.ai_score >= 80 ? '#f59e0b' : '#ef4444' }}>
-                          🔥 {clip.ai_score}/100
+                          {clip.ai_score}/100
                         </span>
                       )}
                     </div>
@@ -1871,29 +1926,29 @@ export default function ImportPage() {
                     {(clip.start_time !== undefined || clip.end_time !== undefined) && (
                       <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', marginBottom: '8px', display: 'flex', gap: '12px' }}>
                         <span>
-                          ⏱ {Math.floor((clip.start_time || 0) / 60)}:{String(Math.floor((clip.start_time || 0) % 60)).padStart(2, '0')}
+                          {Math.floor((clip.start_time || 0) / 60)}:{String(Math.floor((clip.start_time || 0) % 60)).padStart(2, '0')}
                           {' → '}
                           {Math.floor((clip.end_time || 60) / 60)}:{String(Math.floor((clip.end_time || 60) % 60)).padStart(2, '0')}
                         </span>
-                        <span>📏 {clip.duration || (endSeconds - startSeconds)}s</span>
+                        <span>{clip.duration || (endSeconds - startSeconds)}s</span>
                       </div>
                     )}
 
                     {clip.hook_text && (
                       <div style={{ fontSize: '12px', color: '#fcd34d', fontStyle: 'italic', marginBottom: '8px', padding: '6px 10px', background: 'rgba(252,211,77,0.08)', borderRadius: '6px' }}>
-                        🎣 Hook: &ldquo;{clip.hook_text}&rdquo;
+                        Hook: &ldquo;{stripEmoji(clip.hook_text)}&rdquo;
                       </div>
                     )}
 
                     {clip.caption && (
                       <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.7)', lineHeight: 1.6, margin: '0 0 10px' }}>
-                        {clip.caption}
+                        {stripEmoji(clip.caption)}
                       </p>
                     )}
 
                     {clip.reason && (
                       <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', lineHeight: 1.5, margin: '0 0 12px', fontStyle: 'italic' }}>
-                        💡 {clip.reason}
+                        {stripEmoji(clip.reason)}
                       </p>
                     )}
 
@@ -1934,10 +1989,23 @@ export default function ImportPage() {
 
                     <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                       <button
-                        onClick={() => router.push(
-                          '/editor?videoUrl=' + encodeURIComponent(clip.video_url || '') +
-                          '&title=' + encodeURIComponent(clip.title || '')
-                        )}
+                        onClick={() => {
+                          sessionStorage.setItem('editor_clip', JSON.stringify({
+                            id: clip.id,
+                            video_url: clip.video_url || '',
+                            clip_url: clip.video_url || '',
+                            thumbnail_url: clip.thumbnail_url || '',
+                            title: clip.title || '',
+                            hook_text: clip.hook_text || '',
+                            ai_score: clip.ai_score,
+                            virality_score: clip.ai_score,
+                            caption: clip.caption || '',
+                            hashtags: clip.hashtags || [],
+                            start_time: clip.start_time,
+                            end_time: clip.end_time,
+                          }));
+                          router.push('/editor');
+                        }}
                         style={{
                           flex: 1,
                           padding: '10px 14px',
@@ -1952,7 +2020,7 @@ export default function ImportPage() {
                           display: 'block',
                         }}
                       >
-                        ✂ Open in Editor
+                        Open in Editor
                       </button>
                       <button
                         onClick={() => {
@@ -1962,7 +2030,7 @@ export default function ImportPage() {
                         }}
                         style={{ padding: '10px 14px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '8px', color: 'rgba(255,255,255,0.7)', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}
                       >
-                        📋 Copy Caption
+                        Copy Caption
                       </button>
                       <button
                         onClick={async () => {
@@ -1980,7 +2048,7 @@ export default function ImportPage() {
                         }}
                         style={{ padding: '10px 14px', background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.3)', borderRadius: '8px', color: '#6ee7b7', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}
                       >
-                        💾 Save Clip
+                        Save Clip
                       </button>
                       <button
                         onClick={() => {
@@ -1989,10 +2057,12 @@ export default function ImportPage() {
                           const now = new Date();
                           setScheduleDate(now.toISOString().split('T')[0]);
                           setScheduleTime('10:00');
+                          setImportSchedCaption(clip.caption || '');
+                          setImportSchedHashtags(Array.isArray(clip.hashtags) ? clip.hashtags.join(' ') : (clip.hashtags || ''));
                         }}
                         style={{ padding: '10px 14px', background: 'rgba(124,58,237,0.12)', border: '1px solid rgba(124,58,237,0.3)', borderRadius: '8px', color: '#a78bfa', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}
                       >
-                        📅 Schedule
+                        Schedule
                       </button>
                     </div>
                   </div>
@@ -2008,17 +2078,52 @@ export default function ImportPage() {
       {scheduleModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
           <div style={{ background: '#0d0021', border: '1px solid rgba(124,58,237,0.3)', borderRadius: '16px', padding: '24px', width: '100%', maxWidth: '480px', maxHeight: '90vh', overflowY: 'auto' }}>
-            <div style={{ fontSize: '18px', fontWeight: 700, color: '#ffffff', marginBottom: '6px' }}>Schedule Clip</div>
-            <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.45)', marginBottom: '20px' }}>{scheduleModal.title}</div>
+            <div style={{ fontSize: '18px', fontWeight: 700, color: '#ffffff', marginBottom: '16px' }}>Schedule Clip</div>
+
+            {/* Preview */}
+            {(scheduleModal.thumbnail_url || scheduleModal.video_url) ? (
+              <div style={{ borderRadius: '10px', overflow: 'hidden', marginBottom: '16px', aspectRatio: '16/9', background: 'rgba(255,255,255,0.04)' }}>
+                {scheduleModal.thumbnail_url ? (
+                  <img src={scheduleModal.thumbnail_url} alt={scheduleModal.title} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                ) : (
+                  <video src={scheduleModal.video_url} muted playsInline preload="metadata" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                )}
+              </div>
+            ) : (
+              <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.45)', marginBottom: '16px' }}>{scheduleModal.title}</div>
+            )}
+
+            {/* Caption */}
+            <div style={{ marginBottom: '16px' }}>
+              <div style={{ fontSize: '13px', fontWeight: 600, color: 'rgba(255,255,255,0.6)', marginBottom: '8px' }}>Caption</div>
+              <textarea
+                rows={3}
+                value={importSchedCaption}
+                onChange={e => setImportSchedCaption(e.target.value)}
+                placeholder="Write your post caption..."
+                style={{ width: '100%', padding: '10px 14px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '8px', color: '#ffffff', fontSize: '13px', outline: 'none', resize: 'vertical', minHeight: '80px', boxSizing: 'border-box', fontFamily: "'Inter', sans-serif" }}
+              />
+            </div>
+
+            {/* Hashtags */}
+            <div style={{ marginBottom: '16px' }}>
+              <div style={{ fontSize: '13px', fontWeight: 600, color: 'rgba(255,255,255,0.6)', marginBottom: '8px' }}>Hashtags</div>
+              <input
+                value={importSchedHashtags}
+                onChange={e => setImportSchedHashtags(e.target.value)}
+                placeholder="#faith #sermon #viral"
+                style={{ width: '100%', padding: '10px 14px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '8px', color: '#ffffff', fontSize: '13px', outline: 'none', boxSizing: 'border-box' }}
+              />
+            </div>
 
             <div style={{ fontSize: '13px', fontWeight: 600, color: 'rgba(255,255,255,0.6)', marginBottom: '10px' }}>Select platforms:</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '20px' }}>
               {[
-                { id: 'tiktok', label: 'TikTok', icon: '🎵' },
-                { id: 'instagram', label: 'Instagram Reels', icon: '📸' },
-                { id: 'youtube', label: 'YouTube Shorts', icon: '▶' },
-                { id: 'facebook', label: 'Facebook', icon: '📘' },
-                { id: 'twitter', label: 'X (Twitter)', icon: '𝕏' },
+                { id: 'tiktok', label: 'TikTok' },
+                { id: 'instagram', label: 'Instagram Reels' },
+                { id: 'youtube', label: 'YouTube Shorts' },
+                { id: 'facebook', label: 'Facebook' },
+                { id: 'twitter', label: 'X (Twitter)' },
               ].map(p => (
                 <label key={p.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 14px', background: selectedPlatforms.includes(p.id) ? 'rgba(124,58,237,0.15)' : 'rgba(255,255,255,0.04)', border: '1px solid', borderColor: selectedPlatforms.includes(p.id) ? 'rgba(124,58,237,0.4)' : 'rgba(255,255,255,0.08)', borderRadius: '10px', cursor: 'pointer' }}>
                   <input
@@ -2027,7 +2132,6 @@ export default function ImportPage() {
                     onChange={e => setSelectedPlatforms(prev => e.target.checked ? [...prev, p.id] : prev.filter(x => x !== p.id))}
                     style={{ width: '16px', height: '16px' }}
                   />
-                  <span style={{ fontSize: '18px' }}>{p.icon}</span>
                   <span style={{ fontSize: '13px', fontWeight: 600, color: '#ffffff' }}>{p.label}</span>
                 </label>
               ))}
@@ -2053,15 +2157,32 @@ export default function ImportPage() {
                       body: JSON.stringify({
                         clipId: scheduleModal.id,
                         platforms: selectedPlatforms,
-                        caption: scheduleModal.caption,
-                        hashtags: scheduleModal.hashtags,
+                        caption: importSchedCaption,
+                        hashtags: importSchedHashtags,
                         scheduleTime: scheduledAt,
                         videoUrl: scheduleModal.video_url || videoUrl,
                         title: scheduleModal.title,
+                        thumbnailUrl: scheduleModal.thumbnail_url || '',
                       }),
                     });
                     const data = await res.json();
                     if (data.success) {
+                      const existingSched = JSON.parse(sessionStorage.getItem('hookclip_scheduled') || '[]');
+                      existingSched.push({
+                        id: Date.now().toString(),
+                        clip_title: scheduleModal.title,
+                        hook_text: scheduleModal.hook_text || scheduleModal.caption || '',
+                        virality_score: scheduleModal.ai_score || 0,
+                        caption: importSchedCaption,
+                        hashtags: importSchedHashtags,
+                        platforms: selectedPlatforms,
+                        scheduled_date: scheduleDate,
+                        scheduled_time: scheduleTime,
+                        status: 'scheduled',
+                        video_url: scheduleModal.video_url || '',
+                        thumbnail_url: scheduleModal.thumbnail_url || '',
+                      });
+                      sessionStorage.setItem('hookclip_scheduled', JSON.stringify(existingSched));
                       alert(`Clip scheduled for ${scheduleDate} at ${scheduleTime} on ${selectedPlatforms.join(', ')}`);
                       setScheduleModal(null);
                     } else {
@@ -2076,7 +2197,7 @@ export default function ImportPage() {
                 disabled={scheduling}
                 style={{ flex: 1, padding: '13px', background: 'linear-gradient(135deg, #7c3aed, #5b21b6)', border: 'none', borderRadius: '10px', color: '#ffffff', fontSize: '14px', fontWeight: 700, cursor: scheduling ? 'not-allowed' : 'pointer', opacity: scheduling ? 0.7 : 1 }}
               >
-                {scheduling ? 'Scheduling...' : '📅 Schedule Post'}
+                {scheduling ? 'Scheduling...' : 'Schedule Post'}
               </button>
               <button onClick={() => setScheduleModal(null)} style={{ padding: '13px 20px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', color: 'rgba(255,255,255,0.6)', fontSize: '14px', cursor: 'pointer' }}>Cancel</button>
             </div>
