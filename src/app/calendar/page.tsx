@@ -8,6 +8,7 @@ type ScheduledPost = {
   id: string; clip_title: string; hook_text: string; virality_score: number;
   caption: string; hashtags: string; platforms: string[];
   scheduled_date: string; scheduled_time: string; status: string;
+  video_url?: string; thumbnail_url?: string;
 };
 
 const DAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
@@ -199,6 +200,15 @@ export default function CalendarPage() {
               <button onClick={() => setSelectedPost(null)} style={{ background:'none', border:'none', cursor:'pointer', color:colors.onSurfaceVariant }}><Icon name="close" size={22}/></button>
             </div>
 
+            {(selectedPost.thumbnail_url || selectedPost.video_url) && (
+              <div style={{ borderRadius:radius.md, overflow:'hidden', marginBottom:16, aspectRatio:'16/9', background:colors.surfaceContainer }}>
+                {selectedPost.thumbnail_url ? (
+                  <img src={selectedPost.thumbnail_url} alt={selectedPost.clip_title} style={{ width:'100%', height:'100%', objectFit:'cover', display:'block' }}/>
+                ) : (
+                  <video src={selectedPost.video_url} controls playsInline preload="metadata" style={{ width:'100%', height:'100%', objectFit:'cover', display:'block' }}/>
+                )}
+              </div>
+            )}
             <div style={{ background:colors.surfaceContainer, borderRadius:radius.md, padding:'16px', marginBottom:'16px' }}>
               <p style={{ fontSize:'15px', fontWeight:600, marginBottom:6 }}>{selectedPost.clip_title}</p>
               <p style={{ fontSize:'12px', color:colors.onSurfaceVariant, fontStyle:'italic', marginBottom:8 }}>&ldquo;{selectedPost.hook_text}&rdquo;</p>

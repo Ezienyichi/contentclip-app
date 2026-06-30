@@ -20,12 +20,40 @@ const TRANSITIONS = ['Cut','Dissolve','Fade','Slide Left','Slide Up','Zoom In','
 
 type Overlay = { id: string; url: string; name: string; opacity: number };
 
+function overlayPositionStyle(pos: string): React.CSSProperties {
+  const base: React.CSSProperties = { position: 'absolute' };
+  switch (pos) {
+    case 'Top Left':   return { ...base, top:12, left:12 };
+    case 'Top Center': return { ...base, top:12, left:'50%', transform:'translateX(-50%)' };
+    case 'Top Right':  return { ...base, top:12, right:12 };
+    case 'Mid Left':   return { ...base, top:'50%', left:12, transform:'translateY(-50%)' };
+    case 'Center':     return { ...base, top:'50%', left:'50%', transform:'translate(-50%,-50%)' };
+    case 'Mid Right':  return { ...base, top:'50%', right:12, transform:'translateY(-50%)' };
+    case 'Bot Left':   return { ...base, bottom:12, left:12 };
+    case 'Bot Center': return { ...base, bottom:12, left:'50%', transform:'translateX(-50%)' };
+    case 'Bot Right':  return { ...base, bottom:12, right:12 };
+    default:           return { ...base, top:12, right:12 };
+  }
+}
+
 function EditorPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const clipId = searchParams.get('clipId') || '';
-  const videoUrl = searchParams.get('videoUrl') || '';
-  const clipTitle = searchParams.get('title') || 'Edited Clip';
+  // Read full clip object from sessionStorage; fall back to URL params so direct links still work
+  const [editorClip] = useState<Record<string,any>|null>(() => {
+    if (typeof window === 'undefined') return null;
+    try { const r = sessionStorage.getItem('editor_clip'); return r ? JSON.parse(r) : null; } catch { return null; }
+  });
+  const clipId    = editorClip?.id || editorClip?.clipId || searchParams.get('clipId') || '';
+  const videoUrl  = editorClip?.video_url || editorClip?.clip_url || searchParams.get('videoUrl') || '';
+  const clipTitle = editorClip?.title || searchParams.get('title') || 'Edited Clip';
+  const thumbnailUrl   = editorClip?.thumbnail_url || '';
+  const hookText       = editorClip?.hook_text || '';
+  const viralityScore  = Number(editorClip?.virality_score ?? editorClip?.ai_score ?? 0);
+  const defaultCaption = editorClip?.caption || '';
+  const defaultHashtags = Array.isArray(editorClip?.hashtags)
+    ? (editorClip.hashtags as string[]).join(' ')
+    : (editorClip?.hashtags || '');
 
   const [playing, setPlaying] = useState(false);
   const [capStyle, setCapStyle] = useState(0);
@@ -46,13 +74,14 @@ function EditorPageInner() {
   const [overlays, setOverlays] = useState<Overlay[]>([]);
   const [removeBg, setRemoveBg] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [logoPosition, setLogoPosition] = useState('Top Right');
   const fileRef = useRef<HTMLInputElement>(null);
 
   // Schedule state
   const [schedDate, setSchedDate] = useState('');
   const [schedTime, setSchedTime] = useState('12:00');
-  const [schedCaption, setSchedCaption] = useState('');
-  const [schedHashtags, setSchedHashtags] = useState('');
+  const [schedCaption, setSchedCaption] = useState(defaultCaption);
+  const [schedHashtags, setSchedHashtags] = useState(defaultHashtags);
   const [schedPlatforms, setSchedPlatforms] = useState<string[]>(['tiktok']);
 
   function togglePlay() {
@@ -124,22 +153,42 @@ function EditorPageInner() {
     setSchedPlatforms(prev => prev.includes(p) ? prev.filter(x => x !== p) : [...prev, p]);
   }
 
-  function handleSchedule() {
+  async function handleSchedule() {
     if (!schedDate) { alert('Please select a date'); return; }
-    const existing = JSON.parse(sessionStorage.getItem('hookclip_scheduled') || '[]');
-    existing.push({
+    const newPost = {
       id: Date.now().toString(),
       clip_title: clipTitle,
-      hook_text: 'The shocking truth about AI',
-      virality_score: 94,
+      hook_text: hookText,
+      virality_score: viralityScore,
       caption: schedCaption,
       hashtags: schedHashtags,
       platforms: schedPlatforms,
       scheduled_date: schedDate,
       scheduled_time: schedTime,
       status: 'scheduled',
-    });
+      video_url: videoUrl,
+      thumbnail_url: thumbnailUrl,
+    };
+    const existing = JSON.parse(sessionStorage.getItem('hookclip_scheduled') || '[]');
+    existing.push(newPost);
     sessionStorage.setItem('hookclip_scheduled', JSON.stringify(existing));
+    try {
+      await fetch('/api/social/schedule', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          clipId: clipId || null,
+          platforms: schedPlatforms,
+          caption: schedCaption,
+          hashtags: schedHashtags,
+          scheduleTime: new Date(`${schedDate}T${schedTime}:00`).toISOString(),
+          videoUrl,
+          title: clipTitle,
+          thumbnailUrl,
+        }),
+      });
+    } catch {}
     setShowSchedule(false);
     router.push('/calendar');
   }
@@ -169,7 +218,8 @@ function EditorPageInner() {
               {/* Overlays rendered on preview */}
               {overlays.map(ov => (
                 <img key={ov.id} src={ov.url} alt={ov.name} style={{
-                  position:'absolute', top:16, right:16, width:80, height:'auto',
+                  ...overlayPositionStyle(logoPosition),
+                  width:80, height:'auto',
                   opacity: ov.opacity / 100, objectFit:'contain', pointerEvents:'none',
                   filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.5))',
                 }}/>
@@ -334,7 +384,7 @@ function EditorPageInner() {
               <h3 style={{ fontSize:'13px', fontWeight:700, marginBottom:'12px' }}>Logo Position</h3>
               <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:'6px' }}>
                 {['Top Left','Top Center','Top Right','Mid Left','Center','Mid Right','Bot Left','Bot Center','Bot Right'].map(pos => (
-                  <button key={pos} style={{ padding:'8px', borderRadius:radius.md, background:pos==='Top Right'?'rgba(192,193,255,0.1)':colors.surfaceContainer, border:pos==='Top Right'?'1px solid rgba(192,193,255,0.3)':'1px solid transparent', color:pos==='Top Right'?colors.primary:colors.onSurfaceVariant, fontSize:'10px', fontWeight:600, cursor:'pointer', fontFamily:"'Inter',sans-serif" }}>{pos}</button>
+                  <button key={pos} onClick={() => setLogoPosition(pos)} style={{ padding:'8px', borderRadius:radius.md, background:pos===logoPosition?'rgba(192,193,255,0.1)':colors.surfaceContainer, border:pos===logoPosition?'1px solid rgba(192,193,255,0.3)':'1px solid transparent', color:pos===logoPosition?colors.primary:colors.onSurfaceVariant, fontSize:'10px', fontWeight:600, cursor:'pointer', fontFamily:"'Inter',sans-serif" }}>{pos}</button>
                 ))}
               </div>
             </div>
@@ -424,6 +474,17 @@ function EditorPageInner() {
           </div>
 
           <div style={{ display:'flex', flexDirection:'column', gap:'16px' }}>
+            {/* Clip preview */}
+            <div style={{ borderRadius:radius.md, overflow:'hidden', background:colors.surfaceContainer }}>
+              {thumbnailUrl ? (
+                <img src={thumbnailUrl} alt={clipTitle} style={{ width:'100%', aspectRatio:'16/9', objectFit:'cover', display:'block' }}/>
+              ) : videoUrl ? (
+                <video src={videoUrl} muted playsInline preload="metadata" style={{ width:'100%', aspectRatio:'16/9', objectFit:'cover', display:'block' }}/>
+              ) : null}
+              <div style={{ padding:'10px 14px' }}>
+                <p style={{ margin:0, fontSize:'13px', fontWeight:600, color:colors.onSurface }}>{clipTitle}</p>
+              </div>
+            </div>
             {/* Caption */}
             <div>
               <label style={{ fontSize:'12px', fontWeight:600, color:colors.onSurfaceVariant, display:'block', marginBottom:'6px' }}>Caption</label>

@@ -77,10 +77,10 @@ export default function ClipsPage() {
     setSchedPlatforms(prev => prev.includes(p) ? prev.filter(x => x !== p) : [...prev, p]);
   }
 
-  function handleSchedule() {
+  async function handleSchedule() {
     if (!scheduleClip || !schedDate) { alert('Please select a date'); return; }
-    // Save to sessionStorage for calendar page
-    const existing = JSON.parse(sessionStorage.getItem('hookclip_scheduled') || '[]');
+    const clipVideoUrl = scheduleClip.clip_url || scheduleClip.video_url || '';
+    const clipThumbUrl = scheduleClip.thumbnail_url || '';
     const newPost = {
       id: Date.now().toString(),
       clip_title: scheduleClip.title,
@@ -92,9 +92,29 @@ export default function ClipsPage() {
       scheduled_date: schedDate,
       scheduled_time: schedTime,
       status: 'scheduled',
+      video_url: clipVideoUrl,
+      thumbnail_url: clipThumbUrl,
     };
+    const existing = JSON.parse(sessionStorage.getItem('hookclip_scheduled') || '[]');
     existing.push(newPost);
     sessionStorage.setItem('hookclip_scheduled', JSON.stringify(existing));
+    try {
+      await fetch('/api/social/schedule', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          clipId: scheduleClip.id || null,
+          platforms: schedPlatforms,
+          caption: schedCaption,
+          hashtags: schedHashtags,
+          scheduleTime: new Date(`${schedDate}T${schedTime}:00`).toISOString(),
+          videoUrl: clipVideoUrl,
+          title: scheduleClip.title,
+          thumbnailUrl: clipThumbUrl,
+        }),
+      });
+    } catch {}
     setScheduleClip(null);
     alert('Clip scheduled! View it in your Content Calendar.');
   }
@@ -146,7 +166,7 @@ export default function ClipsPage() {
 
               {/* Action buttons */}
               <div style={{ display:'flex', gap:'6px' }}>
-                <button onClick={() => router.push(`/editor?clipId=${clip.id||''}&videoUrl=${encodeURIComponent(previewSrc)}&title=${encodeURIComponent(clip.title)}`)} style={{ flex:1, padding:'8px', borderRadius:radius.md, background:colors.surfaceContainer, border:'1px solid '+colors.outlineVariant, color:colors.onSurface, fontSize:'11px', fontWeight:600, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:'4px', fontFamily:"'Inter',sans-serif" }}>
+                <button onClick={() => { sessionStorage.setItem('editor_clip', JSON.stringify({ id: clip.id, video_url: clip.clip_url || clip.video_url || '', clip_url: clip.clip_url || '', thumbnail_url: clip.thumbnail_url || '', title: clip.title, hook_text: clip.hook_text || '', virality_score: clip.virality_score, caption: clip.suggested_caption || '', hashtags: clip.hashtags || '' })); router.push('/editor'); }} style={{ flex:1, padding:'8px', borderRadius:radius.md, background:colors.surfaceContainer, border:'1px solid '+colors.outlineVariant, color:colors.onSurface, fontSize:'11px', fontWeight:600, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:'4px', fontFamily:"'Inter',sans-serif" }}>
                   <Icon name="edit" size={13}/> Edit
                 </button>
                 <button onClick={() => openSchedule(clip)} style={{ flex:1, padding:'8px', borderRadius:radius.md, background:'rgba(37,211,102,0.1)', border:'1px solid rgba(37,211,102,0.2)', color:'#25D366', fontSize:'11px', fontWeight:600, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:'4px', fontFamily:"'Inter',sans-serif" }}>
@@ -166,7 +186,7 @@ export default function ClipsPage() {
       {playingUrl && (
         <div onClick={() => setPlayingUrl(null)} style={{ position:'fixed', inset:0, zIndex:100, background:'rgba(0,0,0,0.9)', display:'flex', alignItems:'center', justifyContent:'center', padding:20 }}>
           <div onClick={e => e.stopPropagation()} style={{ width:'100%', maxWidth:400, aspectRatio:'9/16', borderRadius:radius.lg, overflow:'hidden', position:'relative' }}>
-            <video src={playingUrl} controls autoPlay style={{ width:'100%', height:'100%', objectFit:'cover' }} />
+            <video src={playingUrl} controls style={{ width:'100%', height:'100%', objectFit:'cover' }} />
             <button onClick={() => setPlayingUrl(null)} style={{ position:'absolute', top:12, right:12, background:'rgba(0,0,0,0.7)', border:'none', color:'#fff', borderRadius:'50%', width:32, height:32, cursor:'pointer', fontSize:18, display:'flex', alignItems:'center', justifyContent:'center' }}>×</button>
           </div>
         </div>
@@ -192,13 +212,23 @@ export default function ClipsPage() {
             </div>
 
             {/* Clip preview */}
-            <div style={{ background:colors.surfaceContainer, borderRadius:radius.md, padding:'14px', marginBottom:'20px', display:'flex', gap:'12px', alignItems:'center' }}>
-              <div style={{ width:44, height:44, borderRadius:radius.md, background:'rgba(192,193,255,0.1)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-                <Icon name="movie" size={20} style={{ color:colors.primary }}/>
-              </div>
-              <div style={{ flex:1, minWidth:0 }}>
-                <p style={{ fontSize:'13px', fontWeight:600, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{scheduleClip.title}</p>
-                <p style={{ fontSize:'11px', color:colors.onSurfaceVariant }}>Score: {scheduleClip.virality_score} · {formatDuration(scheduleClip.duration)}</p>
+            <div style={{ background:colors.surfaceContainer, borderRadius:radius.md, marginBottom:'20px', overflow:'hidden' }}>
+              {(scheduleClip.thumbnail_url || scheduleClip.clip_url || scheduleClip.video_url) ? (
+                <div style={{ aspectRatio:'16/9', overflow:'hidden' }}>
+                  {scheduleClip.thumbnail_url ? (
+                    <img src={scheduleClip.thumbnail_url} alt={scheduleClip.title} style={{ width:'100%', height:'100%', objectFit:'cover', display:'block' }}/>
+                  ) : (
+                    <video src={scheduleClip.clip_url || scheduleClip.video_url} muted playsInline preload="metadata" style={{ width:'100%', height:'100%', objectFit:'cover', display:'block' }}/>
+                  )}
+                </div>
+              ) : (
+                <div style={{ height:56, display:'flex', alignItems:'center', justifyContent:'center' }}>
+                  <Icon name="movie" size={24} style={{ color:colors.onSurfaceVariant }}/>
+                </div>
+              )}
+              <div style={{ padding:'12px 14px', display:'flex', alignItems:'center', justifyContent:'space-between', gap:8 }}>
+                <p style={{ margin:0, fontSize:'13px', fontWeight:600, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', flex:1 }}>{scheduleClip.title}</p>
+                <p style={{ margin:0, fontSize:'11px', color:colors.onSurfaceVariant, flexShrink:0 }}>Score: {scheduleClip.virality_score} · {formatDuration(scheduleClip.duration)}</p>
               </div>
             </div>
 
@@ -267,7 +297,7 @@ export default function ClipsPage() {
               <div style={{ position:'absolute', bottom:16, left:16, right:16, background:'rgba(0,0,0,0.7)', padding:'8px 12px', borderRadius:radius.md }}><p style={{ fontSize:'13px', color:'#fff', fontWeight:600 }}>{filtered[preview].title}</p></div>
             </div>
             <div style={{ padding:'16px', display:'flex', gap:'8px' }}>
-              <button onClick={() => { const c = filtered[preview!]; const src = c.clip_url || c.video_url || ''; setPreview(null); router.push(`/editor?clipId=${c.id||''}&videoUrl=${encodeURIComponent(src)}&title=${encodeURIComponent(c.title)}`); }} style={{ flex:1, padding:'10px', borderRadius:radius.md, background:gradients.primary, color:'#FAF7FF', border:'none', fontWeight:600, fontSize:'13px', cursor:'pointer', fontFamily:"'Inter',sans-serif" }}>Edit Clip</button>
+              <button onClick={() => { const c = filtered[preview!]; sessionStorage.setItem('editor_clip', JSON.stringify({ id: c.id, video_url: c.clip_url || c.video_url || '', clip_url: c.clip_url || '', thumbnail_url: c.thumbnail_url || '', title: c.title, hook_text: c.hook_text || '', virality_score: c.virality_score, caption: c.suggested_caption || '', hashtags: c.hashtags || '' })); setPreview(null); router.push('/editor'); }} style={{ flex:1, padding:'10px', borderRadius:radius.md, background:gradients.primary, color:'#FAF7FF', border:'none', fontWeight:600, fontSize:'13px', cursor:'pointer', fontFamily:"'Inter',sans-serif" }}>Edit Clip</button>
               <button onClick={() => { openSchedule(filtered[preview]); setPreview(null); }} style={{ flex:1, padding:'10px', borderRadius:radius.md, background:'rgba(37,211,102,0.1)', border:'1px solid rgba(37,211,102,0.2)', color:'#25D366', fontWeight:600, fontSize:'13px', cursor:'pointer', fontFamily:"'Inter',sans-serif" }}>Schedule</button>
               <button onClick={() => setPreview(null)} style={{ padding:'10px', borderRadius:radius.md, background:colors.surfaceContainer, border:'1px solid '+colors.outlineVariant, color:colors.onSurface, cursor:'pointer' }}><Icon name="close" size={18}/></button>
             </div>

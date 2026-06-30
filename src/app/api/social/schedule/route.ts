@@ -43,6 +43,7 @@ export async function POST(req: NextRequest) {
     scheduleTime,
     videoUrl,
     title,
+    thumbnailUrl,
   } = body;
 
   if (!platforms || platforms.length === 0) {
@@ -62,6 +63,7 @@ export async function POST(req: NextRequest) {
       hashtags: hashtags || [],
       scheduleTime: scheduleTime || new Date().toISOString(),
       videoUrl: videoUrl || '',
+      thumbnailUrl: thumbnailUrl || '',
       title: title || '',
       source: 'vangelclip',
     };
@@ -81,6 +83,7 @@ export async function POST(req: NextRequest) {
       clip_id: clipId || null,
       clip_title: title || 'Untitled Clip',
       video_url: videoUrl || '',
+      thumbnail_url: thumbnailUrl || '',
       platforms: platforms,
       platform: platforms[0],
       caption: caption || '',
