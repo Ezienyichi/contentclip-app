@@ -30,7 +30,14 @@
       "Bash(netstat -ano)",
       "Read(//tmp/**)",
       "Bash(git check-ignore *)",
-      "Bash(echo \"exit:$?\")"
+      "Bash(echo \"exit:$?\")",
+      "Bash(dir \"c:\\\\Users\\\\HP\\\\helpedit\\\\design-reference\")",
+      "Bash(git -C \"c:\\\\Users\\\\HP\\\\helpedit\" log --oneline -6)",
+      "Bash(git -C \"c:\\\\Users\\\\HP\\\\helpedit\" diff --stat HEAD \"src/app/page.tsx\")",
+      "Bash(git -C \"c:\\\\Users\\\\HP\\\\helpedit\" status)",
+      "Bash(npx next *)",
+      "Bash(git -C \"c:/Users/HP/helpedit\" status)",
+      "Bash(git -C \"c:/Users/HP/helpedit\" check-ignore -v .env.local design-reference/homepage.html.html)"
     ]
   }
 }

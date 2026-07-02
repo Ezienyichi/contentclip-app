@@ -1,9 +1,13 @@
 'use client';
-import React from 'react';
+import React, { useEffect } from 'react';
 import Sidebar from './Sidebar';
 import NotificationBell from './NotificationBell';
 import { colors } from '@/lib/tokens';
 export default function DashboardLayout({ children, title, subtitle, actions }: { children: React.ReactNode; title?: string; subtitle?: string; actions?: React.ReactNode }) {
+  useEffect(() => {
+    document.documentElement.classList.add('dark');
+    return () => { document.documentElement.classList.remove('dark'); };
+  }, []);
   return (
     <div style={{ minHeight: '100vh', background: colors.background }}>
       <Sidebar />
