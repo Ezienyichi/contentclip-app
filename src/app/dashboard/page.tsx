@@ -25,7 +25,7 @@ const ACTIVITY = [
 export default function DashboardPage() {
   const router = useRouter();
   return (
-    <DashboardLayout title="Welcome back" subtitle="Here's what's happening with your content today." actions={<button onClick={()=>router.push('/import')} style={{ background:gradients.cta,color:'#000',padding:'10px 20px',borderRadius:radius.md,fontWeight:700,fontSize:'13px',border:'none',cursor:'pointer',display:'flex',alignItems:'center',gap:'8px',fontFamily:"'Inter',sans-serif" }}><Icon name="add_circle" size={18}/> New Project</button>}>
+    <DashboardLayout title="Welcome back" subtitle="Here's what's happening with your content today." actions={<button onClick={()=>router.push('/import')} style={{ background:gradients.cta,color:'#fff',padding:'10px 20px',borderRadius:radius.md,fontWeight:700,fontSize:'13px',border:'none',cursor:'pointer',display:'flex',alignItems:'center',gap:'8px',fontFamily:"'Inter',sans-serif" }}><Icon name="add_circle" size={18}/> New Project</button>}>
       <div className="stats-grid" style={{ display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:'16px',marginBottom:'32px' }}>
         {STATS.map(s=><div key={s.label} style={{ background:colors.surfaceContainerHigh,borderRadius:radius.lg,padding:'24px' }}>
           <div style={{ display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:'16px' }}>

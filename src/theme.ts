@@ -1,32 +1,32 @@
 import type { CSSProperties } from 'react';
 
-// Light-theme design system for VangelClip's public/marketing pages.
-// Dashboard and app pages use src/lib/tokens.ts (dark theme) — keep the two separate.
+// Dark-theme design system for VangelClip's public/marketing pages.
+// Dashboard and app pages use src/lib/tokens.ts (separate dark tokens) — keep the two separate.
 
 // ── Primitive tokens ──────────────────────────────────────────────────────────
 export const mkt = {
-  // Core palette
-  bg:         '#FFFFFF',
-  surface:    '#EEEBF3',
-  surface2:   '#F8F6FB',
-  text:       '#0E0307',
-  muted:      '#6E6880',
-  brand:      '#6E33B1',
-  brand2:     '#9B5DE5',
-  accent:     '#E4DBFF',
-  accentText: '#6E33B1',
-  border:     'rgba(14,3,7,0.09)',
-  edge:       'rgba(255,255,255,0.75)',
-  navBg:      'rgba(255,255,255,0.85)',
-  success:    '#1FA774',
+  // Core palette — deliberate dark theme
+  bg:         '#000000',
+  surface:    '#111113',
+  surface2:   '#0A0A0A',
+  text:       '#FFFFFF',
+  muted:      '#9A96A6',
+  brand:      '#9B5DE5',
+  brand2:     '#B47DF0',
+  accent:     '#241B33',
+  accentText: '#CDB6F2',
+  border:     'rgba(255,255,255,0.10)',
+  edge:       'rgba(255,255,255,0.06)',
+  navBg:      'rgba(0,0,0,0.85)',
+  success:    '#38E6A2',
 
   // Gradients
-  brandGrad:  'linear-gradient(135deg,#6E33B1,#9B5DE5)',
+  brandGrad:  'linear-gradient(135deg,#9B5DE5,#B47DF0)',
 
   // Shadows
-  shadow:     '0 1px 3px rgba(14,3,7,0.07),0 8px 24px rgba(14,3,7,0.04)',
-  glow:       '0 6px 22px rgba(110,51,177,0.32)',
-  cardShadow: 'inset 1px 1px 0 rgba(255,255,255,0.75),0 1px 3px rgba(14,3,7,0.07),0 8px 24px rgba(14,3,7,0.04)',
+  shadow:     '0 1px 3px rgba(0,0,0,0.5),0 10px 30px rgba(0,0,0,0.4)',
+  glow:       '0 6px 26px rgba(155,93,229,0.4)',
+  cardShadow: 'inset 1px 1px 0 rgba(255,255,255,0.06),0 1px 3px rgba(0,0,0,0.5),0 10px 30px rgba(0,0,0,0.4)',
 
   // Radius
   r:     '6px',
@@ -49,7 +49,7 @@ export const mktBtn: Record<'primary' | 'ghost', CSSProperties> = {
     alignItems:     'center',
     gap:            '8px',
     border:         'none',
-    background:     'linear-gradient(135deg,#6E33B1,#9B5DE5)',
+    background:     'linear-gradient(135deg,#9B5DE5,#B47DF0)',
     color:          '#ffffff',
     fontWeight:     700,
     fontFamily:     "'Figtree',sans-serif",
@@ -57,7 +57,7 @@ export const mktBtn: Record<'primary' | 'ghost', CSSProperties> = {
     padding:        '12px 22px',
     borderRadius:   '6px',
     cursor:         'pointer',
-    boxShadow:      'inset 1px 1px 0 rgba(255,255,255,0.25),0 6px 22px rgba(110,51,177,0.32)',
+    boxShadow:      'inset 1px 1px 0 rgba(255,255,255,0.20),0 6px 26px rgba(155,93,229,0.4)',
     whiteSpace:     'nowrap',
     textDecoration: 'none',
     lineHeight:     1,
@@ -65,9 +65,9 @@ export const mktBtn: Record<'primary' | 'ghost', CSSProperties> = {
   ghost: {
     display:        'inline-flex',
     alignItems:     'center',
-    border:         '1px solid rgba(14,3,7,0.09)',
+    border:         '1px solid rgba(255,255,255,0.15)',
     background:     'transparent',
-    color:          '#0E0307',
+    color:          '#FFFFFF',
     fontWeight:     600,
     fontFamily:     "'Figtree',sans-serif",
     fontSize:       '14px',
@@ -81,16 +81,16 @@ export const mktBtn: Record<'primary' | 'ghost', CSSProperties> = {
 
 export const mktCard: Record<'base' | 'elevated', CSSProperties> = {
   base: {
-    background:   '#EEEBF3',
-    border:       '1px solid rgba(14,3,7,0.09)',
+    background:   '#111113',
+    border:       '1px solid rgba(255,255,255,0.08)',
     borderRadius: '6px',
-    boxShadow:    'inset 1px 1px 0 rgba(255,255,255,0.75),0 1px 3px rgba(14,3,7,0.07),0 8px 24px rgba(14,3,7,0.04)',
+    boxShadow:    'inset 1px 1px 0 rgba(255,255,255,0.06),0 1px 3px rgba(0,0,0,0.5),0 10px 30px rgba(0,0,0,0.4)',
   },
   elevated: {
-    background:   '#FFFFFF',
-    border:       '1px solid rgba(14,3,7,0.09)',
+    background:   '#141414',
+    border:       '1px solid rgba(255,255,255,0.10)',
     borderRadius: '10px',
-    boxShadow:    'inset 1px 1px 0 rgba(255,255,255,0.75),0 1px 3px rgba(14,3,7,0.07),0 8px 24px rgba(14,3,7,0.04)',
+    boxShadow:    'inset 1px 1px 0 rgba(255,255,255,0.06),0 1px 3px rgba(0,0,0,0.5),0 10px 30px rgba(0,0,0,0.4)',
   },
 };
 
@@ -99,11 +99,11 @@ export const mktField: Record<'wrap' | 'input', CSSProperties> = {
     display:      'flex',
     alignItems:   'center',
     gap:          '10px',
-    background:   '#FFFFFF',
-    border:       '1px solid rgba(14,3,7,0.09)',
+    background:   'rgba(255,255,255,0.07)',
+    border:       '1px solid rgba(255,255,255,0.15)',
     borderRadius: '6px',
     padding:      '6px 6px 6px 16px',
-    boxShadow:    'inset 1px 1px 0 rgba(255,255,255,0.75),0 1px 3px rgba(14,3,7,0.07),0 8px 24px rgba(14,3,7,0.04)',
+    boxShadow:    'inset 1px 1px 0 rgba(255,255,255,0.06)',
   },
   input: {
     flex:        1,
@@ -111,7 +111,7 @@ export const mktField: Record<'wrap' | 'input', CSSProperties> = {
     border:      'none',
     outline:     'none',
     background:  'transparent',
-    color:       '#0E0307',
+    color:       '#FFFFFF',
     fontFamily:  "'Figtree',sans-serif",
     fontSize:    '14.5px',
     padding:     '8px 0',

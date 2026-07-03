@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import type { CSSProperties } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { mkt, mktBtn, mktCard } from '@/theme';
 
@@ -28,30 +29,10 @@ const STATS = [
 ];
 
 const FEATURE_IMGS = [
-  {
-    src: '/images/ai-hook-detection.png',
-    label: 'AI Hook Detection',
-    badge: '94% accuracy',
-    placeholder: false,
-  },
-  {
-    src: '',
-    label: 'Animated Captions',
-    badge: '+40% watch time',
-    placeholder: true,
-  },
-  {
-    src: '',
-    label: 'Multi-Platform Publish',
-    badge: '3 platforms',
-    placeholder: true,
-  },
-  {
-    src: '',
-    label: 'Pro Adjustments',
-    badge: '20+ tools',
-    placeholder: true,
-  },
+  { src: '/images/feature-viral-score.jpg', label: 'AI Hook Detection',      badge: '94% accuracy'    },
+  { src: '/images/feature-captions.png',    label: 'Animated Captions',      badge: '+40% watch time' },
+  { src: '/images/feature-scheduling.png',  label: 'Multi-Platform Publish', badge: '3 platforms'     },
+  { src: '/images/feature-editing.png',     label: 'Pro Adjustments',        badge: '20+ tools'       },
 ];
 
 const PLANS = [
@@ -134,7 +115,8 @@ export default function HomePage() {
   }
 
   const planCard  = (pop: boolean) => pop ? {
-    position:'relative' as const, background:mkt.bg,
+    // Popular: subtle purple tint so it's elevated above the black page
+    position:'relative' as const, background:'rgba(155,93,229,0.08)',
     border:`2px solid ${mkt.brand}`, borderRadius:mkt.rMd,
     padding:30, boxShadow:`${mkt.glow},inset 1px 1px 0 ${mkt.edge}`,
   } : {
@@ -148,15 +130,17 @@ export default function HomePage() {
     background:mkt.brandGrad, color:'#fff',
     fontWeight:700, fontSize:15, padding:14,
     borderRadius:mkt.r, cursor:'pointer',
-    boxShadow:`inset 1px 1px 0 rgba(255,255,255,.25),${mkt.glow}`,
+    boxShadow:`inset 1px 1px 0 rgba(255,255,255,.20),${mkt.glow}`,
     fontFamily:mkt.fontBody, marginTop:18,
   } as CSSProperties : {
+    // Ghost on dark: semi-transparent white bg so it reads against dark card
     display:'block', width:'100%',
     border:`1px solid ${mkt.border}`,
-    background:'transparent', color:mkt.text,
+    background:'rgba(255,255,255,0.06)', color:mkt.text,
     fontWeight:600, fontSize:15, padding:14,
     borderRadius:mkt.r, cursor:'pointer',
     fontFamily:mkt.fontBody, marginTop:18,
+    textAlign:'center',
   } as CSSProperties;
 
   return (
@@ -183,7 +167,7 @@ export default function HomePage() {
 
         /* Hero input row */
         .vc-hero-row   { display:flex; gap:10px; justify-content:center; align-items:stretch; flex-wrap:wrap; max-width:620px; margin:0 auto; }
-        .vc-hero-input { display:flex; align-items:center; gap:8px; flex:1; min-width:260px; background:#fff; border:1px solid ${mkt.border}; border-radius:${mkt.r}; padding:6px 6px 6px 14px; box-shadow:${mkt.cardShadow}; }
+        .vc-hero-input { display:flex; align-items:center; gap:8px; flex:1; min-width:260px; background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.15); border-radius:${mkt.r}; padding:6px 6px 6px 14px; box-shadow:inset 1px 1px 0 rgba(255,255,255,0.06); }
         .vc-hero-cta   { flex:none; border:none; background:${mkt.brandGrad}; color:#fff; font-weight:700; font-family:'Figtree',sans-serif; font-size:15px; padding:0 22px; min-height:50px; border-radius:${mkt.r}; cursor:pointer; box-shadow:inset 1px 1px 0 rgba(255,255,255,.25),${mkt.glow}; white-space:nowrap; }
         .vc-cta-input  { display:flex; align-items:center; gap:8px; flex:1; min-width:280px; background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.3); border-radius:${mkt.r}; padding:6px 6px 6px 14px; }
         .vc-cta-btn    { flex:none; border:none; background:#fff; color:${mkt.brand}; font-weight:700; font-family:'Figtree',sans-serif; font-size:15.5px; padding:14px 24px; border-radius:${mkt.r}; cursor:pointer; box-shadow:0 6px 18px rgba(0,0,0,.18); white-space:nowrap; }
@@ -195,7 +179,7 @@ export default function HomePage() {
         .vc-nav-sighin { display:inline-flex; }
         .vc-hamburger  { display:none; flex-direction:column; gap:5px; background:none; border:none; cursor:pointer; padding:8px; }
         .vc-hamburger span { display:block; width:22px; height:2px; background:${mkt.text}; border-radius:2px; }
-        .vc-mobile-menu { display:none; position:fixed; inset:0; top:57px; background:rgba(255,255,255,0.97); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); z-index:90; flex-direction:column; padding:12px 20px; gap:2px; overflow-y:auto; }
+        .vc-mobile-menu { display:none; position:fixed; inset:0; top:57px; background:rgba(0,0,0,0.97); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); z-index:90; flex-direction:column; padding:12px 20px; gap:2px; overflow-y:auto; }
         .vc-mobile-menu.open { display:flex; }
         .vc-mobile-menu a { display:block; color:${mkt.text}; text-decoration:none; font-size:18px; font-weight:600; padding:14px 0; border-bottom:1px solid ${mkt.border}; font-family:'Figtree',sans-serif; }
         .vc-mobile-menu a:hover { color:${mkt.brand}; }
@@ -290,7 +274,7 @@ export default function HomePage() {
       </div>
 
       {/* ══ HERO ═══════════════════════════════════════════════════════════════ */}
-      <section style={{ maxWidth:mkt.maxW, margin:'0 auto', padding:'78px 28px 30px', textAlign:'center', backgroundImage:"url('/hero-bg.svg')", backgroundSize:'cover', backgroundPosition:'center', backgroundRepeat:'no-repeat', minHeight:600 }}>
+      <section style={{ maxWidth:mkt.maxW, margin:'0 auto', padding:'78px 28px 30px', textAlign:'center', minHeight:600 }}>
         <h1 style={{ fontFamily:mkt.fontHead, fontWeight:800, fontSize:'clamp(32px,6vw,62px)', lineHeight:1.04, letterSpacing:'-.03em', margin:'0 auto 20px', maxWidth:820 }}>
           Spread your Content.<br />
           <span style={{ fontStyle:'italic', fontWeight:700, color:mkt.brand }}>One Video, Seen Everywhere.</span>
@@ -418,22 +402,16 @@ export default function HomePage() {
             </h2>
           </div>
           <div className="vc-feat-grid">
-            {FEATURE_IMGS.map(feat => (
-              <div key={feat.label} style={{ borderRadius:`calc(${mkt.r} + 4px)`, overflow:'hidden', border:`1px solid ${mkt.border}`, boxShadow:`inset 1px 1px 0 ${mkt.edge},${mkt.shadow}`, background:'#000000', aspectRatio:'16/9', position:'relative', display:'flex', alignItems:'center', justifyContent:'center' }}>
-                {feat.placeholder ? (
-                  /* Placeholder — replace with real screenshot before launch */
-                  <>
-                    <div style={{ position:'absolute', inset:0, backgroundImage:`repeating-linear-gradient(135deg,rgba(255,255,255,.04) 0 1px,transparent 1px 18px)` }} />
-                    <div style={{ position:'relative', textAlign:'center' }}>
-                      <div style={{ display:'inline-block', background:mkt.accent, color:mkt.accentText, fontSize:11, fontWeight:700, padding:'3px 10px', borderRadius:mkt.rPill, marginBottom:12, letterSpacing:'.04em' }}>{feat.badge}</div>
-                      <div style={{ fontFamily:mkt.fontHead, fontWeight:700, fontSize:18, color:'#fff' }}>{feat.label}</div>
-                      <div style={{ fontSize:12, color:'rgba(255,255,255,.4)', marginTop:6 }}>Replace with screenshot</div>
-                    </div>
-                  </>
-                ) : (
-                  /* eslint-disable-next-line @next/next/no-img-element */
-                  <img src={feat.src} alt={feat.label} style={{ display:'block', width:'100%', height:'auto', position:'absolute', inset:0, objectFit:'cover' }} />
-                )}
+            {FEATURE_IMGS.map((feat, i) => (
+              <div key={feat.label} style={{ borderRadius:`calc(${mkt.r} + 4px)`, overflow:'hidden', border:`1px solid ${mkt.border}`, boxShadow:`inset 1px 1px 0 ${mkt.edge},${mkt.shadow}`, background:mkt.surface, aspectRatio:'16/9', position:'relative' }}>
+                <Image
+                  src={feat.src}
+                  alt={feat.label}
+                  fill
+                  priority={i < 2}
+                  sizes="(max-width:860px) 100vw, 50vw"
+                  style={{ objectFit:'cover' }}
+                />
               </div>
             ))}
           </div>
@@ -525,10 +503,10 @@ export default function HomePage() {
       <section style={{ maxWidth:mkt.maxW, margin:'30px auto 70px', padding:'0 28px' }}>
         <div style={{ position:'relative', overflow:'hidden', borderRadius:10, background:mkt.brandGrad, padding:'62px 40px', textAlign:'center', boxShadow:mkt.glow }}>
           <div style={{ position:'absolute', inset:0, backgroundImage:"url('/cta-bg.svg')", backgroundSize:'cover', backgroundPosition:'center', backgroundRepeat:'no-repeat' }} />
-          <h2 style={{ position:'relative', fontFamily:mkt.fontHead, fontWeight:800, fontSize:'clamp(26px,4vw,38px)', letterSpacing:'-.02em', color:'#110101', margin:'0 0 12px' }}>
+          <h2 style={{ position:'relative', fontFamily:mkt.fontHead, fontWeight:800, fontSize:'clamp(26px,4vw,38px)', letterSpacing:'-.02em', color:'rgba(255,255,255,0.95)', margin:'0 0 12px' }}>
             Ready to Clip Your <span style={{ fontStyle:'italic' }}>Message?</span>
           </h2>
-          <p style={{ position:'relative', fontSize:16, color:'rgba(8,1,1,0.85)', margin:'0 0 26px' }}>
+          <p style={{ position:'relative', fontSize:16, color:'rgba(255,255,255,0.72)', margin:'0 0 26px' }}>
             <b style={{ color:'rgba(255,255,255,0.96)' }}>Join thousands of African creators already using VangelClip.</b>
           </p>
           <div className="vc-cta-row" style={{ position:'relative' }}>

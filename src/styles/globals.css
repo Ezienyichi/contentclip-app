@@ -1,25 +1,22 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
+
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
 
-/* Default: light theme for marketing/public pages */
-body { font-family: 'Inter', sans-serif; background: #ffffff; color: #0E0307; line-height: 1.6; overflow-x: hidden; }
-::selection { background: rgba(192,193,255,0.3); color: white; }
+/* Universal dark theme — VangelClip uses black/purple across all pages */
+body { font-family: 'Inter', sans-serif; background: #000000; color: #FFFFFF; line-height: 1.6; overflow-x: hidden; }
+::selection { background: rgba(155,93,229,0.4); color: #FFFFFF; }
 ::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: #f5f5f5; }
-::-webkit-scrollbar-thumb { background: #c9c9c9; border-radius: 999px; }
+::-webkit-scrollbar-track { background: #111111; }
+::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 999px; }
 
-/* Dark theme: applied by DashboardLayout via html.dark on mount */
-html.dark body { background: #0E0E0E; color: #E5E2E1; }
-html.dark ::-webkit-scrollbar-track { background: #0E0E0E; }
-html.dark ::-webkit-scrollbar-thumb { background: #353534; border-radius: 999px; }
 .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; user-select: none; }
 @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes pulse-glow { 0%, 100% { box-shadow: 0 0 20px rgba(192,193,255,0.1); } 50% { box-shadow: 0 0 50px rgba(192,193,255,0.25); } }
+@keyframes pulse-glow { 0%, 100% { box-shadow: 0 0 20px rgba(155,93,229,0.15); } 50% { box-shadow: 0 0 50px rgba(155,93,229,0.35); } }
 @keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
-input:focus, textarea:focus, select:focus { outline: none; border-color: rgba(192,193,255,0.4) !important; }
+input:focus, textarea:focus, select:focus { outline: none; border-color: rgba(155,93,229,0.5) !important; }
 img, video, iframe { max-width: 100%; }
 .container { width: 100%; max-width: 1200px; margin: 0 auto; padding: 0 24px; }
 @media (max-width: 600px) { .container { padding: 0 16px; } }
@@ -27,7 +24,7 @@ img, video, iframe { max-width: 100%; }
 /* ─── SECTION UTILITIES ─────────────────── */
 .section-container { width: 100%; max-width: 1100px; margin: 0 auto; padding: 80px 24px; }
 .section-title { font-size: clamp(28px, 5vw, 36px); font-weight: 800; margin-bottom: 12px; }
-.section-subtitle { font-size: 16px; color: #8B8AA3; margin-bottom: 48px; }
+.section-subtitle { font-size: 16px; color: #9A96A6; margin-bottom: 48px; }
 .card-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
 .card-grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
 @media (max-width: 900px) {

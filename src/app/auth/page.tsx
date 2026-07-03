@@ -315,7 +315,7 @@ export default function AuthPage() {
             VangelClip turned my ministry reach from weeks to minutes.
           </blockquote>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-            <div style={{ width: 48, height: 48, borderRadius: '50%', background: gradients.cta, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, fontWeight: 700, color: '#000' }}>A</div>
+            <div style={{ width: 48, height: 48, borderRadius: '50%', background: gradients.cta, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, fontWeight: 700, color: '#fff' }}>A</div>
             <div>
               <p style={{ fontWeight: 600, fontSize: 14, color: colors.onSurface }}>Alex Nguyen</p>
               <p style={{ fontSize: 12, color: colors.onSurfaceVariant }}>Creator · 2.1M followers</p>
@@ -452,7 +452,7 @@ export default function AuthPage() {
                   type="checkbox"
                   checked={termsAccepted}
                   onChange={e => setTermsAccepted(e.target.checked)}
-                  style={{ marginTop: 2, accentColor: '#7c3aed', width: 15, height: 15, flexShrink: 0, cursor: 'pointer' }}
+                  style={{ marginTop: 2, accentColor: '#9B5DE5', width: 15, height: 15, flexShrink: 0, cursor: 'pointer' }}
                 />
                 <span style={{ fontSize: 12, color: colors.onSurfaceVariant, lineHeight: 1.6 }}>
                   I agree to the{' '}

@@ -48,7 +48,7 @@ export default function SettingsPage(){
         <div style={{background:colors.surfaceContainerHigh,borderRadius:radius.lg,padding:'32px',marginBottom:'16px'}}>
           <h3 style={{fontSize:'16px',fontWeight:700,marginBottom:'24px'}}>Personal Information</h3>
           <div style={{display:'flex',alignItems:'center',gap:'20px',marginBottom:'28px'}}>
-            <div onClick={()=>fileRef.current?.click()} style={{width:72,height:72,borderRadius:'50%',background:avatar?`url(${avatar}) center/cover`:gradients.cta,display:'flex',alignItems:'center',justifyContent:'center',fontSize:'28px',fontWeight:800,color:'#000',cursor:'pointer',overflow:'hidden'}}>
+            <div onClick={()=>fileRef.current?.click()} style={{width:72,height:72,borderRadius:'50%',background:avatar?`url(${avatar}) center/cover`:gradients.cta,display:'flex',alignItems:'center',justifyContent:'center',fontSize:'28px',fontWeight:800,color:'#fff',cursor:'pointer',overflow:'hidden'}}>
               {avatar?<img src={avatar} alt="Avatar" style={{width:'100%',height:'100%',objectFit:'cover'}}/>:'V'}
             </div>
             <div>

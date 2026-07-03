@@ -20,15 +20,15 @@ export default function PricingPage(){
           <div style={{width:32,height:32,borderRadius:radius.md,background:gradients.cta,display:'flex',alignItems:'center',justifyContent:'center'}}><Icon name="auto_awesome" size={18} style={{color:'#fff'}}/></div>
           <span style={{fontSize:'18px',fontWeight:800}}>VangelClip</span>
         </div>
-        <button onClick={()=>router.push('/auth')} style={{background:'#fff',color:'#000',fontSize:'13px',fontWeight:700,padding:'8px 18px',borderRadius:radius.md,border:'none',cursor:'pointer'}}>Get Started</button>
+        <button onClick={()=>router.push('/auth')} style={{background:gradients.primary,color:'#fff',fontSize:'13px',fontWeight:700,padding:'8px 18px',borderRadius:radius.md,border:'none',cursor:'pointer'}}>Get Started</button>
       </nav>
       <div style={{maxWidth:1200,margin:'0 auto',padding:'48px 24px 96px'}}>
         <div style={{textAlign:'center',marginBottom:'48px'}}>
           <h1 style={{fontSize:'40px',fontWeight:800,marginBottom:'12px'}}>Choose Your Plan</h1>
           <p style={{color:colors.onSurfaceVariant,fontSize:'16px',marginBottom:'28px'}}>Start free. Upgrade when you&apos;re ready.</p>
           <div style={{display:'inline-flex',background:colors.surfaceContainerHigh,borderRadius:radius.full,padding:'4px'}}>
-            <button onClick={()=>setAnnual(false)} style={{padding:'8px 20px',borderRadius:radius.full,border:'none',cursor:'pointer',background:!annual?colors.primary:'transparent',color:!annual?'#000':colors.onSurfaceVariant,fontWeight:600,fontSize:'13px',fontFamily:"'Inter',sans-serif"}}>Monthly</button>
-            <button onClick={()=>setAnnual(true)} style={{padding:'8px 20px',borderRadius:radius.full,border:'none',cursor:'pointer',background:annual?colors.primary:'transparent',color:annual?'#000':colors.onSurfaceVariant,fontWeight:600,fontSize:'13px',fontFamily:"'Inter',sans-serif"}}>Annual <span style={{color:annual?'#000':'#4ade80',fontSize:'11px'}}>-25%</span></button>
+            <button onClick={()=>setAnnual(false)} style={{padding:'8px 20px',borderRadius:radius.full,border:'none',cursor:'pointer',background:!annual?colors.primary:'transparent',color:!annual?'#fff':colors.onSurfaceVariant,fontWeight:600,fontSize:'13px',fontFamily:"'Inter',sans-serif"}}>Monthly</button>
+            <button onClick={()=>setAnnual(true)} style={{padding:'8px 20px',borderRadius:radius.full,border:'none',cursor:'pointer',background:annual?colors.primary:'transparent',color:annual?'#fff':colors.onSurfaceVariant,fontWeight:600,fontSize:'13px',fontFamily:"'Inter',sans-serif"}}>Annual <span style={{color:annual?'#fff':'#4ade80',fontSize:'11px'}}>-25%</span></button>
           </div>
         </div>
         {/* Credits explainer */}
@@ -37,7 +37,7 @@ export default function PricingPage(){
         </div>
         <div className="pricing-cards" style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:'16px',marginBottom:'64px'}}>
           {P.map(plan=>{const dp=annual?Math.round(plan.p*0.75):plan.p;const hi=plan.badge!==null;return<div key={plan.n} style={{background:hi?colors.surfaceContainerHigh:colors.surfaceContainerLow,borderRadius:radius.xl,padding:'32px',border:hi?'1px solid '+colors.primary+'40':'1px solid transparent',position:'relative',boxShadow:hi?shadows.glow:'none'}}>
-            {plan.badge&&<div style={{position:'absolute',top:'-12px',left:'50%',transform:'translateX(-50%)',background:gradients.primary,color:'#000',fontSize:'11px',fontWeight:700,padding:'4px 16px',borderRadius:radius.full,whiteSpace:'nowrap'}}>{plan.badge}</div>}
+            {plan.badge&&<div style={{position:'absolute',top:'-12px',left:'50%',transform:'translateX(-50%)',background:gradients.primary,color:'#fff',fontSize:'11px',fontWeight:700,padding:'4px 16px',borderRadius:radius.full,whiteSpace:'nowrap'}}>{plan.badge}</div>}
             <h3 style={{fontSize:'18px',fontWeight:700,marginBottom:'4px'}}>{plan.n}</h3>
             <p style={{fontSize:'12px',color:colors.onSurfaceVariant,marginBottom:plan.p>0?'12px':'20px'}}>{plan.d}</p>
             <div style={{marginBottom:plan.p>0?'4px':'24px'}}><span style={{fontSize:'40px',fontWeight:800}}>${dp}</span><span style={{fontSize:'14px',color:colors.onSurfaceVariant}}>/mo</span></div>
@@ -48,10 +48,10 @@ export default function PricingPage(){
         <div style={{background:colors.surfaceContainerHigh,borderRadius:radius.xl,padding:'32px',overflow:'auto'}}>
           <h2 style={{fontSize:'22px',fontWeight:700,marginBottom:'24px'}}>Feature Comparison</h2>
           <table style={{width:'100%',borderCollapse:'collapse',minWidth:'600px'}}>
-            <thead><tr><th style={{textAlign:'left',padding:'12px',fontSize:'12px',fontWeight:600,color:colors.onSurfaceVariant,borderBottom:'1px solid rgba(70,69,85,0.1)'}}>Feature</th>
-            {P.map(p=><th key={p.n} style={{textAlign:'center',padding:'12px',fontSize:'13px',fontWeight:700,color:p.badge?colors.primary:colors.onSurface,borderBottom:'1px solid rgba(70,69,85,0.1)'}}>{p.n}</th>)}</tr></thead>
-            <tbody>{keys.map((key,i)=><tr key={key}><td style={{padding:'12px',fontSize:'13px',color:colors.onSurfaceVariant,borderBottom:i<keys.length-1?'1px solid rgba(70,69,85,0.05)':'none'}}>{key}</td>
-            {P.map(p=>{const v=p.f[key as keyof typeof p.f];return<td key={p.n} style={{textAlign:'center',padding:'12px',fontSize:'13px',borderBottom:i<keys.length-1?'1px solid rgba(70,69,85,0.05)':'none',color:v==='—'?colors.outlineVariant:v==='✓'?'#4ade80':colors.onSurface}}>
+            <thead><tr><th style={{textAlign:'left',padding:'12px',fontSize:'12px',fontWeight:600,color:colors.onSurfaceVariant,borderBottom:'1px solid rgba(255,255,255,0.08)'}}>Feature</th>
+            {P.map(p=><th key={p.n} style={{textAlign:'center',padding:'12px',fontSize:'13px',fontWeight:700,color:p.badge?colors.primary:colors.onSurface,borderBottom:'1px solid rgba(255,255,255,0.08)'}}>{p.n}</th>)}</tr></thead>
+            <tbody>{keys.map((key,i)=><tr key={key}><td style={{padding:'12px',fontSize:'13px',color:colors.onSurfaceVariant,borderBottom:i<keys.length-1?'1px solid rgba(255,255,255,0.04)':'none'}}>{key}</td>
+            {P.map(p=>{const v=p.f[key as keyof typeof p.f];return<td key={p.n} style={{textAlign:'center',padding:'12px',fontSize:'13px',borderBottom:i<keys.length-1?'1px solid rgba(255,255,255,0.04)':'none',color:v==='—'?colors.outlineVariant:v==='✓'?'#4ade80':colors.onSurface}}>
               {v==='✓'?<Icon name="check" size={16} style={{color:'#4ade80'}}/>:v}
             </td>;})}</tr>)}</tbody>
           </table>
