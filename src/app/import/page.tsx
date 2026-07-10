@@ -832,18 +832,33 @@ export default function ImportPage() {
 
         if (data.status === "SUCCEEDED") {
           stopPolling();
+          // Log raw response so we can verify the actual structure from WayinVideo
+          console.log('[clip-status] raw SUCCEEDED response:', JSON.stringify(data, null, 2));
+          const rawClips: any[] = data.clips ?? data.result ?? [];
+          const normalizedClips = rawClips.map((c: any) => ({
+            video_url:     c.export_link || c.video_url || c.clip_url || '',
+            title:         c.title || 'Clip',
+            caption:       c.desc || c.caption || '',
+            ai_score:      c.score ?? c.ai_score,
+            thumbnail_url: c.thumbnail || c.thumbnail_url || '',
+            hashtags:      c.tags || c.hashtags || [],
+            start_time:    c.begin_ms != null ? c.begin_ms / 1000 : (c.start_time ?? 0),
+            end_time:      c.end_ms   != null ? c.end_ms   / 1000 : (c.end_time   ?? 60),
+            id:            c.idx ?? c.id,
+            duration:      c.duration,
+          }));
           setStatus("completed");
           setResult({
             success: true,
             jobId: taskId,
-            clips: data.clips || [],
+            clips: normalizedClips,
             creditsUsed: data.cost_usage ?? 0,
             creditsRemaining: userCredits,
           });
-          setClips(data.clips || []);
+          setClips(normalizedClips);
           setGenerationSuccess(true);
           localStorage.setItem(CLIPS_STORAGE_KEY, JSON.stringify({
-            clips: data.clips || [],
+            clips: normalizedClips,
             videoUrl,
             generatedAt: new Date().toISOString(),
           }));
@@ -1854,8 +1869,15 @@ export default function ImportPage() {
                     marginBottom: '16px',
                   }}
                 >
-                  {/* Video Preview */}
-                  {videoId ? (
+                  {/* Video Preview — rendered clip first, YouTube embed as fallback */}
+                  {clip.video_url ? (
+                    <video
+                      src={clip.video_url}
+                      style={{ width: '100%', aspectRatio: '9/16', objectFit: 'cover', display: 'block' }}
+                      controls
+                      preload="metadata"
+                    />
+                  ) : videoId ? (
                     <div style={{ position: 'relative', width: '100%', aspectRatio: '16/9', background: '#000' }}>
                       <iframe
                         src={`https://www.youtube.com/embed/${videoId}?start=${startSeconds}&end=${endSeconds}&autoplay=0&rel=0&modestbranding=1`}
@@ -1866,13 +1888,6 @@ export default function ImportPage() {
                         title={clip.title}
                       />
                     </div>
-                  ) : clip.video_url ? (
-                    <video
-                      src={clip.video_url}
-                      style={{ width: '100%', aspectRatio: '16/9', objectFit: 'cover', display: 'block' }}
-                      controls
-                      preload="metadata"
-                    />
                   ) : null}
 
                   {/* Clip Info */}
