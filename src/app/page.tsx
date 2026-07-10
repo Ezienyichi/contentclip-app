@@ -246,6 +246,8 @@ export default function HomePage() {
         .vc-hero-cta:focus-visible, .vc-hamburger:focus-visible,
         .vc-pill-active:focus-visible, .vc-pill-inactive:focus-visible { outline:2px solid ${mkt.brand}; outline-offset:2px; border-radius:${mkt.r}; }
         a:focus-visible { outline:2px solid ${mkt.brand}; outline-offset:2px; border-radius:3px; }
+        .vc-hero-icon { position:absolute; pointer-events:none; user-select:none; }
+        @media (max-width:900px) { .vc-hero-icon { display:none; } }
       `}</style>
 
       {/* ══ NAV ════════════════════════════════════════════════════════════════ */}
@@ -259,7 +261,7 @@ export default function HomePage() {
           </div>
           <div style={{ display:'flex', gap:10, alignItems:'center' }}>
             <a href="/auth" className="vc-nav-sighin" style={{ ...mktBtn.ghost, fontSize:13.5, padding:'8px 14px', minHeight:36 }}>Sign in</a>
-            <a href="/signup" style={{ ...mktBtn.primary, fontSize:13.5, padding:'10px 18px', minHeight:36 }}>Start Free</a>
+            <a href="/auth" style={{ ...mktBtn.primary, fontSize:13.5, padding:'10px 18px', minHeight:36 }}>Start Free</a>
             <button className="vc-hamburger" onClick={() => setMenuOpen(o => !o)} aria-label="Toggle menu" aria-expanded={menuOpen}>
               <span /><span /><span />
             </button>
@@ -270,17 +272,72 @@ export default function HomePage() {
       <div className={`vc-mobile-menu${menuOpen ? ' open' : ''}`} onClick={() => setMenuOpen(false)}>
         {NAV_LINKS.map(l => <a key={l.label} href={l.href}>{l.label}</a>)}
         <a href="/auth" style={{ color:mkt.muted }}>Sign in</a>
-        <a href="/signup" style={{ background:mkt.brandGrad, color:'#fff', borderRadius:mkt.r, textAlign:'center', marginTop:12, padding:'15px 0', boxShadow:`inset 1px 1px 0 rgba(255,255,255,.25),${mkt.glow}`, border:'none' }}>Start Free</a>
+        <a href="/auth" style={{ background:mkt.brandGrad, color:'#fff', borderRadius:mkt.r, textAlign:'center', marginTop:12, padding:'15px 0', boxShadow:`inset 1px 1px 0 rgba(255,255,255,.25),${mkt.glow}`, border:'none' }}>Start Free</a>
       </div>
 
       {/* ══ HERO ═══════════════════════════════════════════════════════════════ */}
-      <section style={{ maxWidth:mkt.maxW, margin:'0 auto', padding:'78px 28px 30px', textAlign:'center', minHeight:600 }}>
+      <section style={{ maxWidth:mkt.maxW, margin:'0 auto', padding:'78px 28px 30px', textAlign:'center', minHeight:600, position:'relative' }}>
+
+        {/* Music note — upper left */}
+        <span className="vc-hero-icon" style={{ top:85, left:38, transform:'rotate(-15deg)' }}>
+          <svg width="34" height="42" viewBox="0 0 34 42" fill="none">
+            <line x1="21" y1="4" x2="21" y2="33" stroke={mkt.brand} strokeWidth="2.5" strokeLinecap="round"/>
+            <path d="M21 4 C29 8 30 17 25 23" stroke={mkt.brand} strokeWidth="2.5" strokeLinecap="round" fill="none"/>
+            <ellipse cx="13" cy="35" rx="10" ry="6.5" transform="rotate(-15 13 35)" fill={mkt.brand}/>
+          </svg>
+        </span>
+
+        {/* Microphone — upper right */}
+        <span className="vc-hero-icon" style={{ top:52, right:38, transform:'rotate(10deg)' }}>
+          <svg width="28" height="46" viewBox="0 0 28 46" fill="none">
+            <rect x="7" y="1" width="14" height="22" rx="7" fill={mkt.brand} opacity="0.18"/>
+            <rect x="7" y="1" width="14" height="22" rx="7" stroke={mkt.brand} strokeWidth="2.5"/>
+            <line x1="10" y1="9"  x2="18" y2="9"  stroke={mkt.brand} strokeWidth="1.5" strokeLinecap="round" opacity="0.5"/>
+            <line x1="10" y1="14" x2="18" y2="14" stroke={mkt.brand} strokeWidth="1.5" strokeLinecap="round" opacity="0.5"/>
+            <path d="M2 20 C2 35 26 35 26 20" stroke={mkt.brand} strokeWidth="2.5" strokeLinecap="round" fill="none"/>
+            <line x1="14" y1="35" x2="14" y2="42" stroke={mkt.brand} strokeWidth="2.5" strokeLinecap="round"/>
+            <line x1="6"  y1="42" x2="22" y2="42" stroke={mkt.brand} strokeWidth="2.5" strokeLinecap="round"/>
+          </svg>
+        </span>
+
+        {/* Chat bubble — left middle */}
+        <span className="vc-hero-icon" style={{ top:218, left:14, transform:'rotate(-8deg)' }}>
+          <svg width="44" height="40" viewBox="0 0 44 40" fill="none">
+            <rect x="2" y="2" width="40" height="28" rx="9" fill={mkt.brand} opacity="0.12"/>
+            <rect x="2" y="2" width="40" height="28" rx="9" stroke={mkt.brand} strokeWidth="2.5"/>
+            <line x1="11" y1="12" x2="33" y2="12" stroke={mkt.brand} strokeWidth="2" strokeLinecap="round"/>
+            <line x1="11" y1="20" x2="25" y2="20" stroke={mkt.brand} strokeWidth="2" strokeLinecap="round"/>
+            <path d="M10 30 L6 39 L20 30" fill={mkt.brand} opacity="0.12"/>
+            <path d="M10 30 L6 39 L20 30" stroke={mkt.brand} strokeWidth="2" strokeLinejoin="round" fill="none"/>
+          </svg>
+        </span>
+
+        {/* Heart — right middle */}
+        <span className="vc-hero-icon" style={{ top:198, right:18, transform:'rotate(8deg)' }}>
+          <svg width="38" height="34" viewBox="0 0 38 34" fill="none">
+            <path d="M19 31C17 29 2 20 2 10C2 5.8 5.4 3 9.5 3C13 3 16 5 19 8.5C22 5 25 3 28.5 3C32.6 3 36 5.8 36 10C36 20 21 29 19 31Z" fill={mkt.brand}/>
+          </svg>
+        </span>
+
+        {/* Hands holding phone — lower right */}
+        <span className="vc-hero-icon" style={{ bottom:68, right:42, transform:'rotate(5deg)' }}>
+          <svg width="46" height="52" viewBox="0 0 46 52" fill="none">
+            <rect x="12" y="1"  width="22" height="37" rx="5" fill={mkt.brand} opacity="0.15"/>
+            <rect x="12" y="1"  width="22" height="37" rx="5" stroke={mkt.brand} strokeWidth="2.5"/>
+            <rect x="15" y="5"  width="16" height="24" rx="2" fill={mkt.brand} opacity="0.2"/>
+            <line x1="18" y1="33" x2="28" y2="33" stroke={mkt.brand} strokeWidth="2" strokeLinecap="round"/>
+            <path d="M4 44 C4 40 12 38 12 38"        stroke={mkt.brand} strokeWidth="2.5" strokeLinecap="round" fill="none"/>
+            <path d="M42 44 C42 40 34 38 34 38"      stroke={mkt.brand} strokeWidth="2.5" strokeLinecap="round" fill="none"/>
+            <path d="M4 44 Q4 50 23 50 Q42 50 42 44" stroke={mkt.brand} strokeWidth="2.5" strokeLinecap="round" fill="none"/>
+          </svg>
+        </span>
+
         <h1 style={{ fontFamily:mkt.fontHead, fontWeight:800, fontSize:'clamp(32px,6vw,62px)', lineHeight:1.04, letterSpacing:'-.03em', margin:'0 auto 20px', maxWidth:820 }}>
           Spread your Content.<br />
           <span style={{ fontStyle:'italic', fontWeight:700, color:mkt.brand }}>One Video, Seen Everywhere.</span>
         </h1>
         <div style={{ display:'inline-flex', alignItems:'center', gap:8, background:mkt.accent, color:mkt.accentText, fontWeight:600, fontSize:12.5, padding:'6px 13px', borderRadius:100, marginBottom:26, boxShadow:`inset 1px 1px 0 ${mkt.edge}` }}>
-          Top African AI Clipping App built for all African/Gospel Creators
+          AI clipping for podcasters, creators &amp; ministries
         </div>
         <p style={{ fontSize:'clamp(15px,2.2vw,18px)', lineHeight:1.6, color:mkt.muted, maxWidth:560, margin:'0 auto 30px' }}>
           VangelClip turns your long videos into dozens of short, captioned clips — so your best moments reach more people, on every platform, in minutes.
@@ -457,7 +514,7 @@ export default function HomePage() {
               <div style={{ fontSize:12.5, color:mkt.muted, marginTop:5, minHeight:18 }}>
                 {annual ? plan.sub.annual : plan.sub.monthly}
               </div>
-              <button onClick={() => router.push('/signup')} style={planCta(plan.popular)}>{plan.cta}</button>
+              <button onClick={() => router.push('/auth')} style={planCta(plan.popular)}>{plan.cta}</button>
               <div style={{ height:1, background:mkt.border, margin:'22px 0' }} />
               <div style={{ fontSize:12, fontWeight:700, letterSpacing:'.06em', textTransform:'uppercase', color:mkt.muted, marginBottom:14 }}>{plan.includes}</div>
               <div style={{ display:'flex', flexDirection:'column', gap:11 }}>

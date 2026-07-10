@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase-browser";
 import DashboardLayout from "@/components/DashboardLayout";
 import { colors, gradients, radius } from "@/lib/tokens";
+import ComingSoonModal from "@/components/ComingSoonModal";
 
 const RATIO_ENUM_MAP: Record<string, string> = {
   '9:16': 'RATIO_9_16',
@@ -709,6 +710,7 @@ export default function ImportPage() {
   const [importSchedCaption, setImportSchedCaption] = useState('');
   const [importSchedHashtags, setImportSchedHashtags] = useState('');
   const [generationSuccess, setGenerationSuccess] = useState(false);
+  const [csmClip, setCsmClip] = useState<{ url: string; title: string } | null>(null);
   const POLL_INTERVAL_MS = 5000;
   const POLL_TIMEOUT_MS = 10 * 60 * 1000; // 10 minutes
   const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -976,7 +978,7 @@ export default function ImportPage() {
 
       await new Promise<void>((resolve) => {
         const xhr = new XMLHttpRequest();
-        xhr.open('POST', 'http://178.62.215.67:8000/api/process-upload');
+        xhr.open('POST', 'https://api.vangelclip.app/api/process-upload');
         xhr.upload.onprogress = (e) => {
           if (e.lengthComputable) {
             setUploadProgress(Math.round((e.loaded / e.total) * 100));
@@ -2051,15 +2053,7 @@ export default function ImportPage() {
                         Save Clip
                       </button>
                       <button
-                        onClick={() => {
-                          setScheduleModal(clip);
-                          setSelectedPlatforms([]);
-                          const now = new Date();
-                          setScheduleDate(now.toISOString().split('T')[0]);
-                          setScheduleTime('10:00');
-                          setImportSchedCaption(clip.caption || '');
-                          setImportSchedHashtags(Array.isArray(clip.hashtags) ? clip.hashtags.join(' ') : (clip.hashtags || ''));
-                        }}
+                        onClick={() => setCsmClip({ url: clip.video_url || '', title: clip.title || '' })}
                         style={{ padding: '10px 14px', background: 'rgba(124,58,237,0.12)', border: '1px solid rgba(124,58,237,0.3)', borderRadius: '8px', color: '#a78bfa', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}
                       >
                         Schedule
@@ -2204,6 +2198,7 @@ export default function ImportPage() {
           </div>
         </div>
       )}
+      <ComingSoonModal isOpen={!!csmClip} onClose={() => setCsmClip(null)} videoUrl={csmClip?.url} clipTitle={csmClip?.title} />
     </DashboardLayout>
   );
 }

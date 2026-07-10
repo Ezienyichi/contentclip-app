@@ -4,6 +4,7 @@ import DashboardLayout from '@/components/DashboardLayout';
 import Icon from '@/components/Icon';
 import { useRouter } from 'next/navigation';
 import { colors, gradients, radius, inputField } from '@/lib/tokens';
+import ComingSoonModal from '@/components/ComingSoonModal';
 
 type Clip = {
   id?: string; title: string; hook_text: string; start_time: number; end_time: number;
@@ -23,6 +24,7 @@ export default function ClipsPage() {
   const [playingUrl, setPlayingUrl] = useState<string|null>(null);
   const [showDl, setShowDl] = useState<number|null>(null);
   const [scheduleClip, setScheduleClip] = useState<Clip|null>(null);
+  const [csmClip, setCsmClip] = useState<{ url: string; title: string } | null>(null);
   const [schedDate, setSchedDate] = useState('');
   const [schedTime, setSchedTime] = useState('12:00');
   const [schedPlatforms, setSchedPlatforms] = useState<string[]>(['tiktok']);
@@ -169,7 +171,7 @@ export default function ClipsPage() {
                 <button onClick={() => { sessionStorage.setItem('editor_clip', JSON.stringify({ id: clip.id, video_url: clip.clip_url || clip.video_url || '', clip_url: clip.clip_url || '', thumbnail_url: clip.thumbnail_url || '', title: clip.title, hook_text: clip.hook_text || '', virality_score: clip.virality_score, caption: clip.suggested_caption || '', hashtags: clip.hashtags || '' })); router.push('/editor'); }} style={{ flex:1, padding:'8px', borderRadius:radius.md, background:colors.surfaceContainer, border:'1px solid '+colors.outlineVariant, color:colors.onSurface, fontSize:'11px', fontWeight:600, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:'4px', fontFamily:"'Inter',sans-serif" }}>
                   <Icon name="edit" size={13}/> Edit
                 </button>
-                <button onClick={() => openSchedule(clip)} style={{ flex:1, padding:'8px', borderRadius:radius.md, background:'rgba(37,211,102,0.1)', border:'1px solid rgba(37,211,102,0.2)', color:'#25D366', fontSize:'11px', fontWeight:600, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:'4px', fontFamily:"'Inter',sans-serif" }}>
+                <button onClick={() => setCsmClip({ url: clip.clip_url || clip.video_url || '', title: clip.title })} style={{ flex:1, padding:'8px', borderRadius:radius.md, background:'rgba(37,211,102,0.1)', border:'1px solid rgba(37,211,102,0.2)', color:'#25D366', fontSize:'11px', fontWeight:600, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:'4px', fontFamily:"'Inter',sans-serif" }}>
                   <Icon name="calendar_month" size={13}/> Schedule
                 </button>
                 <button onClick={() => setShowDl(idx)} style={{ padding:'8px 10px', borderRadius:radius.md, background:gradients.primary, color:'#FAF7FF', border:'none', fontSize:'11px', fontWeight:600, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:'4px', fontFamily:"'Inter',sans-serif" }}>
@@ -298,7 +300,7 @@ export default function ClipsPage() {
             </div>
             <div style={{ padding:'16px', display:'flex', gap:'8px' }}>
               <button onClick={() => { const c = filtered[preview!]; sessionStorage.setItem('editor_clip', JSON.stringify({ id: c.id, video_url: c.clip_url || c.video_url || '', clip_url: c.clip_url || '', thumbnail_url: c.thumbnail_url || '', title: c.title, hook_text: c.hook_text || '', virality_score: c.virality_score, caption: c.suggested_caption || '', hashtags: c.hashtags || '' })); setPreview(null); router.push('/editor'); }} style={{ flex:1, padding:'10px', borderRadius:radius.md, background:gradients.primary, color:'#FAF7FF', border:'none', fontWeight:600, fontSize:'13px', cursor:'pointer', fontFamily:"'Inter',sans-serif" }}>Edit Clip</button>
-              <button onClick={() => { openSchedule(filtered[preview]); setPreview(null); }} style={{ flex:1, padding:'10px', borderRadius:radius.md, background:'rgba(37,211,102,0.1)', border:'1px solid rgba(37,211,102,0.2)', color:'#25D366', fontWeight:600, fontSize:'13px', cursor:'pointer', fontFamily:"'Inter',sans-serif" }}>Schedule</button>
+              <button onClick={() => { setCsmClip({ url: filtered[preview!].clip_url || filtered[preview!].video_url || '', title: filtered[preview!].title }); setPreview(null); }} style={{ flex:1, padding:'10px', borderRadius:radius.md, background:'rgba(37,211,102,0.1)', border:'1px solid rgba(37,211,102,0.2)', color:'#25D366', fontWeight:600, fontSize:'13px', cursor:'pointer', fontFamily:"'Inter',sans-serif" }}>Schedule</button>
               <button onClick={() => setPreview(null)} style={{ padding:'10px', borderRadius:radius.md, background:colors.surfaceContainer, border:'1px solid '+colors.outlineVariant, color:colors.onSurface, cursor:'pointer' }}><Icon name="close" size={18}/></button>
             </div>
           </div>
@@ -321,6 +323,7 @@ export default function ClipsPage() {
         </div>
       )}
 
+      <ComingSoonModal isOpen={!!csmClip} onClose={() => setCsmClip(null)} videoUrl={csmClip?.url} clipTitle={csmClip?.title} />
       <style>{'@keyframes fadeInUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}@media(max-width:640px){.clips-grid{grid-template-columns:1fr!important}}'}</style>
     </DashboardLayout>
   );

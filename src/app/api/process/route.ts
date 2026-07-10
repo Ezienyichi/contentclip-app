@@ -5,7 +5,7 @@ import { cookies } from 'next/headers';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 300;
 
-const PROCESS_API_URL = 'http://178.62.215.67:8000/api/process';
+const PROCESS_API_URL = 'https://api.vangelclip.app/api/process';
 
 const PLAN_WINDOWS: Record<string, number> = {
   free:         300,

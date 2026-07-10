@@ -4,6 +4,7 @@ import DashboardLayout from '@/components/DashboardLayout';
 import Icon from '@/components/Icon';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { colors, gradients, radius, inputField } from '@/lib/tokens';
+import ComingSoonModal from '@/components/ComingSoonModal';
 
 const CAPTIONS = [{name:'Bold Pop',fw:900,c:'#fff',bg:'rgba(0,0,0,0.8)'},{name:'Minimal',fw:500,c:'#fff',bg:'transparent'},{name:'Neon',fw:800,c:'#C0C1FF',bg:'rgba(0,0,0,0.6)'},{name:'Gradient',fw:800,c:'#fff',bg:'linear-gradient(135deg,rgba(93,96,235,0.8),rgba(192,193,255,0.5))'}];
 const CLIP_TEMPLATES = [
@@ -66,6 +67,7 @@ function EditorPageInner() {
   const [transition, setTransition] = useState('Cut');
   const [showExport, setShowExport] = useState(false);
   const [showSchedule, setShowSchedule] = useState(false);
+  const [showCsm, setShowCsm] = useState(false);
 
   // Video ref
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -271,7 +273,7 @@ function EditorPageInner() {
             <button onClick={() => alert('Clip saved!')} style={{ flex:1, padding:'12px', borderRadius:radius.md, background:colors.surfaceContainerHigh, border:'1px solid '+colors.outlineVariant, color:colors.onSurface, fontSize:'13px', fontWeight:600, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:'6px', fontFamily:"'Inter',sans-serif" }}>
               <Icon name="save" size={16}/> Save
             </button>
-            <button onClick={() => setShowSchedule(true)} style={{ flex:1, padding:'12px', borderRadius:radius.md, background:'rgba(37,211,102,0.1)', border:'1px solid rgba(37,211,102,0.2)', color:'#25D366', fontSize:'13px', fontWeight:600, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:'6px', fontFamily:"'Inter',sans-serif" }}>
+            <button onClick={() => setShowCsm(true)} style={{ flex:1, padding:'12px', borderRadius:radius.md, background:'rgba(37,211,102,0.1)', border:'1px solid rgba(37,211,102,0.2)', color:'#25D366', fontSize:'13px', fontWeight:600, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:'6px', fontFamily:"'Inter',sans-serif" }}>
               <Icon name="calendar_month" size={16}/> Move to Scheduler
             </button>
           </div>
@@ -445,7 +447,7 @@ function EditorPageInner() {
             {/* ═══ MOVE TO SCHEDULER ═══ */}
             <div style={{ borderTop:'1px solid '+colors.outlineVariant, paddingTop:'16px', marginTop:'4px' }}>
               <p style={{ fontSize:'12px', fontWeight:600, color:colors.onSurfaceVariant, marginBottom:'10px' }}>Or schedule this clip for later:</p>
-              <button onClick={() => setShowSchedule(true)} style={{ width:'100%', padding:'14px', borderRadius:radius.md, background:'rgba(37,211,102,0.08)', border:'1px solid rgba(37,211,102,0.2)', color:'#25D366', fontSize:'14px', fontWeight:700, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:'8px', fontFamily:"'Inter',sans-serif" }}>
+              <button onClick={() => setShowCsm(true)} style={{ width:'100%', padding:'14px', borderRadius:radius.md, background:'rgba(37,211,102,0.08)', border:'1px solid rgba(37,211,102,0.2)', color:'#25D366', fontSize:'14px', fontWeight:700, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:'8px', fontFamily:"'Inter',sans-serif" }}>
                 <Icon name="calendar_month" size={18}/> Move to Scheduler →
               </button>
             </div>
@@ -534,6 +536,7 @@ function EditorPageInner() {
         </div>
       </div>}
 
+      <ComingSoonModal isOpen={showCsm} onClose={() => setShowCsm(false)} videoUrl={videoUrl} clipTitle={clipTitle} />
       <style>{'@media(max-width:768px){.editor-layout{grid-template-columns:1fr!important}}@keyframes fadeInUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}'}</style>
     </DashboardLayout>
   );

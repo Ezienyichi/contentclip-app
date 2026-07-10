@@ -3,6 +3,9 @@ import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase-browser';
 import Link from 'next/link';
 import DashboardLayout from '@/components/DashboardLayout';
+import ComingSoonModal from '@/components/ComingSoonModal';
+import { colors, radius } from '@/lib/tokens';
+import Icon from '@/components/Icon';
 
 const PLATFORMS = [
   {
@@ -66,6 +69,7 @@ export default function SocialConnectionsPage() {
   const [userPlan, setUserPlan] = useState('free');
   const [loading, setLoading] = useState(true);
   const [connecting, setConnecting] = useState<string | null>(null);
+  const [showCsm, setShowCsm] = useState(false);
   const [showUsernameInput, setShowUsernameInput] = useState<string | null>(null);
   const [usernameValue, setUsernameValue] = useState('');
   const supabase = createClient();
@@ -148,6 +152,17 @@ export default function SocialConnectionsPage() {
   return (
     <DashboardLayout>
       <div style={{ maxWidth: 640, margin: '0 auto', padding: '32px 16px' }}>
+        {/* Coming-soon banner */}
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', padding: '16px 18px', borderRadius: radius.lg, background: colors.primary + '10', border: '1px solid ' + colors.primary + '25', marginBottom: '24px' }}>
+          <Icon name="schedule" size={20} style={{ color: colors.primary, flexShrink: 0, marginTop: '1px' }} />
+          <div>
+            <p style={{ fontSize: '13px', fontWeight: 700, color: colors.onSurface, marginBottom: '3px' }}>Social scheduling is coming soon</p>
+            <p style={{ fontSize: '12px', color: colors.onSurfaceVariant, lineHeight: 1.6 }}>
+              Platform connections go live with the scheduling feature. In the meantime, download your clips and post directly — it takes seconds.
+            </p>
+          </div>
+        </div>
+
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
           <div>
             <h1 style={{ fontSize: '22px', fontWeight: 700, color: '#ffffff', margin: '0 0 4px' }}>
@@ -199,7 +214,7 @@ export default function SocialConnectionsPage() {
                         <button onClick={() => handleDisconnect(platform.id)} style={{ padding: '7px 14px', borderRadius: '8px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#fca5a5', fontSize: '12px', cursor: 'pointer' }}>Disconnect</button>
                       </div>
                     ) : (
-                      <button onClick={() => handleConnect(platform.id)} disabled={isConnecting} style={{ padding: '8px 18px', borderRadius: '8px', background: 'linear-gradient(135deg, #7c3aed, #5b21b6)', border: 'none', color: '#ffffff', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>
+                      <button onClick={() => setShowCsm(true)} disabled={isConnecting} style={{ padding: '8px 18px', borderRadius: '8px', background: 'linear-gradient(135deg, #7c3aed, #5b21b6)', border: 'none', color: '#ffffff', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>
                         {isConnecting ? 'Connecting...' : 'Connect'}
                       </button>
                     )}
@@ -233,6 +248,7 @@ export default function SocialConnectionsPage() {
           </div>
         </div>
       </div>
+      <ComingSoonModal isOpen={showCsm} onClose={() => setShowCsm(false)} />
     </DashboardLayout>
   );
 }
