@@ -832,19 +832,19 @@ export default function ImportPage() {
 
         if (data.status === "SUCCEEDED") {
           stopPolling();
-          // Log raw response so we can verify the actual structure from WayinVideo
           console.log('[clip-status] raw SUCCEEDED response:', JSON.stringify(data, null, 2));
-          const rawClips: any[] = data.clips ?? data.result ?? [];
+          const rawClips: any[] = data.clips ?? [];
           const normalizedClips = rawClips.map((c: any) => ({
-            video_url:     c.export_link || c.video_url || c.clip_url || '',
-            title:         c.title || 'Clip',
-            caption:       c.desc || c.caption || '',
-            ai_score:      c.score ?? c.ai_score,
-            thumbnail_url: c.thumbnail || c.thumbnail_url || '',
-            hashtags:      c.tags || c.hashtags || [],
-            start_time:    c.begin_ms != null ? c.begin_ms / 1000 : (c.start_time ?? 0),
-            end_time:      c.end_ms   != null ? c.end_ms   / 1000 : (c.end_time   ?? 60),
-            id:            c.idx ?? c.id,
+            video_url:     c.video_url     || '',
+            download_url:  c.download_url  || '',
+            title:         c.title         || 'Clip',
+            caption:       c.desc          || '',
+            ai_score:      c.score,
+            thumbnail_url: c.thumbnail     || '',
+            hashtags:      c.tags          || [],
+            start_time:    c.start_time    ?? 0,
+            end_time:      c.end_time      ?? 60,
+            id:            c.id,
             duration:      c.duration,
           }));
           setStatus("completed");
