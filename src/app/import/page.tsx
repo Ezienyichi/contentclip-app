@@ -710,6 +710,7 @@ export default function ImportPage() {
   const [importSchedCaption, setImportSchedCaption] = useState('');
   const [importSchedHashtags, setImportSchedHashtags] = useState('');
   const [generationSuccess, setGenerationSuccess] = useState(false);
+  const [playingClip, setPlayingClip] = useState<number | null>(null);
   const [csmClip, setCsmClip] = useState<{ url: string; title: string } | null>(null);
   const POLL_INTERVAL_MS = 5000;
   const POLL_TIMEOUT_MS = 10 * 60 * 1000; // 10 minutes
@@ -1852,159 +1853,75 @@ export default function ImportPage() {
               </button>
             </div>
 
-            {/* Clip cards */}
-            {clips.map((clip: any, index: number) => {
-              const videoId = extractVideoId(videoUrl);
-              const startSeconds = Math.floor(clip.start_time || 0);
-              const endSeconds = Math.floor(clip.end_time || 60);
+            {/* Clip cards — responsive grid */}
+            <div className="vc-clip-grid">
+              {clips.map((clip: any, index: number) => (
+                <div key={clip.id || index} className="vc-clip-card">
 
-              return (
-                <div
-                  key={clip.id || index}
-                  style={{
-                    background: 'rgba(255,255,255,0.04)',
-                    border: '1px solid rgba(255,255,255,0.1)',
-                    borderRadius: '16px',
-                    overflow: 'hidden',
-                    marginBottom: '16px',
-                  }}
-                >
-                  {/* Video Preview — rendered clip first, YouTube embed as fallback */}
-                  {clip.video_url ? (
-                    <video
-                      src={clip.video_url}
-                      style={{ width: '100%', aspectRatio: '9/16', objectFit: 'cover', display: 'block' }}
-                      controls
-                      preload="metadata"
-                    />
-                  ) : videoId ? (
-                    <div style={{ position: 'relative', width: '100%', aspectRatio: '16/9', background: '#000' }}>
-                      <iframe
-                        src={`https://www.youtube.com/embed/${videoId}?start=${startSeconds}&end=${endSeconds}&autoplay=0&rel=0&modestbranding=1`}
-                        style={{ width: '100%', height: '100%', border: 'none' }}
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowFullScreen
-                        loading="lazy"
-                        title={clip.title}
+                  {/* Media — thumbnail by default, video on click */}
+                  <div
+                    style={{ position: 'relative', aspectRatio: '9/16', background: '#111', overflow: 'hidden', cursor: 'pointer' }}
+                    onClick={() => setPlayingClip(playingClip === index ? null : index)}
+                  >
+                    {playingClip === index && clip.video_url ? (
+                      <video
+                        src={clip.video_url}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                        controls
+                        autoPlay
+                        preload="auto"
+                        onClick={e => e.stopPropagation()}
                       />
-                    </div>
-                  ) : null}
-
-                  {/* Clip Info */}
-                  <div style={{ padding: '16px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                      <span style={{ fontSize: '11px', fontWeight: 700, color: '#a78bfa', background: 'rgba(124,58,237,0.15)', padding: '3px 10px', borderRadius: '100px' }}>
-                        Clip {index + 1}
-                      </span>
-                      {clip.ai_score !== undefined && (
-                        <span style={{ fontSize: '13px', fontWeight: 700, color: clip.ai_score >= 90 ? '#10b981' : clip.ai_score >= 80 ? '#f59e0b' : '#ef4444' }}>
-                          {clip.ai_score}/100
-                        </span>
-                      )}
-                    </div>
-
-                    {clip.category && (
-                      <span style={{
-                        fontSize: '10px',
-                        fontWeight: 700,
-                        padding: '2px 8px',
-                        borderRadius: '100px',
-                        display: 'inline-block',
-                        marginBottom: '8px',
-                        background:
-                          clip.category === 'testimony' || clip.category === 'Testimony'
-                            ? 'rgba(124,58,237,0.15)'
-                          : clip.category === 'truth' || clip.category === 'Truth'
-                            ? 'rgba(14,165,233,0.15)'
-                          : clip.category === 'team' || clip.category === 'Team'
-                            ? 'rgba(16,185,129,0.15)'
-                          : clip.category === 'transcendence' || clip.category === 'Transcendence'
-                            ? 'rgba(245,158,11,0.15)'
-                          : 'rgba(255,255,255,0.08)',
-                        color:
-                          clip.category === 'testimony' || clip.category === 'Testimony'
-                            ? '#a78bfa'
-                          : clip.category === 'truth' || clip.category === 'Truth'
-                            ? '#38bdf8'
-                          : clip.category === 'team' || clip.category === 'Team'
-                            ? '#6ee7b7'
-                          : clip.category === 'transcendence' || clip.category === 'Transcendence'
-                            ? '#fcd34d'
-                          : 'rgba(255,255,255,0.5)',
-                      }}>
-                        {clip.category}
-                      </span>
+                    ) : (
+                      <>
+                        {clip.thumbnail_url ? (
+                          <img
+                            src={clip.thumbnail_url}
+                            alt={clip.title}
+                            loading="lazy"
+                            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                          />
+                        ) : (
+                          <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(124,58,237,0.08)' }}>
+                            <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
+                              <rect x="3" y="5" width="14" height="14" rx="2" fill="rgba(124,58,237,0.2)" stroke="rgba(124,58,237,0.4)" strokeWidth="1.5"/>
+                              <path d="M17 9l4 3-4 3V9z" fill="rgba(124,58,237,0.5)"/>
+                            </svg>
+                          </div>
+                        )}
+                        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.18)' }}>
+                          <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'rgba(255,255,255,0.14)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.22)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <svg width="15" height="15" viewBox="0 0 15 15" fill="white"><path d="M3 1.5l10 6-10 6V1.5z"/></svg>
+                          </div>
+                        </div>
+                      </>
                     )}
 
-                    <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#ffffff', margin: '0 0 8px', lineHeight: 1.3 }}>
+                    {/* Clip # — top left */}
+                    <span style={{ position: 'absolute', top: 7, left: 7, fontSize: '10px', fontWeight: 700, background: 'rgba(124,58,237,0.85)', color: '#fff', padding: '2px 7px', borderRadius: '100px', pointerEvents: 'none' }}>
+                      #{index + 1}
+                    </span>
+                    {/* Score — top right */}
+                    {clip.ai_score !== undefined && (
+                      <span style={{ position: 'absolute', top: 7, right: 7, fontSize: '11px', fontWeight: 700, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', color: clip.ai_score >= 90 ? '#10b981' : clip.ai_score >= 80 ? '#f59e0b' : '#ef4444', padding: '2px 7px', borderRadius: '100px', pointerEvents: 'none' }}>
+                        {clip.ai_score}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Card info */}
+                  <div style={{ padding: '10px 12px 12px' }}>
+                    <h3 style={{ fontSize: '13px', fontWeight: 700, color: '#fff', margin: '0 0 4px', lineHeight: 1.35, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
                       {clip.title}
                     </h3>
-
-                    {(clip.start_time !== undefined || clip.end_time !== undefined) && (
-                      <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', marginBottom: '8px', display: 'flex', gap: '12px' }}>
-                        <span>
-                          {Math.floor((clip.start_time || 0) / 60)}:{String(Math.floor((clip.start_time || 0) % 60)).padStart(2, '0')}
-                          {' → '}
-                          {Math.floor((clip.end_time || 60) / 60)}:{String(Math.floor((clip.end_time || 60) % 60)).padStart(2, '0')}
-                        </span>
-                        <span>{clip.duration || (endSeconds - startSeconds)}s</span>
-                      </div>
-                    )}
-
-                    {clip.hook_text && (
-                      <div style={{ fontSize: '12px', color: '#fcd34d', fontStyle: 'italic', marginBottom: '8px', padding: '6px 10px', background: 'rgba(252,211,77,0.08)', borderRadius: '6px' }}>
-                        Hook: &ldquo;{stripEmoji(clip.hook_text)}&rdquo;
-                      </div>
-                    )}
-
                     {clip.caption && (
-                      <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.7)', lineHeight: 1.6, margin: '0 0 10px' }}>
+                      <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.45)', margin: '0 0 10px', lineHeight: 1.4, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
                         {stripEmoji(clip.caption)}
                       </p>
                     )}
 
-                    {clip.reason && (
-                      <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', lineHeight: 1.5, margin: '0 0 12px', fontStyle: 'italic' }}>
-                        {stripEmoji(clip.reason)}
-                      </p>
-                    )}
-
-                    {clip.hashtags && clip.hashtags.length > 0 && (
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '14px' }}>
-                        {clip.hashtags.map((tag: string, i: number) => (
-                          <span key={i} style={{ fontSize: '11px', color: '#a78bfa', background: 'rgba(124,58,237,0.12)', padding: '2px 8px', borderRadius: '100px' }}>
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-
-                    {clip.category && (
-                      <div style={{
-                        marginTop: '8px',
-                        marginBottom: '12px',
-                        padding: '8px 12px',
-                        background: 'rgba(124,58,237,0.06)',
-                        border: '1px solid rgba(124,58,237,0.12)',
-                        borderRadius: '8px',
-                        fontSize: '11px',
-                        color: 'rgba(255,255,255,0.5)',
-                        lineHeight: 1.5,
-                      }}>
-                        {(clip.category === 'testimony' || clip.category === 'Testimony')
-                          ? 'Testimony clips generate 1,200% more shares than text and image content combined. Share this on all platforms.'
-                        : (clip.category === 'truth' || clip.category === 'Truth')
-                          ? 'Truth clips get the highest comment rates. Post this as a question to drive discussion.'
-                        : (clip.category === 'team' || clip.category === 'Team')
-                          ? 'Team content kills the fear of the unknown. This makes new people feel welcome before they arrive.'
-                        : (clip.category === 'transcendence' || clip.category === 'Transcendence')
-                          ? 'Worship and transcendence clips reach more non-Christians than sermon clips. Let this speak for itself.'
-                        : 'Share this clip across all your platforms for maximum reach.'
-                        }
-                      </div>
-                    )}
-
-                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    {/* 3-button row */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '6px' }}>
                       <button
                         onClick={() => {
                           sessionStorage.setItem('editor_clip', JSON.stringify({
@@ -2023,31 +1940,18 @@ export default function ImportPage() {
                           }));
                           router.push('/editor');
                         }}
-                        style={{
-                          flex: 1,
-                          padding: '10px 14px',
-                          background: 'linear-gradient(135deg, #7c3aed, #5b21b6)',
-                          borderRadius: '8px',
-                          color: '#ffffff',
-                          fontSize: '13px',
-                          fontWeight: 600,
-                          textAlign: 'center',
-                          border: 'none',
-                          cursor: 'pointer',
-                          display: 'block',
-                        }}
+                        style={{ padding: '8px 4px', background: 'linear-gradient(135deg,#7c3aed,#5b21b6)', borderRadius: '7px', color: '#fff', fontSize: '11px', fontWeight: 700, border: 'none', cursor: 'pointer' }}
                       >
-                        Open in Editor
+                        Edit
                       </button>
                       <button
                         onClick={() => {
                           const text = (clip.caption || '') + (clip.hashtags?.length ? '\n\n' + clip.hashtags.join(' ') : '');
                           navigator.clipboard.writeText(text);
-                          alert('Caption and hashtags copied!');
                         }}
-                        style={{ padding: '10px 14px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '8px', color: 'rgba(255,255,255,0.7)', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}
+                        style={{ padding: '8px 4px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '7px', color: 'rgba(255,255,255,0.7)', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}
                       >
-                        Copy Caption
+                        Copy
                       </button>
                       <button
                         onClick={async () => {
@@ -2056,33 +1960,32 @@ export default function ImportPage() {
                               method: 'POST',
                               headers: { 'Content-Type': 'application/json' },
                               credentials: 'include',
-                              body: JSON.stringify({ ...clip, video_url: videoUrl }),
+                              body: JSON.stringify({ ...clip, video_url: clip.video_url || videoUrl }),
                             });
-                            alert('Saved to your clips!');
-                          } catch(e) {
-                            alert('Failed to save');
-                          }
+                          } catch {}
                         }}
-                        style={{ padding: '10px 14px', background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.3)', borderRadius: '8px', color: '#6ee7b7', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}
+                        style={{ padding: '8px 4px', background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.25)', borderRadius: '7px', color: '#6ee7b7', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}
                       >
-                        Save Clip
-                      </button>
-                      <button
-                        onClick={() => setCsmClip({ url: clip.video_url || '', title: clip.title || '' })}
-                        style={{ padding: '10px 14px', background: 'rgba(124,58,237,0.12)', border: '1px solid rgba(124,58,237,0.3)', borderRadius: '8px', color: '#a78bfa', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}
-                      >
-                        Schedule
+                        Save
                       </button>
                     </div>
                   </div>
+
                 </div>
-              );
-            })}
+              ))}
+            </div>
           </div>
         )}
       </div>
 
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } } @media (max-width: 768px) { .import-settings-panel { display: none !important; } }`}</style>
+      <style>{`
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @media (max-width: 768px) { .import-settings-panel { display: none !important; } }
+  .vc-clip-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
+  .vc-clip-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; overflow: hidden; transition: border-color 0.2s; }
+  .vc-clip-card:hover { border-color: rgba(124,58,237,0.4); }
+  @media (max-width: 480px) { .vc-clip-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; } }
+`}</style>
 
       {scheduleModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
