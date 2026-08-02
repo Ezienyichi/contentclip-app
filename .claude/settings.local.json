@@ -37,7 +37,15 @@
       "Bash(git -C \"c:\\\\Users\\\\HP\\\\helpedit\" status)",
       "Bash(npx next *)",
       "Bash(git -C \"c:/Users/HP/helpedit\" status)",
-      "Bash(git -C \"c:/Users/HP/helpedit\" check-ignore -v .env.local design-reference/homepage.html.html)"
+      "Bash(git -C \"c:/Users/HP/helpedit\" check-ignore -v .env.local design-reference/homepage.html.html)",
+      "Bash(gh run *)",
+      "Bash(gh deployment *)",
+      "Bash(npx vercel@latest whoami)",
+      "Bash(npx vercel@latest ls)",
+      "Bash(grep -v \"//\\\\|sessionStorage\\\\|calendar\\\\|router.push\")",
+      "Bash(grep -v \"useState\\\\|setAspect\\\\|//\\\\|setSubtitles\\\\|description\")",
+      "Bash(grep -v \"//\\\\|node_modules\")",
+      "Bash(grep -v \"//\\\\|aspectRatio\\\\|setSubtitles\\\\|useState\")"
     ]
   }
 }
