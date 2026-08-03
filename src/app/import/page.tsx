@@ -217,6 +217,7 @@ function buildSmartPrompt(
 
 interface Clip {
   video_url: string;
+  download_url?: string;
   title: string;
   caption: string;
   hashtags?: string[];
@@ -1074,6 +1075,7 @@ export default function ImportPage() {
       hashtags: c.hashtags?.join(' ') ?? '',
       platform: 'tiktok',
       clip_url: c.video_url,
+      download_url: c.download_url ?? '',
       thumbnail_url: c.thumbnail_url ?? '',
       duration: c.duration ?? 60,
       status: 'ready',

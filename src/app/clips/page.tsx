@@ -3,13 +3,12 @@ import React, { useState, useEffect } from 'react';
 import DashboardLayout from '@/components/DashboardLayout';
 import Icon from '@/components/Icon';
 import { useRouter } from 'next/navigation';
-import { colors, gradients, radius, inputField } from '@/lib/tokens';
-import ComingSoonModal from '@/components/ComingSoonModal';
+import { colors, gradients, radius } from '@/lib/tokens';
 
 type Clip = {
   id?: string; title: string; hook_text: string; start_time: number; end_time: number;
   virality_score: number; suggested_caption: string; hashtags: string;
-  platform: string; clip_url?: string; video_url?: string; thumbnail_url?: string; duration: number; status?: string;
+  platform: string; clip_url?: string; video_url?: string; download_url?: string; thumbnail_url?: string; duration: number; status?: string;
 };
 
 const SORTS = ['Most Viral','Newest','Longest','Shortest'];
@@ -22,14 +21,6 @@ export default function ClipsPage() {
   const [plat, setPlat] = useState('All');
   const [preview, setPreview] = useState<number|null>(null);
   const [playingUrl, setPlayingUrl] = useState<string|null>(null);
-  const [showDl, setShowDl] = useState<number|null>(null);
-  const [scheduleClip, setScheduleClip] = useState<Clip|null>(null);
-  const [csmClip, setCsmClip] = useState<{ url: string; title: string } | null>(null);
-  const [schedDate, setSchedDate] = useState('');
-  const [schedTime, setSchedTime] = useState('12:00');
-  const [schedPlatforms, setSchedPlatforms] = useState<string[]>(['tiktok']);
-  const [schedCaption, setSchedCaption] = useState('');
-  const [schedHashtags, setSchedHashtags] = useState('');
 
   // Load real clips from sessionStorage
   useEffect(() => {
@@ -65,61 +56,6 @@ export default function ClipsPage() {
       if (sort === 'Shortest') return a.duration - b.duration;
       return 0;
     });
-
-  function openSchedule(clip: Clip) {
-    setScheduleClip(clip);
-    setSchedCaption(clip.suggested_caption || '');
-    setSchedHashtags(clip.hashtags || '');
-    setSchedDate('');
-    setSchedTime('12:00');
-    setSchedPlatforms([clip.platform.includes('tiktok') ? 'tiktok' : clip.platform.includes('reels') ? 'reels' : 'shorts']);
-  }
-
-  function togglePlatform(p: string) {
-    setSchedPlatforms(prev => prev.includes(p) ? prev.filter(x => x !== p) : [...prev, p]);
-  }
-
-  async function handleSchedule() {
-    if (!scheduleClip || !schedDate) { alert('Please select a date'); return; }
-    const clipVideoUrl = scheduleClip.clip_url || scheduleClip.video_url || '';
-    const clipThumbUrl = scheduleClip.thumbnail_url || '';
-    const newPost = {
-      id: Date.now().toString(),
-      clip_title: scheduleClip.title,
-      hook_text: scheduleClip.hook_text,
-      virality_score: scheduleClip.virality_score,
-      caption: schedCaption,
-      hashtags: schedHashtags,
-      platforms: schedPlatforms,
-      scheduled_date: schedDate,
-      scheduled_time: schedTime,
-      status: 'scheduled',
-      video_url: clipVideoUrl,
-      thumbnail_url: clipThumbUrl,
-    };
-    const existing = JSON.parse(sessionStorage.getItem('hookclip_scheduled') || '[]');
-    existing.push(newPost);
-    sessionStorage.setItem('hookclip_scheduled', JSON.stringify(existing));
-    try {
-      await fetch('/api/social/schedule', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          clipId: scheduleClip.id || null,
-          platforms: schedPlatforms,
-          caption: schedCaption,
-          hashtags: schedHashtags,
-          scheduleTime: new Date(`${schedDate}T${schedTime}:00`).toISOString(),
-          videoUrl: clipVideoUrl,
-          title: scheduleClip.title,
-          thumbnailUrl: clipThumbUrl,
-        }),
-      });
-    } catch {}
-    setScheduleClip(null);
-    alert('Clip scheduled! View it in your Content Calendar.');
-  }
 
   return (
     <DashboardLayout title="Generated Clips" subtitle={clips.length + ' clips ready'}>
@@ -168,15 +104,12 @@ export default function ClipsPage() {
 
               {/* Action buttons */}
               <div style={{ display:'flex', gap:'6px' }}>
-                <button onClick={() => { sessionStorage.setItem('editor_clip', JSON.stringify({ id: clip.id, video_url: clip.clip_url || clip.video_url || '', clip_url: clip.clip_url || '', thumbnail_url: clip.thumbnail_url || '', title: clip.title, hook_text: clip.hook_text || '', virality_score: clip.virality_score, caption: clip.suggested_caption || '', hashtags: clip.hashtags || '' })); router.push('/editor'); }} style={{ flex:1, padding:'8px', borderRadius:radius.md, background:colors.surfaceContainer, border:'1px solid '+colors.outlineVariant, color:colors.onSurface, fontSize:'11px', fontWeight:600, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:'4px', fontFamily:"'Inter',sans-serif" }}>
+                <button onClick={() => { sessionStorage.setItem('editor_clip', JSON.stringify({ id: clip.id, video_url: clip.clip_url || clip.video_url || '', clip_url: clip.clip_url || '', download_url: clip.download_url || clip.clip_url || clip.video_url || '', thumbnail_url: clip.thumbnail_url || '', title: clip.title, hook_text: clip.hook_text || '', virality_score: clip.virality_score, caption: clip.suggested_caption || '', hashtags: clip.hashtags || '' })); router.push('/editor'); }} style={{ flex:1, padding:'8px', borderRadius:radius.md, background:colors.surfaceContainer, border:'1px solid '+colors.outlineVariant, color:colors.onSurface, fontSize:'11px', fontWeight:600, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:'4px', fontFamily:"'Inter',sans-serif" }}>
                   <Icon name="edit" size={13}/> Edit
                 </button>
-                <button onClick={() => setCsmClip({ url: clip.clip_url || clip.video_url || '', title: clip.title })} style={{ flex:1, padding:'8px', borderRadius:radius.md, background:'rgba(37,211,102,0.1)', border:'1px solid rgba(37,211,102,0.2)', color:'#25D366', fontSize:'11px', fontWeight:600, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:'4px', fontFamily:"'Inter',sans-serif" }}>
-                  <Icon name="calendar_month" size={13}/> Schedule
-                </button>
-                <button onClick={() => setShowDl(idx)} style={{ padding:'8px 10px', borderRadius:radius.md, background:gradients.primary, color:'#FAF7FF', border:'none', fontSize:'11px', fontWeight:600, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:'4px', fontFamily:"'Inter',sans-serif" }}>
+                <a href={clip.download_url || clip.clip_url || clip.video_url || '#'} download={clip.title ? clip.title.replace(/\s+/g,'_')+'.mp4' : 'clip.mp4'} style={{ padding:'8px 10px', borderRadius:radius.md, background:clip.download_url||clip.clip_url||clip.video_url ? gradients.primary : colors.surfaceContainer, color:'#FAF7FF', border:'none', fontSize:'11px', fontWeight:600, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:'4px', textDecoration:'none', opacity:clip.download_url||clip.clip_url||clip.video_url ? 1 : 0.4 }}>
                   <Icon name="download" size={13}/>
-                </button>
+                </a>
               </div>
             </div>
           </div>
@@ -204,91 +137,6 @@ export default function ClipsPage() {
         </div>
       )}
 
-      {/* ═══ SCHEDULE MODAL ═══ */}
-      {scheduleClip && (
-        <div style={{ position:'fixed', inset:0, zIndex:100, background:'rgba(0,0,0,0.7)', backdropFilter:'blur(12px)', display:'flex', alignItems:'center', justifyContent:'center', padding:'24px' }} onClick={() => setScheduleClip(null)}>
-          <div onClick={e => e.stopPropagation()} style={{ background:colors.surfaceContainerHigh, borderRadius:radius.xl, padding:'32px', width:'100%', maxWidth:'480px', animation:'fadeInUp 0.25s ease-out' }}>
-            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'24px' }}>
-              <h3 style={{ fontSize:'20px', fontWeight:700 }}>Schedule to Calendar</h3>
-              <button onClick={() => setScheduleClip(null)} style={{ background:'none', border:'none', cursor:'pointer', color:colors.onSurfaceVariant }}><Icon name="close" size={22}/></button>
-            </div>
-
-            {/* Clip preview */}
-            <div style={{ background:colors.surfaceContainer, borderRadius:radius.md, marginBottom:'20px', overflow:'hidden' }}>
-              {(scheduleClip.thumbnail_url || scheduleClip.clip_url || scheduleClip.video_url) ? (
-                <div style={{ aspectRatio:'16/9', overflow:'hidden' }}>
-                  {scheduleClip.thumbnail_url ? (
-                    <img src={scheduleClip.thumbnail_url} alt={scheduleClip.title} style={{ width:'100%', height:'100%', objectFit:'cover', display:'block' }}/>
-                  ) : (
-                    <video src={scheduleClip.clip_url || scheduleClip.video_url} muted playsInline preload="metadata" style={{ width:'100%', height:'100%', objectFit:'cover', display:'block' }}/>
-                  )}
-                </div>
-              ) : (
-                <div style={{ height:56, display:'flex', alignItems:'center', justifyContent:'center' }}>
-                  <Icon name="movie" size={24} style={{ color:colors.onSurfaceVariant }}/>
-                </div>
-              )}
-              <div style={{ padding:'12px 14px', display:'flex', alignItems:'center', justifyContent:'space-between', gap:8 }}>
-                <p style={{ margin:0, fontSize:'13px', fontWeight:600, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', flex:1 }}>{scheduleClip.title}</p>
-                <p style={{ margin:0, fontSize:'11px', color:colors.onSurfaceVariant, flexShrink:0 }}>Score: {scheduleClip.virality_score} · {formatDuration(scheduleClip.duration)}</p>
-              </div>
-            </div>
-
-            <div style={{ display:'flex', flexDirection:'column', gap:'16px' }}>
-              {/* Caption */}
-              <div>
-                <label style={{ fontSize:'12px', fontWeight:600, color:colors.onSurfaceVariant, display:'block', marginBottom:'6px' }}>Caption</label>
-                <textarea rows={3} value={schedCaption} onChange={e => setSchedCaption(e.target.value)} placeholder="Write your post caption..." style={{ ...inputField, resize:'vertical' as any, minHeight:'80px' }}/>
-              </div>
-
-              {/* Hashtags */}
-              <div>
-                <label style={{ fontSize:'12px', fontWeight:600, color:colors.onSurfaceVariant, display:'block', marginBottom:'6px' }}>Hashtags</label>
-                <input value={schedHashtags} onChange={e => setSchedHashtags(e.target.value)} placeholder="#ai #viral #shorts" style={inputField}/>
-              </div>
-
-              {/* Date & Time */}
-              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'12px' }}>
-                <div>
-                  <label style={{ fontSize:'12px', fontWeight:600, color:colors.onSurfaceVariant, display:'block', marginBottom:'6px' }}>Date</label>
-                  <input type="date" value={schedDate} onChange={e => setSchedDate(e.target.value)} style={inputField}/>
-                </div>
-                <div>
-                  <label style={{ fontSize:'12px', fontWeight:600, color:colors.onSurfaceVariant, display:'block', marginBottom:'6px' }}>Time</label>
-                  <input type="time" value={schedTime} onChange={e => setSchedTime(e.target.value)} style={inputField}/>
-                </div>
-              </div>
-
-              {/* Platforms */}
-              <div>
-                <label style={{ fontSize:'12px', fontWeight:600, color:colors.onSurfaceVariant, display:'block', marginBottom:'6px' }}>Platforms</label>
-                <div style={{ display:'flex', gap:'8px' }}>
-                  {[{n:'TikTok',k:'tiktok',i:'music_note'},{n:'Reels',k:'reels',i:'photo_camera'},{n:'Shorts',k:'shorts',i:'smart_display'}].map(p => (
-                    <button key={p.k} onClick={() => togglePlatform(p.k)} style={{
-                      flex:1, padding:'10px', borderRadius:radius.md, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:'6px', fontFamily:"'Inter',sans-serif", fontSize:'12px', fontWeight:600, border:'none',
-                      background: schedPlatforms.includes(p.k) ? 'rgba(192,193,255,0.15)' : colors.surfaceContainer,
-                      color: schedPlatforms.includes(p.k) ? colors.primary : colors.onSurfaceVariant,
-                      outline: schedPlatforms.includes(p.k) ? '1px solid '+colors.primary : '1px solid '+colors.outlineVariant,
-                    }}>
-                      <Icon name={p.i} size={16}/>{p.n}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Schedule button */}
-              <button onClick={handleSchedule} style={{ background:gradients.primary, color:'#FAF7FF', fontWeight:700, padding:'14px', borderRadius:radius.md, border:'none', cursor:'pointer', fontSize:'14px', marginTop:'8px', fontFamily:"'Inter',sans-serif", display:'flex', alignItems:'center', justifyContent:'center', gap:'8px' }}>
-                <Icon name="calendar_month" size={18}/> Schedule Post
-              </button>
-
-              {/* Go to calendar link */}
-              <button onClick={() => { setScheduleClip(null); router.push('/calendar'); }} style={{ background:'transparent', border:'1px solid '+colors.outlineVariant, color:colors.onSurfaceVariant, padding:'10px', borderRadius:radius.md, fontSize:'13px', cursor:'pointer', fontFamily:"'Inter',sans-serif", textAlign:'center' }}>
-                View Content Calendar →
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Preview modal */}
       {preview !== null && filtered[preview] && (
@@ -299,31 +147,13 @@ export default function ClipsPage() {
               <div style={{ position:'absolute', bottom:16, left:16, right:16, background:'rgba(0,0,0,0.7)', padding:'8px 12px', borderRadius:radius.md }}><p style={{ fontSize:'13px', color:'#fff', fontWeight:600 }}>{filtered[preview].title}</p></div>
             </div>
             <div style={{ padding:'16px', display:'flex', gap:'8px' }}>
-              <button onClick={() => { const c = filtered[preview!]; sessionStorage.setItem('editor_clip', JSON.stringify({ id: c.id, video_url: c.clip_url || c.video_url || '', clip_url: c.clip_url || '', thumbnail_url: c.thumbnail_url || '', title: c.title, hook_text: c.hook_text || '', virality_score: c.virality_score, caption: c.suggested_caption || '', hashtags: c.hashtags || '' })); setPreview(null); router.push('/editor'); }} style={{ flex:1, padding:'10px', borderRadius:radius.md, background:gradients.primary, color:'#FAF7FF', border:'none', fontWeight:600, fontSize:'13px', cursor:'pointer', fontFamily:"'Inter',sans-serif" }}>Edit Clip</button>
-              <button onClick={() => { setCsmClip({ url: filtered[preview!].clip_url || filtered[preview!].video_url || '', title: filtered[preview!].title }); setPreview(null); }} style={{ flex:1, padding:'10px', borderRadius:radius.md, background:'rgba(37,211,102,0.1)', border:'1px solid rgba(37,211,102,0.2)', color:'#25D366', fontWeight:600, fontSize:'13px', cursor:'pointer', fontFamily:"'Inter',sans-serif" }}>Schedule</button>
+              <button onClick={() => { const c = filtered[preview!]; sessionStorage.setItem('editor_clip', JSON.stringify({ id: c.id, video_url: c.clip_url || c.video_url || '', clip_url: c.clip_url || '', download_url: c.download_url || c.clip_url || c.video_url || '', thumbnail_url: c.thumbnail_url || '', title: c.title, hook_text: c.hook_text || '', virality_score: c.virality_score, caption: c.suggested_caption || '', hashtags: c.hashtags || '' })); setPreview(null); router.push('/editor'); }} style={{ flex:1, padding:'10px', borderRadius:radius.md, background:gradients.primary, color:'#FAF7FF', border:'none', fontWeight:600, fontSize:'13px', cursor:'pointer', fontFamily:"'Inter',sans-serif" }}>Edit Clip</button>
               <button onClick={() => setPreview(null)} style={{ padding:'10px', borderRadius:radius.md, background:colors.surfaceContainer, border:'1px solid '+colors.outlineVariant, color:colors.onSurface, cursor:'pointer' }}><Icon name="close" size={18}/></button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Download modal */}
-      {showDl !== null && (
-        <div style={{ position:'fixed', inset:0, zIndex:100, background:'rgba(0,0,0,0.7)', backdropFilter:'blur(8px)', display:'flex', alignItems:'center', justifyContent:'center', padding:'24px' }} onClick={() => setShowDl(null)}>
-          <div onClick={e => e.stopPropagation()} style={{ background:colors.surfaceContainerHigh, borderRadius:radius.xl, padding:'32px', width:'100%', maxWidth:'400px' }}>
-            <h3 style={{ fontSize:'18px', fontWeight:700, marginBottom:'20px' }}>Download Options</h3>
-            {[{label:'MP4 720p',sub:'Free plan'},{label:'MP4 1080p',sub:'Solo Creator+'},{label:'MP4 4K',sub:'Professional+'}].map(opt => (
-              <button key={opt.label} onClick={() => { alert('Downloading '+opt.label+'...'); setShowDl(null); }} style={{ width:'100%', padding:'14px 16px', borderRadius:radius.md, background:colors.surfaceContainer, border:'1px solid '+colors.outlineVariant, color:colors.onSurface, fontSize:'14px', fontWeight:600, cursor:'pointer', display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'8px', fontFamily:"'Inter',sans-serif" }}>
-                <span>{opt.label}</span>
-                <span style={{ fontSize:'11px', color:colors.onSurfaceVariant }}>{opt.sub}</span>
-              </button>
-            ))}
-            <button onClick={() => setShowDl(null)} style={{ width:'100%', padding:'10px', borderRadius:radius.md, background:'transparent', border:'1px solid '+colors.outlineVariant, color:colors.onSurfaceVariant, fontSize:'13px', cursor:'pointer', marginTop:'8px', fontFamily:"'Inter',sans-serif" }}>Cancel</button>
-          </div>
-        </div>
-      )}
-
-      <ComingSoonModal isOpen={!!csmClip} onClose={() => setCsmClip(null)} videoUrl={csmClip?.url} clipTitle={csmClip?.title} />
       <style>{'@keyframes fadeInUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}@media(max-width:640px){.clips-grid{grid-template-columns:1fr!important}}'}</style>
     </DashboardLayout>
   );
