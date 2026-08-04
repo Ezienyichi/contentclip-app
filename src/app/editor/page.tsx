@@ -30,10 +30,11 @@ function EditorPageInner() {
     } catch { return null; }
   });
 
-  const videoUrl    = editorClip?.video_url    || editorClip?.clip_url || searchParams.get('videoUrl') || '';
-  const downloadUrl = editorClip?.download_url || videoUrl;
-  const hashtags    = Array.isArray(editorClip?.hashtags) ? (editorClip.hashtags as string[]) : [];
-  const aiScore     = Number(editorClip?.virality_score ?? editorClip?.ai_score ?? 0);
+  const videoUrl     = editorClip?.video_url    || editorClip?.clip_url || searchParams.get('videoUrl') || '';
+  const downloadUrl  = editorClip?.download_url || videoUrl;
+  const thumbnailUrl = editorClip?.thumbnail_url || '';
+  const hashtags     = Array.isArray(editorClip?.hashtags) ? (editorClip.hashtags as string[]) : [];
+  const aiScore      = Number(editorClip?.virality_score ?? editorClip?.ai_score ?? 0);
 
   const [editTitle,   setEditTitle]   = useState<string>(editorClip?.title   || searchParams.get('title') || 'Clip');
   const [editCaption, setEditCaption] = useState<string>(editorClip?.caption || '');
@@ -97,11 +98,17 @@ function EditorPageInner() {
                   ref={videoRef}
                   key={videoUrl}
                   src={videoUrl}
+                  poster={thumbnailUrl || undefined}
                   style={{ width: '100%', aspectRatio: '9/16', objectFit: 'cover', display: 'block' }}
                   onPlay={()  => setPlaying(true)}
                   onPause={()  => setPlaying(false)}
                   onTimeUpdate={() => setTime(videoRef.current?.currentTime ?? 0)}
-                  onLoadedMetadata={() => setDuration(videoRef.current?.duration ?? 0)}
+                  onLoadedMetadata={() => {
+                    const v = videoRef.current;
+                    if (!v) return;
+                    setDuration(v.duration);
+                    if (!v.poster) v.currentTime = 0.001;
+                  }}
                   preload="metadata"
                 />
                 {!playing && (
