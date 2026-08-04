@@ -21,6 +21,7 @@ export default function ClipsPage() {
   const [plat, setPlat] = useState('All');
   const [preview, setPreview] = useState<number|null>(null);
   const [playingUrl, setPlayingUrl] = useState<string|null>(null);
+  const [downloadingIdx, setDownloadingIdx] = useState<number|null>(null);
 
   // Load real clips from sessionStorage
   useEffect(() => {
@@ -56,6 +57,28 @@ export default function ClipsPage() {
       if (sort === 'Shortest') return a.duration - b.duration;
       return 0;
     });
+
+  async function handleClipDownload(clip: Clip, idx: number) {
+    const url = clip.download_url || clip.clip_url || clip.video_url;
+    if (!url) return;
+    setDownloadingIdx(idx);
+    try {
+      const res = await fetch(url);
+      const blob = await res.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = (clip.title ? clip.title.replace(/\s+/g, '_') : 'clip') + '.mp4';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(blobUrl);
+    } catch {
+      window.open(url, '_blank');
+    } finally {
+      setDownloadingIdx(null);
+    }
+  }
 
   return (
     <DashboardLayout title="Generated Clips" subtitle={clips.length + ' clips ready'}>
@@ -107,9 +130,9 @@ export default function ClipsPage() {
                 <button onClick={() => { sessionStorage.setItem('editor_clip', JSON.stringify({ id: clip.id, video_url: clip.clip_url || clip.video_url || '', clip_url: clip.clip_url || '', download_url: clip.download_url || clip.clip_url || clip.video_url || '', thumbnail_url: clip.thumbnail_url || '', title: clip.title, hook_text: clip.hook_text || '', virality_score: clip.virality_score, caption: clip.suggested_caption || '', hashtags: clip.hashtags || '' })); router.push('/editor'); }} style={{ flex:1, padding:'8px', borderRadius:radius.md, background:colors.surfaceContainer, border:'1px solid '+colors.outlineVariant, color:colors.onSurface, fontSize:'11px', fontWeight:600, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:'4px', fontFamily:"'Inter',sans-serif" }}>
                   <Icon name="edit" size={13}/> Edit
                 </button>
-                <a href={clip.download_url || clip.clip_url || clip.video_url || '#'} download={clip.title ? clip.title.replace(/\s+/g,'_')+'.mp4' : 'clip.mp4'} style={{ padding:'8px 10px', borderRadius:radius.md, background:clip.download_url||clip.clip_url||clip.video_url ? gradients.primary : colors.surfaceContainer, color:'#FAF7FF', border:'none', fontSize:'11px', fontWeight:600, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:'4px', textDecoration:'none', opacity:clip.download_url||clip.clip_url||clip.video_url ? 1 : 0.4 }}>
-                  <Icon name="download" size={13}/>
-                </a>
+                <button onClick={() => handleClipDownload(clip, idx)} disabled={downloadingIdx === idx || !(clip.download_url||clip.clip_url||clip.video_url)} style={{ padding:'8px 10px', borderRadius:radius.md, background:clip.download_url||clip.clip_url||clip.video_url ? gradients.primary : colors.surfaceContainer, color:'#FAF7FF', border:'none', fontSize:'11px', fontWeight:600, cursor:clip.download_url||clip.clip_url||clip.video_url ? 'pointer' : 'default', display:'flex', alignItems:'center', justifyContent:'center', gap:'4px', opacity:downloadingIdx===idx ? 0.5 : (clip.download_url||clip.clip_url||clip.video_url ? 1 : 0.4) }}>
+                  <Icon name={downloadingIdx === idx ? 'hourglass_empty' : 'download'} size={13}/>
+                </button>
               </div>
             </div>
           </div>
