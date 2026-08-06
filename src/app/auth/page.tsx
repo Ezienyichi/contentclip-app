@@ -108,7 +108,7 @@ export default function AuthPage() {
         email: email.trim().toLowerCase(),
         password: password,
         options: {
-          emailRedirectTo: undefined,
+          emailRedirectTo: 'https://vangelclip.app/auth',
           data: {
             full_name: name || '',
           },
