@@ -193,19 +193,12 @@ export async function GET(req: NextRequest) {
       })
       .eq("tx_ref", reference);
 
-    // Send confirmation email
-    await fetch(`${APP_URL}/api/notifications`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        type: "payment_success",
-        userId,
-        data: {
-          plan,
-          credits,
-          amount: verifyData.data.amount / 100,
-        },
-      }),
+    await supabase.from("notifications").insert({
+      user_id: userId,
+      title: "Payment successful",
+      body: `Your ${plan} plan is now active with ${credits} credits.`,
+      type: "payment_success",
+      metadata: { plan, credits, amount: verifyData.data.amount / 100 },
     });
 
     return NextResponse.redirect(
@@ -252,15 +245,12 @@ export async function PATCH(req: NextRequest) {
           .update({ status: "completed", completed_at: new Date().toISOString() })
           .eq("tx_ref", reference);
 
-        // Send email
-        await fetch(`${APP_URL}/api/notifications`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            type: "payment_success",
-            userId,
-            data: { plan, credits, amount: amount / 100 },
-          }),
+        await supabase.from("notifications").insert({
+          user_id: userId,
+          title: "Payment successful",
+          body: `Your ${plan} plan is now active with ${credits} credits.`,
+          type: "payment_success",
+          metadata: { plan, credits, amount: amount / 100 },
         });
       }
     }
