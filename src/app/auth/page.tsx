@@ -1,6 +1,6 @@
 'use client';
-import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase-browser';
 import Icon from '@/components/Icon';
 import { colors, gradients, radius, inputField } from '@/lib/tokens';
@@ -9,9 +9,12 @@ const supabase = createClient();
 
 type View = 'signin' | 'signup' | 'forgot' | 'forgot_sent';
 
-export default function AuthPage() {
+function AuthPageInner() {
   const router = useRouter();
-  const [view, setView] = useState<View>('signin');
+  const searchParams = useSearchParams();
+  const [view, setView] = useState<View>(
+    () => searchParams.get('mode') === 'signup' ? 'signup' : 'signin'
+  );
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
@@ -476,5 +479,13 @@ export default function AuthPage() {
       </section>
       <style>{'@media(max-width:768px){.auth-left{display:none!important}}'}</style>
     </main>
+  );
+}
+
+export default function AuthPage() {
+  return (
+    <Suspense fallback={<div style={{ minHeight: '100vh', background: '#050010' }} />}>
+      <AuthPageInner />
+    </Suspense>
   );
 }

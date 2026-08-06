@@ -261,7 +261,7 @@ export default function HomePage() {
           </div>
           <div style={{ display:'flex', gap:10, alignItems:'center' }}>
             <a href="/auth" className="vc-nav-sighin" style={{ ...mktBtn.ghost, fontSize:13.5, padding:'8px 14px', minHeight:36 }}>Sign in</a>
-            <a href="/auth" style={{ ...mktBtn.primary, fontSize:13.5, padding:'10px 18px', minHeight:36 }}>Start Free</a>
+            <a href="/auth?mode=signup" style={{ ...mktBtn.primary, fontSize:13.5, padding:'10px 18px', minHeight:36 }}>Start Free</a>
             <button className="vc-hamburger" onClick={() => setMenuOpen(o => !o)} aria-label="Toggle menu" aria-expanded={menuOpen}>
               <span /><span /><span />
             </button>
@@ -272,7 +272,7 @@ export default function HomePage() {
       <div className={`vc-mobile-menu${menuOpen ? ' open' : ''}`} onClick={() => setMenuOpen(false)}>
         {NAV_LINKS.map(l => <a key={l.label} href={l.href}>{l.label}</a>)}
         <a href="/auth" style={{ color:mkt.muted }}>Sign in</a>
-        <a href="/auth" style={{ background:mkt.brandGrad, color:'#fff', borderRadius:mkt.r, textAlign:'center', marginTop:12, padding:'15px 0', boxShadow:`inset 1px 1px 0 rgba(255,255,255,.25),${mkt.glow}`, border:'none' }}>Start Free</a>
+        <a href="/auth?mode=signup" style={{ background:mkt.brandGrad, color:'#fff', borderRadius:mkt.r, textAlign:'center', marginTop:12, padding:'15px 0', boxShadow:`inset 1px 1px 0 rgba(255,255,255,.25),${mkt.glow}`, border:'none' }}>Start Free</a>
       </div>
 
       {/* ══ HERO ═══════════════════════════════════════════════════════════════ */}
@@ -514,7 +514,7 @@ export default function HomePage() {
               <div style={{ fontSize:12.5, color:mkt.muted, marginTop:5, minHeight:18 }}>
                 {annual ? plan.sub.annual : plan.sub.monthly}
               </div>
-              <button onClick={() => router.push('/auth')} style={planCta(plan.popular)}>{plan.cta}</button>
+              <button onClick={() => router.push('/auth?mode=signup')} style={planCta(plan.popular)}>{plan.cta}</button>
               <div style={{ height:1, background:mkt.border, margin:'22px 0' }} />
               <div style={{ fontSize:12, fontWeight:700, letterSpacing:'.06em', textTransform:'uppercase', color:mkt.muted, marginBottom:14 }}>{plan.includes}</div>
               <div style={{ display:'flex', flexDirection:'column', gap:11 }}>
