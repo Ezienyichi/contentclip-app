@@ -154,7 +154,7 @@ export default function AboutPage() {
         <div className="about-hero-inner">
           {/* LEFT */}
           <div className="about-left">
-            <div className="about-badge">🌍 African-built. World-class.</div>
+            <div className="about-badge">African-built. World-class.</div>
             <h1 className="about-h1">
               Built for African<br />
               <em>Voices.</em> Made<br />for the World.
@@ -162,7 +162,7 @@ export default function AboutPage() {
             <p className="about-sub">
               VangelClip is Africa&apos;s first AI-powered short-clip platform
               built for gospel creators, educators, pastors, motivational
-              speakers, and inspirational voices &mdash; turning long-form
+              speakers, and inspirational voices, turning long-form
               content into viral short clips that reach the world.
             </p>
             <div className="about-tags">
@@ -234,7 +234,7 @@ export default function AboutPage() {
       <section style={{ maxWidth: 800, margin: '0 auto', padding: '60px 24px', borderTop: '1px solid rgba(70,69,85,0.1)' }}>
         <h2 style={{ fontSize: 32, fontWeight: 800, marginBottom: 24, textAlign: 'center' }}>Why VangelClip?</h2>
         <p style={{ fontSize: 17, color: colors.onSurfaceVariant, lineHeight: 1.85, textAlign: 'center', maxWidth: 680, margin: '0 auto' }}>
-          The name is rooted in <strong style={{ color: colors.onSurface }}>Evangel</strong> &mdash; from Greek, meaning Gospel, good news,
+          The name is rooted in <strong style={{ color: colors.onSurface }}>Evangel</strong>, from Greek, meaning Gospel, good news,
           and the proclamation of truth. Combined with <strong style={{ color: colors.onSurface }}>Clip</strong>, it speaks to our core purpose:
           take the world&apos;s most important messages and make them clip-ready for a generation that consumes content in seconds.
         </p>
@@ -245,12 +245,11 @@ export default function AboutPage() {
         <h2 style={{ fontSize: 32, fontWeight: 800, marginBottom: 48, textAlign: 'center' }}>Three Pillars</h2>
         <div className="pillars-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 24 }}>
           {[
-            { icon: '✝', title: 'Gospel & Faith', color: '#7c3aed', body: 'Pastors, evangelists, gospel musicians, and faith creators produce powerful messages. A Sunday sermon that moves thousands in a church can move millions on TikTok — if the right 60 seconds are clipped. VangelClip finds those 60 seconds automatically.' },
-            { icon: '📚', title: 'Education & Knowledge', color: '#06b6d4', body: 'African educators, professors, coaches, and thought leaders produce world-class content every day. VangelClip gives them the same AI clipping technology global creators use — designed for the African classroom, conference, and content studio.' },
-            { icon: '💡', title: 'Inspiration & Transformation', color: '#10b981', body: 'Motivational speakers, life coaches, and community leaders whose words transform lives deserve global reach. VangelClip makes every profound statement clip-ready for the platforms where the next generation lives.' },
+            { title: 'Gospel & Faith', color: '#7c3aed', body: 'Pastors, evangelists, gospel musicians, and faith creators produce powerful messages. A Sunday sermon that moves thousands in a church can move millions on TikTok, if the right 60 seconds are clipped. VangelClip finds those 60 seconds automatically.' },
+            { title: 'Education & Knowledge', color: '#06b6d4', body: 'African educators, professors, coaches, and thought leaders produce world-class content every day. VangelClip gives them the same AI clipping technology global creators use, designed for the African classroom, conference, and content studio.' },
+            { title: 'Inspiration & Transformation', color: '#10b981', body: 'Motivational speakers, life coaches, and community leaders whose words transform lives deserve global reach. VangelClip makes every profound statement clip-ready for the platforms where the next generation lives.' },
           ].map(p => (
             <div key={p.title} style={{ background: colors.surfaceContainerHigh, borderRadius: radius.xl, padding: 36 }}>
-              <div style={{ fontSize: 36, marginBottom: 20 }}>{p.icon}</div>
               <h3 style={{ fontSize: 20, fontWeight: 700, marginBottom: 14, color: p.color }}>{p.title}</h3>
               <p style={{ fontSize: 14, color: colors.onSurfaceVariant, lineHeight: 1.8 }}>{p.body}</p>
             </div>
@@ -284,9 +283,7 @@ export default function AboutPage() {
       <section style={{ maxWidth: 800, margin: '0 auto', padding: '60px 24px', borderTop: '1px solid rgba(70,69,85,0.1)' }}>
         <h2 style={{ fontSize: 32, fontWeight: 800, marginBottom: 24, textAlign: 'center' }}>The Vision</h2>
         <p style={{ fontSize: 17, color: colors.onSurfaceVariant, lineHeight: 1.85, textAlign: 'center', maxWidth: 680, margin: '0 auto' }}>
-          In 5 years, VangelClip will be the platform a pastor in Lagos uses to clip his Sunday sermon and reach 2 million people
-          by Monday morning. The tool a gospel artist in Accra uses to turn a 4-minute song into 8 viral Reels. What a teacher
-          in Nairobi uses to clip a masterclass into 15 educational shorts that change lives worldwide.
+          In 5 years, VangelClip will turn one Sunday sermon into 2 million views by Monday. How a gospel artist in Accra turns a 4-minute song into over 20 viral Reels. How a teacher in Nairobi turns a masterclass into 15 shorts that reach the world. That&apos;s the mission, multiplying your visibility, one clip at a time.
         </p>
       </section>
 
@@ -318,7 +315,6 @@ export default function AboutPage() {
         <p style={{ fontSize: 15, color: colors.onSurfaceVariant, marginBottom: 40, textAlign: 'center' }}>Have a question or need help? Send us a message and we&apos;ll get back to you within 2 business days.</p>
         {supportSent ? (
           <div style={{ textAlign: 'center', padding: '40px 20px', background: colors.surfaceContainerHigh, borderRadius: radius.xl, border: '1px solid rgba(74,222,128,0.2)' }}>
-            <div style={{ fontSize: 40, marginBottom: 12 }}>✅</div>
             <h3 style={{ fontSize: 20, fontWeight: 700, marginBottom: 8 }}>Message Sent!</h3>
             <p style={{ color: colors.onSurfaceVariant }}>Your email client should open. We&apos;ll reply to <strong>{supportEmail}</strong> within 2 business days.</p>
             <button onClick={() => { setSupportSent(false); setSupportName(''); setSupportEmail(''); setSupportMessage(''); }} style={{ marginTop: 20, padding: '10px 24px', borderRadius: radius.md, background: colors.surfaceContainerHighest, border: '1px solid ' + colors.outlineVariant, color: colors.onSurface, cursor: 'pointer', fontFamily: "'Inter',sans-serif", fontWeight: 600, fontSize: 13 }}>Send Another</button>

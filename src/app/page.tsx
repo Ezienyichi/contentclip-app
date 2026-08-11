@@ -18,7 +18,7 @@ const PHONES = [
   { name: 'CONFERENCES', cap: 'Stage moments that move',      cls: 'vph-mid-l'   },
   { name: 'PODCAST',     cap: 'Why your why matters',         cls: 'vph-center'  },
   { name: 'EDUCATION',   cap: 'A masterclass in 15 shorts',   cls: 'vph-mid-r'   },
-  { name: 'SERMON',      cap: 'Faith over fear — Sunday',     cls: 'vph-outer-r' },
+  { name: 'SERMON',      cap: 'Faith over fear. Sunday',      cls: 'vph-outer-r' },
 ];
 
 const STATS = [
@@ -89,7 +89,7 @@ const PLANS = [
 ];
 
 const FAQS = [
-  { q: 'What does "minutes" mean?',      a: 'Minutes are the total length of video you process each month. A 40-minute sermon uses 40 minutes — no matter how many clips you generate from it.' },
+  { q: 'What does "minutes" mean?',      a: 'Minutes are the total length of video you process each month. A 40-minute sermon uses 40 minutes, no matter how many clips you generate from it.' },
   { q: 'What happens when I run out?',   a: 'Upgrade anytime for more minutes, or wait for your monthly reset. Clips you already made stay yours.' },
   { q: 'Do unused minutes roll over?',   a: 'No, your minute balance resets each month.' },
   { q: 'Can I cancel anytime?',          a: 'Yes, no contract.' },
@@ -340,7 +340,7 @@ export default function HomePage() {
           AI clipping for podcasters, creators &amp; ministries
         </div>
         <p style={{ fontSize:'clamp(15px,2.2vw,18px)', lineHeight:1.6, color:mkt.muted, maxWidth:560, margin:'0 auto 30px' }}>
-          VangelClip turns your long videos into dozens of short, captioned clips — so your best moments reach more people, on every platform, in minutes.
+          VangelClip turns your long videos into dozens of short, captioned clips so your best moments reach more people, on every platform, in minutes.
         </p>
         <div className="vc-hero-row">
           <div className="vc-hero-input">
@@ -359,7 +359,7 @@ export default function HomePage() {
           </div>
           <button onClick={startClipping} className="vc-hero-cta">Start Clipping Free →</button>
         </div>
-        <p style={{ fontSize:13, color:mkt.muted, marginTop:14 }}>No card needed · First clip is on us — try any link above.</p>
+        <p style={{ fontSize:13, color:mkt.muted, marginTop:14 }}>No card needed · First clip is on us. Try any link above.</p>
       </section>
 
       {/* ══ PHONE CLUSTER ══════════════════════════════════════════════════════ */}
@@ -396,7 +396,7 @@ export default function HomePage() {
       <section className="vc-sec" style={{ maxWidth:760 }}>
         <div style={{ fontSize:13, fontWeight:700, letterSpacing:'.1em', textTransform:'uppercase', color:mkt.brand, marginBottom:18 }}>Why VangelClip?</div>
         <p style={{ fontFamily:mkt.fontHead, fontWeight:500, fontSize:'clamp(17px,2.5vw,25px)', lineHeight:1.45, letterSpacing:'-.01em', margin:0 }}>
-          Rooted in <em style={{ color:mkt.brand }}>Evangel</em> — Greek for gospel, good news, the proclamation of truth. Joined with <em style={{ color:mkt.brand }}>Clip</em>, it names our purpose: take the world&apos;s most important messages, content or information and make them clip-ready for a generation that consumes content in seconds.
+          Rooted in <em style={{ color:mkt.brand }}>Evangel</em>, Greek for gospel, good news, the proclamation of truth. Joined with <em style={{ color:mkt.brand }}>Clip</em>, it names our purpose: take the world&apos;s most important messages, content or information and make them clip-ready for a generation that consumes content in seconds.
         </p>
       </section>
 
@@ -584,7 +584,7 @@ export default function HomePage() {
             <button onClick={startClipping} className="vc-cta-btn">Start Clipping Free →</button>
           </div>
           <div style={{ position:'relative', fontSize:13, color:'rgba(255,255,255,.78)', marginTop:14 }}>
-            No card needed · First clip is on us — try any link above.
+            No card needed · First clip is on us. Try any link above.
           </div>
         </div>
       </section>
