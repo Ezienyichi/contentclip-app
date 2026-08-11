@@ -132,18 +132,6 @@ function AuthPageInner() {
         return;
       }
 
-      // Create profile row for new users
-      if (data.user) {
-        await supabase.from('profiles').upsert({
-          id: data.user.id,
-          email: email.trim().toLowerCase(),
-          full_name: name,
-          plan: 'free',
-          credits: 720,
-          created_at: new Date().toISOString(),
-        });
-      }
-
       // If we have a session go straight to dashboard
       if (data.session) {
         await supabase.auth.setSession(data.session);
