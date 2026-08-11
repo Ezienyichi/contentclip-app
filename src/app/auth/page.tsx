@@ -154,11 +154,9 @@ function AuthPageInner() {
         }
 
         if (signInError) {
-          setError(
-            'Account created but email confirmation ' +
-            'is still enabled in settings. ' +
-            'Please contact support or ' +
-            'sign in after confirming your email.'
+          setSuccess(
+            `Account created! We've sent a confirmation link to ${email.trim().toLowerCase()}. ` +
+            `Check your inbox (and spam folder), click the link, then sign in.`
           );
           return;
         }
