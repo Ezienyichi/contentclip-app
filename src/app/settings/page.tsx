@@ -1,5 +1,6 @@
 'use client';
 import { createClient } from '@/lib/supabase-browser';
+import { clearClipStorage } from '@/lib/clearClipStorage';
 import React, { useState, useRef } from 'react';
 import DashboardLayout from '@/components/DashboardLayout';
 import Icon from '@/components/Icon';
@@ -443,6 +444,7 @@ export default function SettingsPage() {
                     await sendEmail('account_deleted', {});
                     await supabase.from('profiles').delete().eq('id', userId);
                     await supabase.auth.signOut();
+                    clearClipStorage();
                     router.push('/auth');
                   }}
                   style={{ flex: 1, padding: '12px', borderRadius: radius.md, background: deleteConfirm === 'DELETE' ? colors.errorContainer : 'rgba(255,180,171,0.05)', color: deleteConfirm === 'DELETE' ? '#fff' : colors.onSurfaceVariant, border: 'none', fontWeight: 700, fontSize: '13px', cursor: deleteConfirm === 'DELETE' ? 'pointer' : 'not-allowed', fontFamily: "'Inter',sans-serif", opacity: deleteConfirm === 'DELETE' ? 1 : 0.4 }}

@@ -2,6 +2,7 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase-browser';
+import { clearClipStorage } from '@/lib/clearClipStorage';
 import Icon from '@/components/Icon';
 import { colors, gradients, radius, inputField } from '@/lib/tokens';
 
@@ -83,7 +84,7 @@ function AuthPageInner() {
       }
 
       if (data.session) {
-        router.push('/dashboard');
+        clearClipStorage(); router.push('/dashboard');
         return;
       }
 
@@ -135,7 +136,7 @@ function AuthPageInner() {
       // If we have a session go straight to dashboard
       if (data.session) {
         await supabase.auth.setSession(data.session);
-        router.push('/dashboard');
+        clearClipStorage(); router.push('/dashboard');
         return;
       }
 
@@ -148,7 +149,7 @@ function AuthPageInner() {
           });
 
         if (signInData.session) {
-          router.push('/dashboard');
+          clearClipStorage(); router.push('/dashboard');
           return;
         }
 

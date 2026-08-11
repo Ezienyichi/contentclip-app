@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Icon from './Icon';
 import { colors, gradients, radius } from '@/lib/tokens';
 import { createClient } from '@/lib/supabase-browser';
+import { clearClipStorage } from '@/lib/clearClipStorage';
 
 const ADMIN_EMAIL = 'adminvangelclip@gmail.com';
 const NAV = [
@@ -25,8 +26,13 @@ export default function Sidebar() {
       setIsAdmin(user?.email === ADMIN_EMAIL);
     });
   }, []);
-  const go = (href: string) => {
-    if (href === '#signout') { router.push('/auth'); return; }
+  const go = async (href: string) => {
+    if (href === '#signout') {
+      clearClipStorage();
+      await createClient().auth.signOut();
+      router.push('/auth');
+      return;
+    }
     if (href === '#') return;
     router.push(href);
   };
