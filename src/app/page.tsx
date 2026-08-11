@@ -149,13 +149,13 @@ export default function HomePage() {
       {/* ── All CSS ── */}
       <style>{`
         /* Phone cluster */
-        .vc-phones   { display:flex; flex-direction:row-reverse; gap:18px; justify-content:center; align-items:flex-end; height:360px; position:relative; overflow:visible; }
+        .vc-phones   { display:flex; flex-direction:row-reverse; gap:20px; justify-content:center; align-items:flex-end; height:500px; position:relative; overflow:visible; }
         .vc-phone    { border-radius:22px; border:1px solid ${mkt.border}; overflow:hidden; background:${mkt.surface}; flex:none; position:relative; box-shadow:${mkt.cardShadow}; }
-        .vph-outer-l { width:118px; height:248px; animation:vcFloat  5.2s ease-in-out infinite; }
-        .vph-mid-l   { width:138px; height:288px; animation:vcFloat2 4.4s ease-in-out infinite; }
-        .vph-center  { width:172px; height:340px; animation:vcFloat  4.0s ease-in-out infinite; z-index:2; }
-        .vph-mid-r   { width:138px; height:288px; animation:vcFloat2 4.8s ease-in-out infinite; }
-        .vph-outer-r { width:118px; height:248px; animation:vcFloat  5.6s ease-in-out infinite; }
+        .vph-outer-l { width:160px; height:336px; animation:vcFloat  5.2s ease-in-out infinite; }
+        .vph-mid-l   { width:186px; height:390px; animation:vcFloat2 4.4s ease-in-out infinite; }
+        .vph-center  { width:232px; height:486px; animation:vcFloat  4.0s ease-in-out infinite; z-index:2; }
+        .vph-mid-r   { width:186px; height:390px; animation:vcFloat2 4.8s ease-in-out infinite; }
+        .vph-outer-r { width:160px; height:336px; animation:vcFloat  5.6s ease-in-out infinite; }
         @keyframes vcFloat  { 0%,100%{transform:translateY(0)}    50%{transform:translateY(-14px)} }
         @keyframes vcFloat2 { 0%,100%{transform:translateY(-8px)} 50%{transform:translateY(6px)}  }
 
@@ -215,7 +215,17 @@ export default function HomePage() {
           .vc-hamburger  { display:flex; }
         }
 
-        /* ── Phone cluster 640px ── */
+        /* ── Phone cluster 900px: hold current sizes so 641–900px range stays clean ── */
+        @media (max-width:900px) {
+          .vc-phones   { height:360px; gap:18px; }
+          .vph-outer-l { width:118px; height:248px; }
+          .vph-mid-l   { width:138px; height:288px; }
+          .vph-center  { width:172px; height:340px; }
+          .vph-mid-r   { width:138px; height:288px; }
+          .vph-outer-r { width:118px; height:248px; }
+        }
+
+        /* ── Phone cluster 640px: 3-card mobile layout ── */
         @media (max-width:640px) {
           .vph-outer-l, .vph-outer-r { display:none; }
           .vc-phones  { height:270px; gap:10px; }
@@ -360,7 +370,7 @@ export default function HomePage() {
       </section>
 
       {/* ══ PHONE CLUSTER ══════════════════════════════════════════════════════ */}
-      <div style={{ maxWidth:mkt.maxW, margin:'0 auto', padding:'0 28px 8px', overflow:'hidden' }}>
+      <div style={{ maxWidth:mkt.maxW, margin:'0 auto', padding:'0 28px 0', overflow:'hidden' }}>
         <div className="vc-phones">
           {PHONES.map((ph, i) => (
             <div key={ph.name} className={`vc-phone ${ph.cls}`} style={{ animationDelay:`${i*0.35}s` }}>
@@ -375,7 +385,7 @@ export default function HomePage() {
               </div>
             </div>
           ))}
-          <div style={{ position:'absolute', left:'50%', top:'55%', transform:'translate(-50%,-50%)', width:560, height:300, background:`radial-gradient(closest-side,${mkt.brand2},transparent)`, opacity:0.32, filter:'blur(40px)', pointerEvents:'none', zIndex:0 }} />
+          <div style={{ position:'absolute', left:'50%', top:'55%', transform:'translate(-50%,-50%)', width:720, height:400, background:`radial-gradient(closest-side,${mkt.brand2},transparent)`, opacity:0.32, filter:'blur(40px)', pointerEvents:'none', zIndex:0 }} />
         </div>
       </div>
 
