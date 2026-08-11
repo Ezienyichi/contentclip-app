@@ -54,7 +54,7 @@ const PLANS = [
   },
   {
     name: 'STARTER',
-    tagline: 'About 5 full sermons or 15 short clips a month.',
+    tagline: '',
     popular: true,
     price:    { monthly: '$24', annual: '$19' },
     sub:      { monthly: 'Billed monthly', annual: 'Billed annually ($228/year)' },
@@ -70,7 +70,7 @@ const PLANS = [
   },
   {
     name: 'PRO',
-    tagline: 'About 12 sermons or tons of content.',
+    tagline: '',
     popular: false,
     price:    { monthly: '$49', annual: '$39' },
     sub:      { monthly: 'Billed monthly', annual: 'Billed annually ($468/year)' },
@@ -336,9 +336,6 @@ export default function HomePage() {
           Spread your Content.<br />
           <span style={{ fontStyle:'italic', fontWeight:700, color:mkt.brand }}>One Video, Seen Everywhere.</span>
         </h1>
-        <div style={{ display:'inline-flex', alignItems:'center', gap:8, background:mkt.accent, color:mkt.accentText, fontWeight:600, fontSize:12.5, padding:'6px 13px', borderRadius:100, marginBottom:26, boxShadow:`inset 1px 1px 0 ${mkt.edge}` }}>
-          AI clipping for podcasters, creators &amp; ministries
-        </div>
         <p style={{ fontSize:'clamp(15px,2.2vw,18px)', lineHeight:1.6, color:mkt.muted, maxWidth:560, margin:'0 auto 30px' }}>
           VangelClip turns your long videos into dozens of short, captioned clips so your best moments reach more people, on every platform, in minutes.
         </p>

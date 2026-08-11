@@ -235,7 +235,6 @@ interface ProcessResult {
 }
 
 type AspectRatio = "9:16" | "16:9" | "1:1" | "4:5";
-type Template = "moments" | "highlights" | "tutorial" | "promo";
 
 function TimeRangeSelector({
   enabled,
@@ -682,7 +681,6 @@ export default function ImportPage() {
   const [maxDuration, setMaxDuration] = useState(60);
   const [aspectRatio, setAspectRatio] = useState<AspectRatio>("9:16");
   const [subtitles, setSubtitles] = useState(true);
-  const [template, setTemplate] = useState<Template>("moments");
   const [userPlan, setUserPlan] = useState<string>("free");
   const [userCredits, setUserCredits] = useState<number>(0);
   const [timeRangeEnabled, setTimeRangeEnabled] = useState(true);
@@ -1271,60 +1269,6 @@ export default function ImportPage() {
               />
             </div>
 
-            {/* Template */}
-            <div>
-              <label
-                style={{
-                  fontSize: 13,
-                  fontWeight: 600,
-                  color: colors.onSurface,
-                  display: "block",
-                  marginBottom: 8,
-                }}
-              >
-                Template
-              </label>
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(4, 1fr)",
-                  gap: 8,
-                }}
-              >
-                {(
-                  ["moments", "highlights", "tutorial", "promo"] as Template[]
-                ).map((t) => (
-                  <button
-                    key={t}
-                    onClick={() => setTemplate(t)}
-                    style={{
-                      height: 38,
-                      borderRadius: radius.md,
-                      border: `1.5px solid ${
-                        template === t
-                          ? colors.primary
-                          : colors.outlineVariant
-                      }`,
-                      background:
-                        template === t
-                          ? `${colors.primaryContainer}30`
-                          : "transparent",
-                      color:
-                        template === t
-                          ? colors.primary
-                          : colors.onSurfaceVariant,
-                      fontSize: 12,
-                      fontWeight: 600,
-                      cursor: "pointer",
-                      textTransform: "capitalize",
-                    }}
-                  >
-                    {t}
-                  </button>
-                ))}
-              </div>
-            </div>
-
             {/* Time Range */}
             <TimeRangeSelector
               enabled={timeRangeEnabled}
@@ -1497,6 +1441,234 @@ export default function ImportPage() {
               )}
             </div>
 
+            {/* Clip Settings */}
+            <div
+              style={{
+                borderRadius: radius.xl,
+                border: `1px solid ${colors.outlineVariant}`,
+                background: colors.surfaceContainerLow,
+                padding: 20,
+                display: "flex",
+                flexDirection: "column",
+                gap: 20,
+              }}
+            >
+              <h3
+                style={{
+                  margin: 0,
+                  fontSize: 14,
+                  fontWeight: 700,
+                  color: colors.onSurface,
+                }}
+              >
+                Clip Settings
+              </h3>
+
+              {/* Aspect Ratio */}
+              <div>
+                <label
+                  style={{
+                    fontSize: 12,
+                    color: colors.onSurfaceVariant,
+                    display: "block",
+                    marginBottom: 8,
+                  }}
+                >
+                  Aspect Ratio
+                </label>
+                <div style={{ display: "flex", gap: 8 }}>
+                  {(["9:16", "16:9", "1:1", "4:5"] as AspectRatio[]).map((ar) => (
+                    <button
+                      key={ar}
+                      onClick={() => setAspectRatio(ar)}
+                      style={{
+                        flex: 1,
+                        height: 36,
+                        borderRadius: radius.md,
+                        border: `1.5px solid ${
+                          aspectRatio === ar
+                            ? colors.primary
+                            : colors.outlineVariant
+                        }`,
+                        background:
+                          aspectRatio === ar
+                            ? `${colors.primaryContainer}30`
+                            : "transparent",
+                        color:
+                          aspectRatio === ar
+                            ? colors.primary
+                            : colors.onSurfaceVariant,
+                        fontSize: 11,
+                        fontWeight: 700,
+                        cursor: "pointer",
+                      }}
+                    >
+                      {ar}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Num Clips */}
+              <div>
+                <label
+                  style={{
+                    fontSize: 12,
+                    color: colors.onSurfaceVariant,
+                    display: "block",
+                    marginBottom: 8,
+                  }}
+                >
+                  Number of Clips —{" "}
+                  <strong style={{ color: colors.onSurface }}>{numClips}</strong>
+                </label>
+                <input
+                  type="range"
+                  min={1}
+                  max={10}
+                  value={numClips ?? 3}
+                  onChange={(e) => setNumClips(Number(e.target.value))}
+                  style={{ width: "100%", accentColor: colors.primary }}
+                />
+              </div>
+
+              {/* Duration */}
+              <div>
+                <label
+                  style={{
+                    fontSize: 12,
+                    color: colors.onSurfaceVariant,
+                    display: "block",
+                    marginBottom: 8,
+                  }}
+                >
+                  Duration Range (seconds)
+                </label>
+                <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                  <input
+                    type="number"
+                    min={5}
+                    value={minDuration ?? 15}
+                    onChange={(e) => setMinDuration(Number(e.target.value))}
+                    style={{
+                      width: "100%",
+                      height: 36,
+                      borderRadius: radius.md,
+                      border: `1px solid ${colors.outlineVariant}`,
+                      background: colors.surfaceContainerLowest,
+                      color: colors.onSurface,
+                      fontSize: 13,
+                      textAlign: "center",
+                      outline: "none",
+                    }}
+                  />
+                  <span style={{ color: colors.onSurfaceVariant, fontSize: 12 }}>
+                    to
+                  </span>
+                  <input
+                    type="number"
+                    max={180}
+                    value={maxDuration ?? 60}
+                    onChange={(e) => setMaxDuration(Number(e.target.value))}
+                    style={{
+                      width: "100%",
+                      height: 36,
+                      borderRadius: radius.md,
+                      border: `1px solid ${colors.outlineVariant}`,
+                      background: colors.surfaceContainerLowest,
+                      color: colors.onSurface,
+                      fontSize: 13,
+                      textAlign: "center",
+                      outline: "none",
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Subtitles */}
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <div>
+                  <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: colors.onSurface }}>
+                    Subtitles
+                  </p>
+                  <p style={{ margin: 0, fontSize: 11, color: colors.onSurfaceVariant }}>
+                    Auto captions
+                  </p>
+                </div>
+                <button
+                  onClick={() => setSubtitles((p) => !p)}
+                  style={{
+                    width: 44,
+                    height: 24,
+                    borderRadius: 12,
+                    border: "none",
+                    cursor: "pointer",
+                    background: subtitles
+                      ? colors.primaryContainer
+                      : colors.surfaceContainerHighest,
+                    position: "relative",
+                    transition: "background 0.2s",
+                  }}
+                >
+                  <span
+                    style={{
+                      position: "absolute",
+                      top: 3,
+                      left: subtitles ? 23 : 3,
+                      width: 18,
+                      height: 18,
+                      borderRadius: "50%",
+                      background: subtitles
+                        ? colors.onPrimaryContainer
+                        : colors.onSurfaceVariant,
+                      transition: "left 0.2s",
+                    }}
+                  />
+                </button>
+              </div>
+
+              {/* Credit cost */}
+              {(() => {
+                const isUpload = inputTab === 'upload';
+                const cost = isUpload ? numClips : creditCost;
+                const notEnough = isUpload ? uploadInsufficientCredits : insufficientCredits;
+                return (
+                  <div
+                    style={{
+                      borderRadius: radius.md,
+                      background: notEnough ? `${colors.error}10` : `${colors.primaryContainer}20`,
+                      border: `1px solid ${notEnough ? colors.error : colors.primary}30`,
+                      padding: "10px 14px",
+                    }}
+                  >
+                    <p style={{ margin: 0, fontSize: 12, color: notEnough ? colors.error : colors.primary, fontWeight: 600 }}>
+                      Cost estimate
+                    </p>
+                    <p style={{ margin: "4px 0 0", fontSize: 20, fontWeight: 800, color: colors.onSurface }}>
+                      {cost}{" "}
+                      <span style={{ fontSize: 13, fontWeight: 500, color: colors.onSurfaceVariant }}>credits</span>
+                    </p>
+                    {isUpload && (
+                      <p style={{ margin: "4px 0 0", fontSize: 11, color: colors.onSurfaceVariant }}>1 per clip generated</p>
+                    )}
+                    {userCredits > 0 && (
+                      <p style={{ margin: "6px 0 0", fontSize: 11, color: notEnough ? colors.error : colors.onSurfaceVariant }}>
+                        {notEnough
+                          ? <><span>Not enough credits — </span><a href="/pricing" style={{ color: colors.primary, fontWeight: 700 }}>upgrade to continue</a></>
+                          : `You have ${userCredits} remaining`}
+                      </p>
+                    )}
+                  </div>
+                );
+              })()}
+            </div>
+
             {/* Error */}
             {error && (
               <div
@@ -1568,252 +1740,6 @@ export default function ImportPage() {
                 ✓ Your clips are ready — scroll down to view them
               </div>
             )}
-          </div>
-
-          {/* Right: Settings */}
-          <div
-            style={{
-              borderRadius: radius.xl,
-              border: `1px solid ${colors.outlineVariant}`,
-              background: colors.surfaceContainerLow,
-              padding: 20,
-              height: "fit-content",
-              display: "flex",
-              flexDirection: "column",
-              gap: 20,
-            }}
-          >
-            <h3
-              style={{
-                margin: 0,
-                fontSize: 14,
-                fontWeight: 700,
-                color: colors.onSurface,
-              }}
-            >
-              Clip Settings
-            </h3>
-
-            {/* Aspect Ratio */}
-            <div>
-              <label
-                style={{
-                  fontSize: 12,
-                  color: colors.onSurfaceVariant,
-                  display: "block",
-                  marginBottom: 8,
-                }}
-              >
-                Aspect Ratio
-              </label>
-              <div style={{ display: "flex", gap: 8 }}>
-                {(["9:16", "16:9", "1:1", "4:5"] as AspectRatio[]).map((ar) => (
-                  <button
-                    key={ar}
-                    onClick={() => setAspectRatio(ar)}
-                    style={{
-                      flex: 1,
-                      height: 36,
-                      borderRadius: radius.md,
-                      border: `1.5px solid ${
-                        aspectRatio === ar
-                          ? colors.primary
-                          : colors.outlineVariant
-                      }`,
-                      background:
-                        aspectRatio === ar
-                          ? `${colors.primaryContainer}30`
-                          : "transparent",
-                      color:
-                        aspectRatio === ar
-                          ? colors.primary
-                          : colors.onSurfaceVariant,
-                      fontSize: 11,
-                      fontWeight: 700,
-                      cursor: "pointer",
-                    }}
-                  >
-                    {ar}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Num Clips */}
-            <div>
-              <label
-                style={{
-                  fontSize: 12,
-                  color: colors.onSurfaceVariant,
-                  display: "block",
-                  marginBottom: 8,
-                }}
-              >
-                Number of Clips —{" "}
-                <strong style={{ color: colors.onSurface }}>{numClips}</strong>
-              </label>
-              <input
-                type="range"
-                min={1}
-                max={10}
-                value={numClips ?? 3}
-                onChange={(e) => setNumClips(Number(e.target.value))}
-                style={{ width: "100%", accentColor: colors.primary }}
-              />
-            </div>
-
-            {/* Duration */}
-            <div>
-              <label
-                style={{
-                  fontSize: 12,
-                  color: colors.onSurfaceVariant,
-                  display: "block",
-                  marginBottom: 8,
-                }}
-              >
-                Duration Range (seconds)
-              </label>
-              <div
-                style={{ display: "flex", gap: 8, alignItems: "center" }}
-              >
-                <input
-                  type="number"
-                  min={5}
-                  value={minDuration ?? 15}
-                  onChange={(e) => setMinDuration(Number(e.target.value))}
-                  style={{
-                    width: "100%",
-                    height: 36,
-                    borderRadius: radius.md,
-                    border: `1px solid ${colors.outlineVariant}`,
-                    background: colors.surfaceContainerLowest,
-                    color: colors.onSurface,
-                    fontSize: 13,
-                    textAlign: "center",
-                    outline: "none",
-                  }}
-                />
-                <span
-                  style={{ color: colors.onSurfaceVariant, fontSize: 12 }}
-                >
-                  to
-                </span>
-                <input
-                  type="number"
-                  max={180}
-                  value={maxDuration ?? 60}
-                  onChange={(e) => setMaxDuration(Number(e.target.value))}
-                  style={{
-                    width: "100%",
-                    height: 36,
-                    borderRadius: radius.md,
-                    border: `1px solid ${colors.outlineVariant}`,
-                    background: colors.surfaceContainerLowest,
-                    color: colors.onSurface,
-                    fontSize: 13,
-                    textAlign: "center",
-                    outline: "none",
-                  }}
-                />
-              </div>
-            </div>
-
-            {/* Subtitles */}
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-              }}
-            >
-              <div>
-                <p
-                  style={{
-                    margin: 0,
-                    fontSize: 13,
-                    fontWeight: 600,
-                    color: colors.onSurface,
-                  }}
-                >
-                  Subtitles
-                </p>
-                <p
-                  style={{
-                    margin: 0,
-                    fontSize: 11,
-                    color: colors.onSurfaceVariant,
-                  }}
-                >
-                  Auto captions
-                </p>
-              </div>
-              <button
-                onClick={() => setSubtitles((p) => !p)}
-                style={{
-                  width: 44,
-                  height: 24,
-                  borderRadius: 12,
-                  border: "none",
-                  cursor: "pointer",
-                  background: subtitles
-                    ? colors.primaryContainer
-                    : colors.surfaceContainerHighest,
-                  position: "relative",
-                  transition: "background 0.2s",
-                }}
-              >
-                <span
-                  style={{
-                    position: "absolute",
-                    top: 3,
-                    left: subtitles ? 23 : 3,
-                    width: 18,
-                    height: 18,
-                    borderRadius: "50%",
-                    background: subtitles
-                      ? colors.onPrimaryContainer
-                      : colors.onSurfaceVariant,
-                    transition: "left 0.2s",
-                  }}
-                />
-              </button>
-            </div>
-
-            {/* Credit cost */}
-            {(() => {
-              const isUpload = inputTab === 'upload';
-              const cost = isUpload ? numClips : creditCost;
-              const notEnough = isUpload ? uploadInsufficientCredits : insufficientCredits;
-              return (
-                <div
-                  style={{
-                    borderRadius: radius.md,
-                    background: notEnough ? `${colors.error}10` : `${colors.primaryContainer}20`,
-                    border: `1px solid ${notEnough ? colors.error : colors.primary}30`,
-                    padding: "10px 14px",
-                  }}
-                >
-                  <p style={{ margin: 0, fontSize: 12, color: notEnough ? colors.error : colors.primary, fontWeight: 600 }}>
-                    Cost estimate
-                  </p>
-                  <p style={{ margin: "4px 0 0", fontSize: 20, fontWeight: 800, color: colors.onSurface }}>
-                    {cost}{" "}
-                    <span style={{ fontSize: 13, fontWeight: 500, color: colors.onSurfaceVariant }}>credits</span>
-                  </p>
-                  {isUpload && (
-                    <p style={{ margin: "4px 0 0", fontSize: 11, color: colors.onSurfaceVariant }}>1 per clip generated</p>
-                  )}
-                  {userCredits > 0 && (
-                    <p style={{ margin: "6px 0 0", fontSize: 11, color: notEnough ? colors.error : colors.onSurfaceVariant }}>
-                      {notEnough
-                        ? <><span>Not enough credits — </span><a href="/pricing" style={{ color: colors.primary, fontWeight: 700 }}>upgrade to continue</a></>
-                        : `You have ${userCredits} remaining`}
-                    </p>
-                  )}
-                </div>
-              );
-            })()}
           </div>
         </div>
 

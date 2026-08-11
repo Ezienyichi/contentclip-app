@@ -18,12 +18,26 @@ export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const [isAdmin, setIsAdmin] = useState(false);
+  const [credits, setCredits] = useState<number | null>(null);
+  const [plan, setPlan] = useState<string>('free');
   const isActive = (href: string) => href === '/dashboard' ? pathname === '/dashboard' : pathname.startsWith(href);
+
+  const PLAN_MAX: Record<string, number> = { free: 30, starter: 300, pro: 1000, agency: 5000 };
 
   useEffect(() => {
     const supabase = createClient();
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setIsAdmin(user?.email === ADMIN_EMAIL);
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (!user) return;
+      setIsAdmin(user.email === ADMIN_EMAIL);
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('credits, plan')
+        .eq('id', user.id)
+        .single();
+      if (profile) {
+        setCredits(profile.credits ?? 0);
+        setPlan(profile.plan ?? 'free');
+      }
     });
   }, []);
   const go = async (href: string) => {
@@ -60,16 +74,30 @@ export default function Sidebar() {
           );
         })}
       </nav>
-      <div style={{ background: colors.surfaceContainerHigh, borderRadius: radius.lg, padding: '16px', marginBottom: '12px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-          <span style={{ fontSize: '11px', color: colors.onSurfaceVariant, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Credits</span>
-          <span style={{ fontSize: '10px', fontWeight: 700, color: '#cc97ff', background: 'rgba(156,72,234,0.15)', padding: '2px 8px', borderRadius: radius.full }}>PRO</span>
-        </div>
-        <div style={{ fontSize: '22px', fontWeight: 800, color: '#fff' }}>47 <span style={{ fontSize: '12px', color: colors.onSurfaceVariant, fontWeight: 500 }}>/ 100</span></div>
-        <div style={{ width: '100%', height: '4px', background: colors.surfaceContainer, borderRadius: radius.full, marginTop: '8px', overflow: 'hidden' }}>
-          <div style={{ width: '47%', height: '100%', background: gradients.cta, borderRadius: radius.full }} />
-        </div>
-      </div>
+      {(() => {
+        const maxCr = PLAN_MAX[plan.toLowerCase()] ?? 30;
+        const pct = credits !== null ? Math.min(100, Math.round((credits / maxCr) * 100)) : 0;
+        return (
+          <div style={{ background: colors.surfaceContainerHigh, borderRadius: radius.lg, padding: '16px', marginBottom: '12px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+              <span style={{ fontSize: '11px', color: colors.onSurfaceVariant, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Minutes</span>
+              <span style={{ fontSize: '10px', fontWeight: 700, color: '#cc97ff', background: 'rgba(156,72,234,0.15)', padding: '2px 8px', borderRadius: radius.full }}>{plan.toUpperCase()}</span>
+            </div>
+            <div style={{ fontSize: '22px', fontWeight: 800, color: '#fff' }}>
+              {credits !== null ? credits : '—'}{' '}
+              <span style={{ fontSize: '12px', color: colors.onSurfaceVariant, fontWeight: 500 }}>/ {maxCr}</span>
+            </div>
+            <div style={{ width: '100%', height: '4px', background: colors.surfaceContainer, borderRadius: radius.full, marginTop: '8px', overflow: 'hidden' }}>
+              <div style={{ width: `${pct}%`, height: '100%', background: gradients.cta, borderRadius: radius.full }} />
+            </div>
+            {plan !== 'agency' && (
+              <button onClick={() => router.push('/pricing')} style={{ marginTop: '10px', fontSize: '11px', color: '#cc97ff', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: "'Inter', sans-serif" }}>
+                Upgrade plan →
+              </button>
+            )}
+          </div>
+        );
+      })()}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
         {isAdmin && (
           <button onClick={() => router.push('/admin')} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 12px', borderRadius: '6px', background: 'rgba(124,58,237,0.1)', color: '#a78bfa', fontWeight: 600, fontSize: '13px', border: '1px solid rgba(124,58,237,0.3)', cursor: 'pointer', width: '100%', textAlign: 'left', fontFamily: "'Inter', sans-serif", marginBottom: '4px' }}>
