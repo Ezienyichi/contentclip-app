@@ -14,7 +14,7 @@ export default function PricingPage(){
   const[annual,setAnnual]=useState(false);
   const keys=Object.keys(P[0].f);
   return(
-    <div style={{background:colors.background,color:colors.onSurface,fontFamily:"'Inter',sans-serif",minHeight:'100vh'}}>
+    <div className="mkt-page" style={{background:colors.background,color:colors.onSurface,fontFamily:"'Inter',sans-serif",minHeight:'100vh'}}>
       <nav style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'16px 24px',maxWidth:1200,margin:'0 auto'}}>
         <div onClick={()=>router.push('/')} style={{display:'flex',alignItems:'center',gap:'10px',cursor:'pointer'}}>
           <div style={{width:32,height:32,borderRadius:radius.md,background:gradients.cta,display:'flex',alignItems:'center',justifyContent:'center'}}><Icon name="auto_awesome" size={18} style={{color:'#fff'}}/></div>

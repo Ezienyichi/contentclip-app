@@ -144,7 +144,7 @@ export default function HomePage() {
   } as CSSProperties;
 
   return (
-    <div style={{ background:mkt.bg, color:mkt.text, fontFamily:mkt.fontBody, minHeight:'100vh' }}>
+    <div className="mkt-page" style={{ background:mkt.bg, color:mkt.text, fontFamily:mkt.fontBody, minHeight:'100vh' }}>
 
       {/* ── All CSS ── */}
       <style>{`

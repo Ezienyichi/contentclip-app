@@ -70,7 +70,7 @@ export default function AboutPage() {
   }
 
   return (
-    <div style={{ background: colors.background, color: colors.onSurface, fontFamily: "'Inter', sans-serif" }}>
+    <div className="mkt-page" style={{ background: colors.background, color: colors.onSurface, fontFamily: "'Inter', sans-serif" }}>
       <nav style={{ position: 'sticky', top: 0, zIndex: 50, background: 'rgba(14,14,14,0.9)', backdropFilter: 'blur(12px)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 24px', borderBottom: '1px solid rgba(70,69,85,0.2)' }}>
         <Link href="/" style={{ textDecoration: 'none' }}>
           <span style={{ fontSize: '22px', fontWeight: 800, color: '#ffffff', letterSpacing: '-0.5px', fontFamily: 'Arial Black, Arial, sans-serif', cursor: 'pointer' }}>Vangel<span style={{ color: '#7C3AED' }}>Clip</span></span>
@@ -282,7 +282,7 @@ export default function AboutPage() {
       {/* VISION */}
       <section style={{ maxWidth: 800, margin: '0 auto', padding: '60px 24px', borderTop: '1px solid rgba(70,69,85,0.1)' }}>
         <h2 style={{ fontSize: 32, fontWeight: 800, marginBottom: 24, textAlign: 'center' }}>The Vision</h2>
-        <p style={{ fontSize: 17, color: colors.onSurfaceVariant, lineHeight: 1.85, textAlign: 'center', maxWidth: 680, margin: '0 auto' }}>
+        <p className="font-display" style={{ fontSize: 17, color: colors.onSurfaceVariant, lineHeight: 1.85, textAlign: 'center', maxWidth: 680, margin: '0 auto' }}>
           In 5 years, VangelClip will turn one Sunday sermon into 2 million views by Monday. How a gospel artist in Accra turns a 4-minute song into over 20 viral Reels. How a teacher in Nairobi turns a masterclass into 15 shorts that reach the world. That&apos;s the mission, multiplying your visibility, one clip at a time.
         </p>
       </section>

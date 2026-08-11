@@ -34,7 +34,7 @@ export const mkt = {
   rPill: '100px',
 
   // Typography
-  fontHead: "'Hanken Grotesk',-apple-system,sans-serif",
+  fontHead: "var(--font-bodoni), Georgia, serif",
   fontBody: "'Figtree',-apple-system,sans-serif",
 
   // Layout

@@ -12,6 +12,12 @@ body { font-family: 'Inter', sans-serif; background: #000000; color: #FFFFFF; li
 ::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 999px; }
 
 .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; user-select: none; }
+
+/* Bodoni Moda — display headings on marketing pages only */
+.mkt-page h1,
+.mkt-page h2,
+.mkt-page h3 { font-family: var(--font-bodoni), Georgia, serif; }
+.font-display  { font-family: var(--font-bodoni), Georgia, serif; }
 @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes pulse-glow { 0%, 100% { box-shadow: 0 0 20px rgba(155,93,229,0.15); } 50% { box-shadow: 0 0 50px rgba(155,93,229,0.35); } }
 @keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
