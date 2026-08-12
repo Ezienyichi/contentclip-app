@@ -31,6 +31,11 @@ const supabase = createClient();
 
 const CLIPS_STORAGE_KEY = 'vangelclip_cached_clips';
 
+const SAMPLE_CLIPS: { url: string; label?: string }[] = [
+  // Add sample clip URLs here to show the "See it in action" teaser.
+  // Example: { url: 'https://your-cdn.com/clip1.mp4', label: 'Sermon' },
+];
+
 function extractVideoId(url: string): string {
   const shortMatch = url.match(/youtu\.be\/([a-zA-Z0-9_-]+)/);
   const longMatch = url.match(/[?&]v=([a-zA-Z0-9_-]+)/);
@@ -669,6 +674,54 @@ function ClipCard({
   );
 }
 
+function LazyVideo({ url, label }: { url: string; label?: string }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setLoaded(true); obs.disconnect(); } },
+      { threshold: 0.1 }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (loaded && videoRef.current) {
+      videoRef.current.load();
+      videoRef.current.play().catch(() => {});
+    }
+  }, [loaded]);
+
+  return (
+    <div ref={containerRef} style={{ flexShrink: 0, width: 130, borderRadius: 14, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)', background: '#0e0e14', scrollSnapAlign: 'start' }}>
+      {loaded ? (
+        <video
+          ref={videoRef}
+          src={url}
+          muted
+          loop
+          autoPlay
+          playsInline
+          preload="metadata"
+          style={{ width: '100%', aspectRatio: '9/16', objectFit: 'cover', display: 'block' }}
+        />
+      ) : (
+        <div style={{ width: '100%', aspectRatio: '9/16', background: 'rgba(155,93,229,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <svg width="20" height="20" viewBox="0 0 15 15" fill="rgba(155,93,229,0.4)"><path d="M3 1.5l10 6-10 6V1.5z"/></svg>
+        </div>
+      )}
+      {label && (
+        <div style={{ padding: '5px 10px', fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.4)' }}>{label}</div>
+      )}
+    </div>
+  );
+}
+
 export default function ImportPage() {
   const router = useRouter();
 
@@ -1106,6 +1159,21 @@ export default function ImportPage() {
         >
           {/* Left: Form */}
           <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+            {/* AI Clipping feature highlight */}
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '14px 16px', borderRadius: radius.lg, background: 'rgba(155,93,229,0.08)', border: '1px solid rgba(155,93,229,0.25)' }}>
+              <div style={{ width: 32, height: 32, flexShrink: 0, borderRadius: radius.md, background: 'rgba(155,93,229,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9B5DE5" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+                </svg>
+              </div>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#fff', marginBottom: 3 }}>AI Clipping</div>
+                <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.5 }}>
+                  Auto-extract viral shorts from long videos. Includes smart reframing and dynamic captions in 100+ languages.
+                </div>
+              </div>
+            </div>
+
             {/* Input tab switcher */}
             <div>
               <div style={{ display: 'flex', gap: '4px', marginBottom: '12px', background: colors.surfaceContainerHigh, borderRadius: radius.md, padding: '4px' }}>
@@ -1742,6 +1810,20 @@ export default function ImportPage() {
             )}
           </div>
         </div>
+
+        {/* Sample clips teaser — hidden until SAMPLE_CLIPS has entries */}
+        {SAMPLE_CLIPS.length > 0 && clips.length === 0 && (
+          <div style={{ marginTop: 36 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: 'rgba(155,93,229,0.7)', marginBottom: 14 }}>
+              See it in action
+            </div>
+            <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 8, scrollSnapType: 'x mandatory' }}>
+              {SAMPLE_CLIPS.map((clip, i) => (
+                <LazyVideo key={i} url={clip.url} label={clip.label} />
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Results */}
         {clips.length > 0 && (
