@@ -18,15 +18,6 @@ function resolutionForPlan(plan: string): string {
   return plan === 'free' ? 'HD_720' : 'FHD_1080';
 }
 
-const PLAN_LIMITS: Record<string, number> = {
-  free: 300,          // 5 min
-  starter: 900,       // 15 min
-  solo: 900,          // legacy DB name → same as starter
-  pro: 2700,          // 45 min
-  professional: 2700, // legacy DB name → same as pro
-  agency: 5400,       // 90 min
-};
-
 const supabase = createClient();
 
 const CLIPS_STORAGE_KEY = 'vangelclip_cached_clips';
@@ -240,204 +231,6 @@ interface ProcessResult {
 }
 
 type AspectRatio = "9:16" | "16:9" | "1:1" | "4:5";
-
-function TimeRangeSelector({
-  enabled,
-  onToggle,
-  start,
-  end,
-  onStartChange,
-  onEndChange,
-  maxAllowed,
-  upgradeable,
-}: {
-  enabled: boolean;
-  onToggle: () => void;
-  start: number;
-  end: number;
-  onStartChange: (v: number) => void;
-  onEndChange: (v: number) => void;
-  maxAllowed: number;
-  upgradeable: boolean;
-}) {
-  const fmt = (s: number) => {
-    const m = Math.floor(s / 60);
-    const sec = s % 60;
-    return `${m}:${sec.toString().padStart(2, "0")}`;
-  };
-
-  const atLimit = end >= maxAllowed;
-
-  return (
-    <div
-      style={{
-        borderRadius: radius.lg,
-        border: `1px solid ${enabled ? colors.primary : colors.outlineVariant}`,
-        padding: "16px 20px",
-        background: enabled ? `${colors.primaryContainer}18` : colors.surfaceContainerLow,
-        transition: "all 0.2s",
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          marginBottom: enabled ? 16 : 0,
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <span style={{ fontSize: 14, fontWeight: 600, color: colors.onSurface }}>
-            Time Range
-          </span>
-          <span
-            style={{
-              fontSize: 11,
-              color: colors.primary,
-              background: `${colors.primary}18`,
-              borderRadius: radius.sm,
-              padding: "2px 8px",
-              fontWeight: 600,
-            }}
-          >
-            {Math.floor(maxAllowed / 60)} min max
-          </span>
-        </div>
-        <button
-          onClick={onToggle}
-          style={{
-            width: 44,
-            height: 24,
-            borderRadius: 12,
-            border: "none",
-            cursor: "pointer",
-            background: enabled ? colors.primaryContainer : colors.surfaceContainerHighest,
-            position: "relative",
-            transition: "background 0.2s",
-          }}
-        >
-          <span
-            style={{
-              position: "absolute",
-              top: 3,
-              left: enabled ? 23 : 3,
-              width: 18,
-              height: 18,
-              borderRadius: "50%",
-              background: enabled ? colors.onPrimaryContainer : colors.onSurfaceVariant,
-              transition: "left 0.2s",
-            }}
-          />
-        </button>
-      </div>
-
-      {enabled && (
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          <div style={{ display: "flex", gap: 16 }}>
-            <div style={{ flex: 1 }}>
-              <label
-                style={{
-                  fontSize: 12,
-                  color: colors.onSurfaceVariant,
-                  display: "block",
-                  marginBottom: 6,
-                }}
-              >
-                Start —{" "}
-                <strong style={{ color: colors.primary }}>{fmt(start)}</strong>
-              </label>
-              <input
-                type="range"
-                min={0}
-                max={end - 5}
-                value={start}
-                onChange={(e) => onStartChange(Number(e.target.value))}
-                style={{ width: "100%", accentColor: colors.primary }}
-              />
-            </div>
-            <div style={{ flex: 1 }}>
-              <label
-                style={{
-                  fontSize: 12,
-                  color: atLimit ? colors.onSurfaceVariant : colors.onSurfaceVariant,
-                  display: "block",
-                  marginBottom: 6,
-                }}
-              >
-                End —{" "}
-                <strong style={{ color: atLimit ? "#FF9500" : colors.primary }}>
-                  {fmt(end)}
-                </strong>
-                {atLimit && (
-                  <span style={{ fontSize: 10, color: "#FF9500", marginLeft: 6 }}>
-                    (plan limit)
-                  </span>
-                )}
-              </label>
-              <input
-                type="range"
-                min={start + 5}
-                max={maxAllowed}
-                value={end}
-                onChange={(e) => onEndChange(Number(e.target.value))}
-                style={{
-                  width: "100%",
-                  accentColor: atLimit ? "#FF9500" : colors.primary,
-                  opacity: atLimit ? 0.7 : 1,
-                }}
-              />
-            </div>
-          </div>
-
-          <p style={{ fontSize: 12, color: colors.onSurfaceVariant, margin: 0 }}>
-            Clips from{" "}
-            <strong style={{ color: colors.onSurface }}>
-              {fmt(start)} → {fmt(end)}
-            </strong>{" "}
-            ({Math.round((end - start) / 60)} min window)
-          </p>
-
-          {/* Helper text */}
-          <p style={{ fontSize: 11, color: colors.onSurfaceVariant, margin: 0, opacity: 0.8 }}>
-            5 min window ≈ 25 seconds processing · extend range for more clips
-          </p>
-
-          {/* Upgrade nudge */}
-          {atLimit && upgradeable && (
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                padding: "8px 12px",
-                borderRadius: radius.md,
-                background: "rgba(255,149,0,0.08)",
-                border: "1px solid rgba(255,149,0,0.25)",
-              }}
-            >
-              <span style={{ fontSize: 12, color: "#FF9500", fontWeight: 600 }}>
-                Upgrade to Pro for longer video windows
-              </span>
-              <a
-                href="/pricing"
-                style={{
-                  fontSize: 11,
-                  color: colors.primary,
-                  fontWeight: 700,
-                  marginLeft: "auto",
-                  textDecoration: "none",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                View plans →
-              </a>
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
 
 function ClipCard({
   clip,
@@ -736,9 +529,6 @@ export default function ImportPage() {
   const [subtitles, setSubtitles] = useState(true);
   const [userPlan, setUserPlan] = useState<string>("free");
   const [userCredits, setUserCredits] = useState<number>(0);
-  const [timeRangeEnabled, setTimeRangeEnabled] = useState(true);
-  const [timeStart, setTimeStart] = useState(0);
-  const [timeEnd, setTimeEnd] = useState(300);
   const [loading, setLoading] = useState(false);
   const [Status, setStatus] = useState<string>("idle");
   const [error, setError] = useState<string | null>(null);
@@ -776,8 +566,7 @@ export default function ImportPage() {
   const [durationLoading, setDurationLoading] = useState(false);
   const [durationUnknown, setDurationUnknown] = useState(false);
 
-  const planLimit = PLAN_LIMITS[userPlan] ?? 300;
-  const creditCost = timeRangeEnabled ? Math.ceil((timeEnd - timeStart) / 60) : numClips * 10;
+  const creditCost = numClips;
   const insufficientCredits = userCredits > 0 && userCredits < creditCost;
   const uploadInsufficientCredits = userCredits > 0 && userCredits < numClips;
 
@@ -793,8 +582,6 @@ export default function ImportPage() {
         .then(({ data }) => {
           if (data?.plan) {
             setUserPlan(data.plan);
-            const limit = PLAN_LIMITS[data.plan] ?? 300;
-            setTimeEnd((prev) => Math.min(prev, limit));
           }
           if (typeof data?.credits === "number") {
             setUserCredits(data.credits);
@@ -934,17 +721,6 @@ export default function ImportPage() {
   const handleProcess = useCallback(async () => {
     if (!isValidUrl) return;
 
-    // Client-side plan window check
-    if (timeRangeEnabled) {
-      const window = timeEnd - timeStart;
-      if (window > planLimit) {
-        setError(
-          `Your ${userPlan} plan allows a maximum ${Math.floor(planLimit / 60)}-minute window. Upgrade to process longer segments.`
-        );
-        return;
-      }
-    }
-
     stopPolling();
     setGenerationSuccess(false);
     setLoading(true);
@@ -997,10 +773,6 @@ export default function ImportPage() {
   }, [
     isValidUrl,
     videoUrl,
-    timeRangeEnabled,
-    timeStart,
-    timeEnd,
-    planLimit,
     userPlan,
     numClips,
     aspectRatio,
@@ -1037,8 +809,6 @@ export default function ImportPage() {
       formData.append('numClips', String(numClips));
       formData.append('category', category);
       formData.append('prompt', buildSmartPrompt(category, selectedTs, contentMode));
-      formData.append('timeStart', String(timeStart));
-      formData.append('timeEnd', String(timeEnd));
       formData.append('plan', userPlan);
 
       let uploadSucceeded = false;
@@ -1102,7 +872,7 @@ export default function ImportPage() {
       setStatus('idle');
       setUploadProgress(0);
     }
-  }, [selectedFile, durationLoading, numClips, category, selectedTs, contentMode, userCredits, timeStart, timeEnd, userPlan]);
+  }, [selectedFile, durationLoading, numClips, category, selectedTs, contentMode, userCredits, userPlan]);
 
   const handleDownload = (clip: Clip) => {
     const a = document.createElement('a');
@@ -1336,18 +1106,6 @@ export default function ImportPage() {
                 }}
               />
             </div>
-
-            {/* Time Range */}
-            <TimeRangeSelector
-              enabled={timeRangeEnabled}
-              onToggle={() => setTimeRangeEnabled((p) => !p)}
-              start={timeStart}
-              end={timeEnd}
-              onStartChange={setTimeStart}
-              onEndChange={setTimeEnd}
-              maxAllowed={planLimit}
-              upgradeable={userPlan !== "agency"}
-            />
 
             {/* ── CONTENT INTELLIGENCE ── */}
             <div style={{
