@@ -1,6 +1,5 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { createClient } from '@/lib/supabase-browser';
 
 interface ClipRow {
   id: string;
@@ -31,9 +30,9 @@ export default function AdminClips() {
   };
 
   useEffect(() => {
-    const supabase = createClient();
-    supabase.from('clip_jobs').select('id, user_id, source_url, status, prompt, num_clips, created_at').order('created_at', { ascending: false }).limit(500)
-      .then(({ data }) => { setClips(data ?? []); setLoading(false); });
+    fetch('/api/admin/clips')
+      .then((r) => r.json())
+      .then(({ clips }) => { setClips(clips ?? []); setLoading(false); });
   }, []);
 
   return (

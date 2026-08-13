@@ -1,6 +1,5 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { createClient } from '@/lib/supabase-browser';
 
 interface UserRow {
   id: string;
@@ -20,9 +19,9 @@ export default function AdminUsers() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const supabase = createClient();
-    supabase.from('profiles').select('id, email, plan, credits, created_at').order('created_at', { ascending: false }).limit(500)
-      .then(({ data }) => { setUsers(data ?? []); setFiltered(data ?? []); setLoading(false); });
+    fetch('/api/admin/users')
+      .then((r) => r.json())
+      .then(({ users }) => { setUsers(users ?? []); setFiltered(users ?? []); setLoading(false); });
   }, []);
 
   useEffect(() => {

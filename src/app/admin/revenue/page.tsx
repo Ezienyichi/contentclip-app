@@ -1,6 +1,5 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { createClient } from '@/lib/supabase-browser';
 
 interface Transaction {
   id: string;
@@ -16,9 +15,9 @@ export default function AdminRevenue() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const supabase = createClient();
-    supabase.from('transactions').select('id, user_id, amount, plan, status, created_at').order('created_at', { ascending: false }).limit(500)
-      .then(({ data }) => { setTransactions(data ?? []); setLoading(false); });
+    fetch('/api/admin/revenue')
+      .then((r) => r.json())
+      .then(({ transactions }) => { setTransactions(transactions ?? []); setLoading(false); });
   }, []);
 
   const completed = transactions.filter((t) => t.status === 'completed');
