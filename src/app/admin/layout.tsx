@@ -4,7 +4,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { createClient } from '@/lib/supabase-browser';
 import Link from 'next/link';
 
-const ADMIN_EMAILS = ['adminvangelclip@gmail.com'];
+const ADMIN_EMAILS = ['chiemerieama29@gmail.com'];
 
 const NAV_LINKS = [
   { label: 'Overview', href: '/admin' },

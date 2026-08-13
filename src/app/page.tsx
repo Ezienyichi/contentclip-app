@@ -188,7 +188,7 @@ export default function HomePage() {
         .vc-sec { max-width:${mkt.maxW}; margin:0 auto; padding:80px 28px; }
 
         /* Trust strip logos */
-        .vc-logos { display:flex; gap:44px; justify-content:center; flex-wrap:wrap; align-items:center; }
+        .vc-logos { display:flex; gap:24px; justify-content:space-evenly; flex-wrap:wrap; align-items:center; }
 
         /* Pricing toggle pill */
         .vc-pill-active   { border:none; cursor:pointer; background:linear-gradient(135deg,${mkt.brand},${mkt.brand2}); color:#fff; font-weight:600; font-size:14px; padding:9px 22px; border-radius:100px; box-shadow:inset 1px 1px 0 rgba(255,255,255,.25),${mkt.glow}; font-family:'Figtree',sans-serif; }
@@ -238,7 +238,7 @@ export default function HomePage() {
         @media (max-width:600px) {
           .vc-sec       { padding:56px 16px; }
           .vc-stats     { gap:12px; }
-          .vc-logos     { gap:20px; font-size:15px; }
+          .vc-logos     { gap:20px; }
           .vc-footer-g  { grid-template-columns:1fr; gap:20px; }
         }
 
@@ -396,23 +396,23 @@ export default function HomePage() {
           <div style={{ fontSize:12, color:mkt.muted, opacity:.6, marginBottom:20 }}>Export once, made for every platform.</div>
           <div className="vc-logos">
             {/* YouTube */}
-            <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:7 }}>
-              <svg width="38" height="27" viewBox="0 0 38 27" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:10 }}>
+              <svg width="52" height="37" viewBox="0 0 38 27" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <rect width="38" height="27" rx="6" fill="#FF0000"/>
                 <path d="M15.5 8.5L26.5 13.5L15.5 18.5V8.5Z" fill="white"/>
               </svg>
-              <span style={{ fontSize:11, fontWeight:600, color:mkt.muted, opacity:.7, letterSpacing:'.02em' }}>YouTube</span>
+              <span style={{ fontSize:13, fontWeight:700, color:mkt.muted, opacity:.7, letterSpacing:'.02em' }}>YouTube</span>
             </div>
             {/* TikTok */}
-            <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:7 }}>
-              <svg width="27" height="27" viewBox="0 0 27 27" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:10 }}>
+              <svg width="40" height="40" viewBox="0 0 27 27" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M20.3 5.8a5.2 5.2 0 0 1-4.1-4.6V1h-3.7v14.7a3.1 3.1 0 0 1-3.1 2.7 3.1 3.1 0 0 1-3.1-3.1 3.1 3.1 0 0 1 3.1-3.1c.3 0 .6 0 .9.1V8.6a6.8 6.8 0 0 0-.9-.1 6.8 6.8 0 0 0-6.8 6.8 6.8 6.8 0 0 0 6.8 6.8 6.8 6.8 0 0 0 6.8-6.8V8.9a8.8 8.8 0 0 0 5.1 1.6V6.8a5.2 5.2 0 0 1-1.0.0z" fill="white"/>
               </svg>
-              <span style={{ fontSize:11, fontWeight:600, color:mkt.muted, opacity:.7, letterSpacing:'.02em' }}>TikTok</span>
+              <span style={{ fontSize:13, fontWeight:700, color:mkt.muted, opacity:.7, letterSpacing:'.02em' }}>TikTok</span>
             </div>
             {/* Instagram */}
-            <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:7 }}>
-              <svg width="27" height="27" viewBox="0 0 27 27" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:10 }}>
+              <svg width="40" height="40" viewBox="0 0 27 27" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <defs>
                   <linearGradient id="ig-grad" x1="0" y1="27" x2="27" y2="0" gradientUnits="userSpaceOnUse">
                     <stop offset="0%" stopColor="#f09433"/>
@@ -427,23 +427,23 @@ export default function HomePage() {
                 <circle cx="13.5" cy="13.5" r="4.5" stroke="white" strokeWidth="1.6" fill="none"/>
                 <circle cx="19.5" cy="7.5" r="1.4" fill="white"/>
               </svg>
-              <span style={{ fontSize:11, fontWeight:600, color:mkt.muted, opacity:.7, letterSpacing:'.02em' }}>Instagram</span>
+              <span style={{ fontSize:13, fontWeight:700, color:mkt.muted, opacity:.7, letterSpacing:'.02em' }}>Instagram</span>
             </div>
             {/* Spotify */}
-            <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:7 }}>
-              <svg width="27" height="27" viewBox="0 0 27 27" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:10 }}>
+              <svg width="40" height="40" viewBox="0 0 27 27" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <circle cx="13.5" cy="13.5" r="13.5" fill="#1ED760"/>
                 <path d="M19.7 18.6c-.2.4-.7.5-1.1.3-3-1.8-6.7-2.2-11.1-1.2-.4.1-.8-.1-.9-.5-.1-.4.1-.8.5-.9 4.8-1.1 8.9-.6 12.2 1.4.5.2.6.8.4 1.1-.0 0 0 0 0-.2zM21.1 15.5c-.3.5-.9.6-1.3.3-3.4-2.1-8.6-2.7-12.6-1.5-.5.2-1.1-.1-1.2-.6-.2-.5.1-1.1.6-1.2 4.6-1.4 10.3-.7 14.2 1.7.5.3.7.9.3 1.3zM21.2 12.3c-4.1-2.4-10.8-2.6-14.7-1.4-.6.2-1.2-.1-1.4-.7-.2-.6.1-1.2.7-1.4 4.5-1.4 11.9-1.1 16.6 1.6.6.3.8 1 .4 1.6-.3.5-1 .7-1.6.3z" fill="#191414"/>
               </svg>
-              <span style={{ fontSize:11, fontWeight:600, color:mkt.muted, opacity:.7, letterSpacing:'.02em' }}>Spotify</span>
+              <span style={{ fontSize:13, fontWeight:700, color:mkt.muted, opacity:.7, letterSpacing:'.02em' }}>Spotify</span>
             </div>
             {/* Facebook */}
-            <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:7 }}>
-              <svg width="27" height="27" viewBox="0 0 27 27" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:10 }}>
+              <svg width="40" height="40" viewBox="0 0 27 27" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <rect width="27" height="27" rx="6" fill="#1877F2"/>
                 <path d="M17.5 3.5h-2.5C13.1 3.5 12 4.6 12 6.5V8.5H10v3h2v9h3.5v-9H17l.5-3h-2V6.8c0-.4.2-.8.8-.8H17.5V3.5z" fill="white"/>
               </svg>
-              <span style={{ fontSize:11, fontWeight:600, color:mkt.muted, opacity:.7, letterSpacing:'.02em' }}>Facebook</span>
+              <span style={{ fontSize:13, fontWeight:700, color:mkt.muted, opacity:.7, letterSpacing:'.02em' }}>Facebook</span>
             </div>
           </div>
         </div>
