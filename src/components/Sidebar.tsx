@@ -22,7 +22,7 @@ export default function Sidebar() {
   const [plan, setPlan] = useState<string>('free');
   const isActive = (href: string) => href === '/dashboard' ? pathname === '/dashboard' : pathname.startsWith(href);
 
-  const PLAN_MAX: Record<string, number> = { free: 30, starter: 300, pro: 1000, agency: 5000 };
+  const PLAN_MAX: Record<string, number> = { free: 30, starter: 180, pro: 500, agency: 5000 };
 
   useEffect(() => {
     const supabase = createClient();
@@ -31,11 +31,11 @@ export default function Sidebar() {
       setIsAdmin(user.email === ADMIN_EMAIL);
       const { data: profile } = await supabase
         .from('profiles')
-        .select('credits, plan')
+        .select('minutes_used, plan')
         .eq('id', user.id)
         .single();
       if (profile) {
-        setCredits(profile.credits ?? 0);
+        setCredits(profile.minutes_used ?? 0);
         setPlan(profile.plan ?? 'free');
       }
     });

@@ -566,9 +566,10 @@ export default function ImportPage() {
   const [durationLoading, setDurationLoading] = useState(false);
   const [durationUnknown, setDurationUnknown] = useState(false);
 
-  const creditCost = numClips;
-  const insufficientCredits = userCredits > 0 && userCredits < creditCost;
-  const uploadInsufficientCredits = userCredits > 0 && userCredits < numClips;
+  const PLAN_MAX: Record<string, number> = { free: 30, starter: 180, pro: 500, agency: 5000 };
+  const minutesRemaining = Math.max(0, (PLAN_MAX[userPlan] ?? 30) - userCredits);
+  const insufficientCredits = userCredits > 0 && minutesRemaining <= 0;
+  const uploadInsufficientCredits = userCredits > 0 && minutesRemaining <= 0;
 
   // Fetch user's plan and credits on mount
   useEffect(() => {
@@ -576,15 +577,15 @@ export default function ImportPage() {
       if (!user) return;
       supabase
         .from("profiles")
-        .select("plan, credits")
+        .select("plan, minutes_used")
         .eq("id", user.id)
         .single()
         .then(({ data }) => {
           if (data?.plan) {
             setUserPlan(data.plan);
           }
-          if (typeof data?.credits === "number") {
-            setUserCredits(data.credits);
+          if (typeof data?.minutes_used === "number") {
+            setUserCredits(data.minutes_used);
           }
         });
     });
@@ -929,21 +930,6 @@ export default function ImportPage() {
         >
           {/* Left: Form */}
           <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-            {/* AI Clipping feature highlight */}
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '14px 16px', borderRadius: radius.lg, background: 'rgba(155,93,229,0.08)', border: '1px solid rgba(155,93,229,0.25)' }}>
-              <div style={{ width: 32, height: 32, flexShrink: 0, borderRadius: radius.md, background: 'rgba(155,93,229,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9B5DE5" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
-                </svg>
-              </div>
-              <div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: '#fff', marginBottom: 3 }}>AI Clipping</div>
-                <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.5 }}>
-                  Auto-extract viral shorts from long videos. Includes smart reframing and dynamic captions in 100+ languages.
-                </div>
-              </div>
-            </div>
-
             {/* Input tab switcher */}
             <div>
               <div style={{ display: 'flex', gap: '4px', marginBottom: '12px', background: colors.surfaceContainerHigh, borderRadius: radius.md, padding: '4px' }}>
@@ -1459,11 +1445,11 @@ export default function ImportPage() {
                 </button>
               </div>
 
-              {/* Credit cost */}
+              {/* Minutes cost */}
               {(() => {
                 const isUpload = inputTab === 'upload';
-                const cost = isUpload ? numClips : creditCost;
                 const notEnough = isUpload ? uploadInsufficientCredits : insufficientCredits;
+                const uploadMins = uploadDuration != null ? Math.ceil(uploadDuration / 60) : null;
                 return (
                   <div
                     style={{
@@ -1474,22 +1460,19 @@ export default function ImportPage() {
                     }}
                   >
                     <p style={{ margin: 0, fontSize: 12, color: notEnough ? colors.error : colors.primary, fontWeight: 600 }}>
-                      Cost estimate
+                      Minutes used
                     </p>
-                    <p style={{ margin: "4px 0 0", fontSize: 20, fontWeight: 800, color: colors.onSurface }}>
-                      {cost}{" "}
-                      <span style={{ fontSize: 13, fontWeight: 500, color: colors.onSurfaceVariant }}>credits</span>
+                    <p style={{ margin: "4px 0 0", fontSize: 14, fontWeight: 700, color: colors.onSurface }}>
+                      {isUpload && uploadMins != null
+                        ? <>{uploadMins} <span style={{ fontSize: 13, fontWeight: 500, color: colors.onSurfaceVariant }}>min estimated</span></>
+                        : <span style={{ fontSize: 13, fontWeight: 500, color: colors.onSurfaceVariant }}>Charged by video length</span>
+                      }
                     </p>
-                    {isUpload && (
-                      <p style={{ margin: "4px 0 0", fontSize: 11, color: colors.onSurfaceVariant }}>1 per clip generated</p>
-                    )}
-                    {userCredits > 0 && (
-                      <p style={{ margin: "6px 0 0", fontSize: 11, color: notEnough ? colors.error : colors.onSurfaceVariant }}>
-                        {notEnough
-                          ? <><span>Not enough credits — </span><a href="/pricing" style={{ color: colors.primary, fontWeight: 700 }}>upgrade to continue</a></>
-                          : `You have ${userCredits} remaining`}
-                      </p>
-                    )}
+                    <p style={{ margin: "6px 0 0", fontSize: 11, color: notEnough ? colors.error : colors.onSurfaceVariant }}>
+                      {notEnough
+                        ? <><span>Not enough minutes — </span><a href="/pricing" style={{ color: colors.primary, fontWeight: 700 }}>upgrade to continue</a></>
+                        : `You have ${minutesRemaining} min remaining`}
+                    </p>
                   </div>
                 );
               })()}
@@ -1594,7 +1577,7 @@ export default function ImportPage() {
                 </h2>
                 {result && (
                   <p style={{ margin: '4px 0 0', fontSize: 13, color: colors.onSurfaceVariant }}>
-                    Used {result.creditsUsed} credits · {result.creditsRemaining} remaining
+                    Used ~{Math.round((result.creditsUsed ?? 0) / 2)} min · {minutesRemaining} min remaining
                   </p>
                 )}
               </div>
