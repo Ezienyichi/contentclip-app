@@ -9,7 +9,7 @@ export async function checkAdminAuth() {
 
     if (!user) return { isAdmin: false, user: null };
 
-    const isAdmin = ADMIN_EMAILS.includes(user.email ?? '');
+    const isAdmin = ADMIN_EMAILS.includes((user.email ?? '').toLowerCase());
     return { isAdmin, user };
   } catch {
     return { isAdmin: false, user: null };

@@ -24,7 +24,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   useEffect(() => {
     const supabase = createClient();
     supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!user || !ADMIN_EMAILS.includes(user.email ?? '')) {
+      if (!user || !ADMIN_EMAILS.includes((user.email ?? '').toLowerCase())) {
         router.replace(user ? '/dashboard' : '/auth?next=/admin');
       } else {
         setChecking(false);
