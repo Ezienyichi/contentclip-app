@@ -43,7 +43,8 @@ export default function Sidebar() {
   const go = async (href: string) => {
     if (href === '#signout') {
       clearClipStorage();
-      await createClient().auth.signOut();
+      await createClient().auth.signOut({ scope: 'global' });
+      Object.keys(localStorage).filter(k => k.startsWith('sb-')).forEach(k => localStorage.removeItem(k));
       router.push('/auth');
       return;
     }

@@ -45,6 +45,8 @@ export default function DashboardPage() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [clipCount, setClipCount] = useState(0);
   const [jobTotal, setJobTotal] = useState(0);
+  const [userName, setUserName] = useState<string | null>(null);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
 
   useEffect(() => {
     const supabase = createClient();
@@ -53,13 +55,17 @@ export default function DashboardPage() {
         router.replace('/auth');
         return;
       }
+      setUserEmail(user.email ?? null);
       Promise.all([
-        supabase.from('profiles').select('plan, credits').eq('id', user.id).single(),
+        supabase.from('profiles').select('plan, credits, full_name').eq('id', user.id).single(),
         supabase.from('clip_jobs').select('id, source_url, status, num_clips, created_at').eq('user_id', user.id).order('created_at', { ascending: false }).limit(5),
         supabase.from('clip_jobs').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
         supabase.from('clips').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
       ]).then(([profileRes, jobsRes, jobCountRes, clipsRes]) => {
-        if (profileRes.data) setProfile(profileRes.data);
+        if (profileRes.data) {
+          setProfile(profileRes.data);
+          setUserName((profileRes.data as any).full_name ?? null);
+        }
         setJobs(jobsRes.data ?? []);
         setJobTotal(jobCountRes.count ?? 0);
         setClipCount(clipsRes.count ?? 0);
@@ -81,8 +87,8 @@ export default function DashboardPage() {
 
   return (
     <DashboardLayout
-      title="Welcome back"
-      subtitle="Here's your account at a glance."
+      title={`Welcome back${userName ? `, ${userName.split(' ')[0]}` : ''}`}
+      subtitle={userEmail ?? "Here's your account at a glance."}
       actions={
         <button
           onClick={() => router.push('/import')}
