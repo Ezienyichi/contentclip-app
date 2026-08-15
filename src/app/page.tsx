@@ -3,7 +3,49 @@ import { useState } from 'react';
 import type { CSSProperties } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { mkt, mktBtn, mktCard } from '@/theme';
+import { mkt as _mkt, mktBtn as _mktBtn, mktCard as _mktCard } from '@/theme';
+import type { CSSProperties as CP } from 'react';
+
+// ── Light theme override (homepage only) ──────────────────────────────────────
+const mkt = {
+  ..._mkt,
+  bg:         '#E4E2DD',
+  surface:    '#EFECEA',
+  surface2:   '#E8E5DF',
+  text:       '#1A1714',
+  muted:      '#6B6560',
+  border:     'rgba(0,0,0,0.10)',
+  edge:       'rgba(0,0,0,0.05)',
+  navBg:      'rgba(228,226,221,0.92)',
+  shadow:     '0 1px 4px rgba(0,0,0,0.10),0 8px 24px rgba(0,0,0,0.07)',
+  glow:       '0 6px 26px rgba(155,93,229,0.18)',
+  cardShadow: '0 1px 4px rgba(0,0,0,0.10),0 8px 24px rgba(0,0,0,0.07)',
+};
+
+const mktBtn = {
+  ..._mktBtn,
+  ghost: {
+    ..._mktBtn.ghost,
+    border:     '1px solid rgba(0,0,0,0.18)',
+    color:      '#1A1714',
+    background: 'rgba(0,0,0,0.05)',
+  } as CP,
+};
+
+const mktCard = {
+  base: {
+    background:   '#EFECEA',
+    border:       '1px solid rgba(0,0,0,0.10)',
+    borderRadius: '6px',
+    boxShadow:    '0 1px 4px rgba(0,0,0,0.10),0 8px 24px rgba(0,0,0,0.07)',
+  } as CP,
+  elevated: {
+    background:   '#F5F2EE',
+    border:       '1px solid rgba(0,0,0,0.10)',
+    borderRadius: '10px',
+    boxShadow:    '0 1px 4px rgba(0,0,0,0.10),0 8px 24px rgba(0,0,0,0.07)',
+  } as CP,
+};
 
 // ── Static data ───────────────────────────────────────────────────────────────
 const NAV_LINKS = [
@@ -133,10 +175,9 @@ export default function HomePage() {
     boxShadow:`inset 1px 1px 0 rgba(255,255,255,.20),${mkt.glow}`,
     fontFamily:mkt.fontBody, marginTop:18,
   } as CSSProperties : {
-    // Ghost on dark: semi-transparent white bg so it reads against dark card
     display:'block', width:'100%',
     border:`1px solid ${mkt.border}`,
-    background:'rgba(255,255,255,0.06)', color:mkt.text,
+    background:'rgba(0,0,0,0.04)', color:mkt.text,
     fontWeight:600, fontSize:15, padding:14,
     borderRadius:mkt.r, cursor:'pointer',
     fontFamily:mkt.fontBody, marginTop:18,
@@ -167,7 +208,7 @@ export default function HomePage() {
 
         /* Hero input row */
         .vc-hero-row   { display:flex; gap:10px; justify-content:center; align-items:stretch; flex-wrap:wrap; max-width:620px; margin:0 auto; }
-        .vc-hero-input { display:flex; align-items:center; gap:8px; flex:1; min-width:260px; background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.15); border-radius:${mkt.r}; padding:6px 6px 6px 14px; box-shadow:inset 1px 1px 0 rgba(255,255,255,0.06); }
+        .vc-hero-input { display:flex; align-items:center; gap:8px; flex:1; min-width:260px; background:rgba(0,0,0,0.06); border:1px solid rgba(0,0,0,0.15); border-radius:${mkt.r}; padding:6px 6px 6px 14px; box-shadow:inset 1px 1px 0 rgba(0,0,0,0.04); }
         .vc-hero-cta   { flex:none; border:none; background:${mkt.brandGrad}; color:#fff; font-weight:700; font-family:'Figtree',sans-serif; font-size:15px; padding:0 22px; min-height:50px; border-radius:${mkt.r}; cursor:pointer; box-shadow:inset 1px 1px 0 rgba(255,255,255,.25),${mkt.glow}; white-space:nowrap; }
         .vc-cta-input  { display:flex; align-items:center; gap:8px; flex:1; min-width:280px; background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.3); border-radius:${mkt.r}; padding:6px 6px 6px 14px; }
         .vc-cta-btn    { flex:none; border:none; background:#fff; color:${mkt.brand}; font-weight:700; font-family:'Figtree',sans-serif; font-size:15.5px; padding:14px 24px; border-radius:${mkt.r}; cursor:pointer; box-shadow:0 6px 18px rgba(0,0,0,.18); white-space:nowrap; }
@@ -385,7 +426,7 @@ export default function HomePage() {
               </div>
             </div>
           ))}
-          <div style={{ position:'absolute', left:'50%', top:'55%', transform:'translate(-50%,-50%)', width:720, height:400, background:`radial-gradient(closest-side,${mkt.brand2},transparent)`, opacity:0.32, filter:'blur(40px)', pointerEvents:'none', zIndex:0 }} />
+          <div style={{ position:'absolute', left:'50%', top:'55%', transform:'translate(-50%,-50%)', width:720, height:400, background:`radial-gradient(closest-side,${mkt.brand2},transparent)`, opacity:0.12, filter:'blur(40px)', pointerEvents:'none', zIndex:0 }} />
         </div>
       </div>
 
@@ -406,6 +447,7 @@ export default function HomePage() {
             {/* TikTok */}
             <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:10 }}>
               <svg width="40" height="40" viewBox="0 0 27 27" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect width="27" height="27" rx="6" fill="#111111"/>
                 <path d="M20.3 5.8a5.2 5.2 0 0 1-4.1-4.6V1h-3.7v14.7a3.1 3.1 0 0 1-3.1 2.7 3.1 3.1 0 0 1-3.1-3.1 3.1 3.1 0 0 1 3.1-3.1c.3 0 .6 0 .9.1V8.6a6.8 6.8 0 0 0-.9-.1 6.8 6.8 0 0 0-6.8 6.8 6.8 6.8 0 0 0 6.8 6.8 6.8 6.8 0 0 0 6.8-6.8V8.9a8.8 8.8 0 0 0 5.1 1.6V6.8a5.2 5.2 0 0 1-1.0.0z" fill="white"/>
               </svg>
               <span style={{ fontSize:13, fontWeight:700, color:mkt.muted, opacity:.7, letterSpacing:'.02em' }}>TikTok</span>
