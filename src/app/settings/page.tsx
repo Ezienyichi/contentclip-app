@@ -187,7 +187,7 @@ export default function SettingsPage() {
           <div style={{ maxWidth: '640px' }}>
             {/* Account details (read-only summary) */}
             <div style={{ background: colors.surfaceContainerHigh, borderRadius: radius.lg, padding: '28px', marginBottom: '16px' }}>
-              <h3 style={{ fontSize: '15px', fontWeight: 700, marginBottom: '4px' }}>Account Details</h3>
+              <h3 style={{ fontSize: '15px', fontWeight: 700, marginBottom: '4px', color: '#1A1714' }}>Account Details</h3>
               <p style={{ fontSize: '12px', color: colors.onSurfaceVariant, marginBottom: '20px' }}>Your account information from VangelClip.</p>
               <DetailRow label="Name"         value={`${firstName} ${lastName}`.trim()} />
               <DetailRow label="Email"        value={userEmail} />
@@ -196,7 +196,7 @@ export default function SettingsPage() {
 
             {/* Edit name */}
             <div style={{ background: colors.surfaceContainerHigh, borderRadius: radius.lg, padding: '28px', marginBottom: '16px' }}>
-              <h3 style={{ fontSize: '15px', fontWeight: 700, marginBottom: '20px' }}>Edit Name</h3>
+              <h3 style={{ fontSize: '15px', fontWeight: 700, marginBottom: '20px', color: '#1A1714' }}>Edit Name</h3>
               <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '24px' }}>
                 <div onClick={() => fileRef.current?.click()} style={{ width: 64, height: 64, borderRadius: '50%', background: avatar ? `url(${avatar}) center/cover` : gradients.cta, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', fontWeight: 800, color: '#fff', cursor: 'pointer', overflow: 'hidden', flexShrink: 0 }}>
                   {avatar ? <img src={avatar} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : (firstName?.[0] ?? 'V')}
@@ -235,7 +235,7 @@ export default function SettingsPage() {
 
             {/* Change password */}
             <div style={{ background: colors.surfaceContainerHigh, borderRadius: radius.lg, padding: '28px', marginBottom: '16px' }}>
-              <h3 style={{ fontSize: '15px', fontWeight: 700, marginBottom: '20px' }}>Change Password</h3>
+              <h3 style={{ fontSize: '15px', fontWeight: 700, marginBottom: '20px', color: '#1A1714' }}>Change Password</h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 <div>
                   <label style={{ fontSize: '12px', fontWeight: 600, color: colors.onSurfaceVariant, display: 'block', marginBottom: '6px' }}>New Password</label>
@@ -304,10 +304,10 @@ export default function SettingsPage() {
             </div>
 
             {/* Danger zone */}
-            <div style={{ background: colors.surfaceContainerHigh, borderRadius: radius.lg, padding: '28px', border: '1px solid rgba(255,180,171,0.2)' }}>
-              <h3 style={{ fontSize: '15px', fontWeight: 700, marginBottom: '6px', color: colors.error }}>Danger Zone</h3>
-              <p style={{ fontSize: '13px', color: colors.onSurfaceVariant, marginBottom: '16px' }}>Deleting your account is permanent. All projects, clips, and data will be erased.</p>
-              <button onClick={() => setShowDelete(true)} style={{ background: 'rgba(255,180,171,0.08)', color: colors.error, border: '1px solid rgba(255,180,171,0.3)', fontWeight: 600, padding: '10px 22px', borderRadius: radius.md, cursor: 'pointer', fontSize: '13px', fontFamily: "'Inter',sans-serif" }}>Delete Account</button>
+            <div style={{ background: colors.surfaceContainerHigh, borderRadius: radius.lg, padding: '28px', border: '1px solid rgba(220,38,38,0.25)' }}>
+              <h3 style={{ fontSize: '15px', fontWeight: 800, marginBottom: '6px', color: '#DC2626' }}>Danger Zone</h3>
+              <p style={{ fontSize: '13px', color: '#4A4540', marginBottom: '16px' }}>Deleting your account is permanent. All projects, clips, and data will be erased.</p>
+              <button onClick={() => setShowDelete(true)} style={{ background: 'rgba(220,38,38,0.1)', color: '#DC2626', border: '1px solid rgba(220,38,38,0.35)', fontWeight: 700, padding: '10px 22px', borderRadius: radius.md, cursor: 'pointer', fontSize: '13px', fontFamily: "'Inter',sans-serif" }}>Delete Account</button>
             </div>
           </div>
         )}
@@ -322,7 +322,7 @@ export default function SettingsPage() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
                 <div>
                   <p style={{ fontSize: '11px', fontWeight: 700, color: colors.onSurfaceVariant, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '4px' }}>Current Plan</p>
-                  <h3 style={{ fontSize: '26px', fontWeight: 800, letterSpacing: '-0.01em' }}>{planInfo.label}</h3>
+                  <h3 style={{ fontSize: '26px', fontWeight: 800, letterSpacing: '-0.01em', color: '#1A1714' }}>{planInfo.label}</h3>
                 </div>
                 <span style={{ fontSize: '11px', fontWeight: 700, color: colors.primary, background: colors.primary + '18', padding: '4px 12px', borderRadius: radius.full, border: '1px solid ' + colors.primary + '40', marginTop: '4px' }}>
                   {planInfo.label.toUpperCase()}
@@ -367,7 +367,7 @@ export default function SettingsPage() {
 
             {/* What's included */}
             <div style={{ background: colors.surfaceContainerHigh, borderRadius: radius.lg, padding: '28px', marginBottom: '16px' }}>
-              <h3 style={{ fontSize: '15px', fontWeight: 700, marginBottom: '16px' }}>What&apos;s included</h3>
+              <h3 style={{ fontSize: '15px', fontWeight: 700, marginBottom: '16px', color: '#1A1714' }}>What&apos;s included</h3>
               {[
                 { label: 'Processing minutes', value: `${planLimit} min / month` },
                 { label: 'Export quality',      value: userPlan === 'free' ? '720p (watermark)' : userPlan === 'starter' || userPlan === 'solo' ? '2K, no watermark' : '4K, no watermark' },
@@ -398,7 +398,7 @@ export default function SettingsPage() {
         {tab === 'notifications' && (
           <div style={{ maxWidth: '640px' }}>
             <div style={{ background: colors.surfaceContainerHigh, borderRadius: radius.lg, padding: '28px' }}>
-              <h3 style={{ fontSize: '15px', fontWeight: 700, marginBottom: '20px' }}>Notification Preferences</h3>
+              <h3 style={{ fontSize: '15px', fontWeight: 800, marginBottom: '20px', color: '#1A1714' }}>Notification Preferences</h3>
               {([
                 { key: 'clips'     as const, label: 'Clip generation complete',  desc: 'Get notified when your clips are ready' },
                 { key: 'weekly'    as const, label: 'Weekly analytics report',   desc: 'Summary of your content performance' },
@@ -407,8 +407,8 @@ export default function SettingsPage() {
               ]).map((n, i) => (
                 <div key={n.key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 0', borderBottom: i < 3 ? `1px solid ${colors.outlineVariant}20` : 'none' }}>
                   <div>
-                    <p style={{ fontSize: '14px', fontWeight: 600, marginBottom: '2px' }}>{n.label}</p>
-                    <p style={{ fontSize: '12px', color: colors.onSurfaceVariant }}>{n.desc}</p>
+                    <p style={{ fontSize: '14px', fontWeight: 700, marginBottom: '2px', color: '#1A1714' }}>{n.label}</p>
+                    <p style={{ fontSize: '12px', color: colors.onSurfaceVariant, fontWeight: 500 }}>{n.desc}</p>
                   </div>
                   <button onClick={() => toggleNotif(n.key)} style={{ width: 44, height: 24, borderRadius: radius.full, background: notifs[n.key] ? colors.primary : colors.surfaceContainer, cursor: 'pointer', position: 'relative', border: 'none', transition: 'background 0.2s', flexShrink: 0 }}>
                     <div style={{ width: 18, height: 18, borderRadius: '50%', background: '#fff', position: 'absolute', top: 3, left: notifs[n.key] ? 23 : 3, transition: 'left 0.2s' }} />
@@ -434,7 +434,7 @@ export default function SettingsPage() {
                         }
                       </div>
                       <div>
-                        <p style={{ fontSize: '14px', fontWeight: 600 }}>{int.name}</p>
+                        <p style={{ fontSize: '14px', fontWeight: 700, color: '#1A1714' }}>{int.name}</p>
                         <p style={{ fontSize: '12px', color: int.connected ? '#4ade80' : colors.onSurfaceVariant }}>{int.connected ? 'Connected' : 'Not connected'}</p>
                       </div>
                     </div>
@@ -460,8 +460,8 @@ export default function SettingsPage() {
           <div style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }} onClick={() => setShowCancel(false)}>
             <div onClick={e => e.stopPropagation()} style={{ background: colors.surfaceContainerHigh, borderRadius: radius.xl, padding: '32px', width: '100%', maxWidth: '440px' }}>
               <Icon name="warning" size={40} style={{ color: '#fbbf24', marginBottom: '16px' }} />
-              <h3 style={{ fontSize: '20px', fontWeight: 700, marginBottom: '8px' }}>Cancel Your Plan?</h3>
-              <p style={{ fontSize: '14px', color: colors.onSurfaceVariant, lineHeight: 1.7, marginBottom: '24px' }}>
+              <h3 style={{ fontSize: '20px', fontWeight: 700, marginBottom: '8px', color: '#1A1714' }}>Cancel Your Plan?</h3>
+              <p style={{ fontSize: '14px', color: '#4A4540', lineHeight: 1.7, marginBottom: '24px' }}>
                 Your plan stays active until your current billing period ends. After that, you&apos;ll move to the Free plan (30 minutes/month).
               </p>
               <div style={{ display: 'flex', gap: '8px' }}>
@@ -491,9 +491,9 @@ export default function SettingsPage() {
           <div style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }} onClick={() => setShowDelete(false)}>
             <div onClick={e => e.stopPropagation()} style={{ background: colors.surfaceContainerHigh, borderRadius: radius.xl, padding: '32px', width: '100%', maxWidth: '440px' }}>
               <Icon name="delete_forever" size={40} style={{ color: colors.error, marginBottom: '16px' }} />
-              <h3 style={{ fontSize: '20px', fontWeight: 700, marginBottom: '8px' }}>Delete Your Account?</h3>
-              <p style={{ fontSize: '14px', color: colors.onSurfaceVariant, lineHeight: 1.7, marginBottom: '16px' }}>
-                This is <strong style={{ color: '#fff' }}>permanent and irreversible</strong>. All your projects, clips, and data will be erased.
+              <h3 style={{ fontSize: '20px', fontWeight: 700, marginBottom: '8px', color: '#1A1714' }}>Delete Your Account?</h3>
+              <p style={{ fontSize: '14px', color: '#4A4540', lineHeight: 1.7, marginBottom: '16px' }}>
+                This is <strong style={{ color: '#DC2626' }}>permanent and irreversible</strong>. All your projects, clips, and data will be erased.
               </p>
               <div style={{ marginBottom: '16px' }}>
                 <label style={{ fontSize: '12px', fontWeight: 600, color: colors.onSurfaceVariant, display: 'block', marginBottom: '6px' }}>Type DELETE to confirm</label>
