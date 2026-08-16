@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { mkt as _mkt, mktBtn as _mktBtn, mktCard as _mktCard } from '@/theme';
 import type { CSSProperties as CP } from 'react';
+import { PLAN_DATA, COMPARISON_KEYS } from '@/lib/pricingData';
 
 // ── Light theme override (homepage only) ──────────────────────────────────────
 const mkt = {
@@ -77,55 +78,7 @@ const FEATURE_IMGS = [
   { src: '/images/feature-editing.png',     label: 'Pro Adjustments',        badge: '20+ tools'       },
 ];
 
-const PLANS = [
-  {
-    name: 'FREE',
-    tagline: "Try it — about one sermon's worth.",
-    popular: false,
-    price:    { monthly: '$0',  annual: '$0'  },
-    sub:      { monthly: 'Free forever', annual: 'Free forever' },
-    cta: 'Start free',
-    includes: "30 minutes / month · What's included",
-    features: [
-      '30 minutes of processing / month',
-      '720p export',
-      'YouTube URL clipping',
-      'All 4 aspect ratios (9:16, 16:9, 1:1, 4:5)',
-      'Auto-captions',
-    ],
-  },
-  {
-    name: 'STARTER',
-    tagline: '',
-    popular: true,
-    price:    { monthly: '$24', annual: '$19' },
-    sub:      { monthly: 'Billed monthly', annual: 'Billed annually ($228/year)' },
-    cta: 'Choose Starter',
-    includes: '150 minutes / month · Everything in Free, plus',
-    features: [
-      '150 minutes of processing / month',
-      '1080p export, no watermark',
-      'Custom captions',
-      'Up to 5 projects',
-    ],
-  },
-  {
-    name: 'PRO',
-    tagline: '',
-    popular: false,
-    price:    { monthly: '$49', annual: '$39' },
-    sub:      { monthly: 'Billed monthly', annual: 'Billed annually ($468/year)' },
-    cta: 'Choose Pro',
-    includes: '400 minutes / month · Everything in Starter, plus',
-    features: [
-      '400 minutes of processing / month',
-      '4K export',
-      'Animated captions',
-      'Priority processing',
-      'Unlimited projects',
-    ],
-  },
-];
+// PLANS is now imported from @/lib/pricingData as PLAN_DATA — single source of truth
 
 const FAQS = [
   { q: 'What does "minutes" mean?',      a: 'Minutes are the total length of video you process each month. A 40-minute sermon uses 40 minutes, no matter how many clips you generate from it.' },
@@ -143,10 +96,11 @@ const FOOTER_COLS = [
 // ── Component ─────────────────────────────────────────────────────────────────
 export default function HomePage() {
   const router  = useRouter();
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [heroUrl, setHeroUrl]   = useState('');
-  const [annual,  setAnnual]    = useState(false);
-  const [openFaq, setOpenFaq]   = useState<number | null>(null);
+  const [menuOpen,   setMenuOpen]   = useState(false);
+  const [heroUrl,    setHeroUrl]    = useState('');
+  const [annual,     setAnnual]     = useState(false);
+  const [openFaq,    setOpenFaq]    = useState<number | null>(null);
+  const [tableOpen,  setTableOpen]  = useState(false);
 
   function startClipping() {
     const url = heroUrl.trim();
@@ -200,7 +154,7 @@ export default function HomePage() {
         /* Grids */
         .vc-stats     { display:grid; grid-template-columns:repeat(4,1fr);  gap:18px; }
         .vc-feat-grid { display:grid; grid-template-columns:repeat(2,1fr);  gap:20px; margin-bottom:30px; }
-        .vc-plan-grid { display:grid; grid-template-columns:repeat(3,1fr);  gap:22px; align-items:start; }
+        .vc-plan-grid { display:grid; grid-template-columns:repeat(4,1fr);  gap:22px; align-items:start; }
         .vc-footer-g  { display:grid; grid-template-columns:1.6fr 1fr 1fr 1fr; gap:32px; }
 
         /* Hero input row */
@@ -242,8 +196,11 @@ export default function HomePage() {
         @media (max-width:860px) {
           .vc-stats     { grid-template-columns:repeat(2,1fr); }
           .vc-feat-grid { grid-template-columns:1fr; }
-          .vc-plan-grid { grid-template-columns:1fr; }
+          .vc-plan-grid { grid-template-columns:repeat(2,1fr); }
           .vc-footer-g  { grid-template-columns:1fr 1fr; gap:24px; }
+        }
+        @media (max-width:540px) {
+          .vc-plan-grid { grid-template-columns:1fr; }
         }
 
         /* ── Nav collapse 768px ── */
@@ -592,23 +549,27 @@ export default function HomePage() {
 
         {/* Plan cards */}
         <div className="vc-plan-grid">
-          {PLANS.map(plan => (
+          {PLAN_DATA.map(plan => (
             <div key={plan.name} style={planCard(plan.popular)}>
               {plan.popular && (
                 <div style={{ position:'absolute', top:0, left:'50%', transform:'translate(-50%,-50%)', background:mkt.brandGrad, color:'#fff', fontSize:11, fontWeight:700, letterSpacing:'.04em', padding:'5px 14px', borderRadius:100, boxShadow:mkt.glow, whiteSpace:'nowrap' }}>
                   MOST POPULAR
                 </div>
               )}
-              <h3 style={{ fontFamily:mkt.fontHead, fontWeight:800, fontSize:18, letterSpacing:'.02em', margin:'0 0 4px' }}>{plan.name}</h3>
+              <h3 style={{ fontFamily:mkt.fontHead, fontWeight:800, fontSize:18, letterSpacing:'.02em', margin:'0 0 4px' }}>{plan.name.toUpperCase()}</h3>
               <p style={{ fontSize:13.5, color:mkt.muted, margin:'0 0 18px', minHeight:20 }}>{plan.tagline}</p>
               <div style={{ display:'flex', alignItems:'baseline', gap:4 }}>
                 <span style={{ fontFamily:mkt.fontHead, fontWeight:800, fontSize:42, letterSpacing:'-.03em' }}>
-                  {annual ? plan.price.annual : plan.price.monthly}
+                  ${annual ? plan.annual : plan.monthly}
                 </span>
                 <span style={{ fontSize:15, color:mkt.muted, fontWeight:500 }}>/mo</span>
               </div>
               <div style={{ fontSize:12.5, color:mkt.muted, marginTop:5, minHeight:18 }}>
-                {annual ? plan.sub.annual : plan.sub.monthly}
+                {plan.monthly === 0
+                  ? 'Free forever'
+                  : annual
+                    ? `Billed annually ($${plan.annual * 12}/yr)`
+                    : 'Billed monthly'}
               </div>
               <button onClick={() => router.push('/auth?mode=signup')} style={planCta(plan.popular)}>{plan.cta}</button>
               <div style={{ height:1, background:mkt.border, margin:'22px 0' }} />
@@ -630,6 +591,55 @@ export default function HomePage() {
         <p style={{ textAlign:'center', fontSize:13, color:mkt.muted, margin:'24px 0 0' }}>
           Minutes = total video length you process each month. Resets monthly. Cancel anytime.
         </p>
+
+        {/* ── Collapsible feature comparison table ── */}
+        <div style={{ maxWidth: 900, margin: '36px auto 0' }}>
+          <button
+            onClick={() => setTableOpen(o => !o)}
+            style={{ width:'100%', display:'flex', alignItems:'center', justifyContent:'space-between', background: mkt.surface, border:`1px solid ${mkt.border}`, borderRadius: tableOpen ? '10px 10px 0 0' : '10px', padding:'16px 22px', cursor:'pointer', fontFamily:mkt.fontBody }}
+          >
+            <span style={{ fontSize:15, fontWeight:700, color:mkt.text }}>Compare all features</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={mkt.brand} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transition:'transform 0.2s', transform: tableOpen ? 'rotate(180deg)' : 'rotate(0deg)', flexShrink:0 }}>
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+          {tableOpen && (
+            <div style={{ background: mkt.surface, border:`1px solid ${mkt.border}`, borderTop:'none', borderRadius:'0 0 10px 10px', overflow:'auto' }}>
+              <table style={{ width:'100%', borderCollapse:'collapse', minWidth:560 }}>
+                <thead>
+                  <tr>
+                    <th style={{ textAlign:'left', padding:'12px 16px', fontSize:12, fontWeight:600, color:mkt.muted, borderBottom:`1px solid ${mkt.border}` }}>Feature</th>
+                    {PLAN_DATA.map(p => (
+                      <th key={p.name} style={{ textAlign:'center', padding:'12px 16px', fontSize:13, fontWeight:700, color: p.popular ? mkt.brand : mkt.text, borderBottom:`1px solid ${mkt.border}` }}>{p.name}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {COMPARISON_KEYS.map((key, i) => (
+                    <tr key={key} style={{ background: i % 2 === 0 ? 'transparent' : 'rgba(0,0,0,0.02)' }}>
+                      <td style={{ padding:'11px 16px', fontSize:13, color:mkt.muted, borderBottom: i < COMPARISON_KEYS.length - 1 ? `1px solid ${mkt.border}` : 'none' }}>{key}</td>
+                      {PLAN_DATA.map(p => {
+                        const v = p.comparison[key];
+                        const isCheck = v === '✓';
+                        const isDash  = v === '—';
+                        const isSoon  = v === 'Coming soon';
+                        return (
+                          <td key={p.name} style={{ textAlign:'center', padding:'11px 16px', fontSize:13, borderBottom: i < COMPARISON_KEYS.length - 1 ? `1px solid ${mkt.border}` : 'none', color: isDash ? 'rgba(0,0,0,0.25)' : isCheck ? '#059669' : isSoon ? mkt.brand : mkt.text }}>
+                            {isCheck
+                              ? <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                              : isSoon
+                                ? <span style={{ fontSize:11, fontWeight:600 }}>Soon</span>
+                                : v}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
 
         {/* FAQ */}
         <div style={{ maxWidth:740, margin:'60px auto 0' }}>
