@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase-browser";
 import DashboardLayout from "@/components/DashboardLayout";
 import { colors as _colors, gradients, radius } from "@/lib/tokens";
+import EngagementPanel, { EngagementProfile } from "@/components/engagement/EngagementPanel";
 
 const colors = {
   ..._colors,
@@ -578,19 +579,25 @@ export default function ImportPage() {
   const [uploadDuration, setUploadDuration] = useState<number | null>(null);
   const [durationLoading, setDurationLoading] = useState(false);
   const [durationUnknown, setDurationUnknown] = useState(false);
+  const [userId, setUserId] = useState<string>('');
+  const [engagementProfile, setEngagementProfile] = useState<EngagementProfile | null>(null);
+  const [engagementDismissed, setEngagementDismissed] = useState(false);
+
+  const isClipping = Status === 'queued' || Status === 'preprocessing' || Status === 'processing';
 
   const PLAN_MAX: Record<string, number> = { free: 30, starter: 150, pro: 400, agency: 1200 };
   const minutesRemaining = Math.max(0, (PLAN_MAX[userPlan] ?? 30) - userCredits);
   const insufficientCredits = userCredits > 0 && minutesRemaining <= 0;
   const uploadInsufficientCredits = userCredits > 0 && minutesRemaining <= 0;
 
-  // Fetch user's plan and credits on mount
+  // Fetch user's plan, credits, and engagement profile on mount
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user) return;
+      setUserId(user.id);
       supabase
         .from("profiles")
-        .select("plan, minutes_used")
+        .select("plan, minutes_used, acquisition_source, content_category")
         .eq("id", user.id)
         .single()
         .then(({ data }) => {
@@ -600,6 +607,10 @@ export default function ImportPage() {
           if (typeof data?.minutes_used === "number") {
             setUserCredits(data.minutes_used);
           }
+          setEngagementProfile({
+            acquisition_source: data?.acquisition_source ?? null,
+            content_category:   data?.content_category   ?? null,
+          });
         });
     });
   }, []);
@@ -737,6 +748,7 @@ export default function ImportPage() {
 
     stopPolling();
     setGenerationSuccess(false);
+    setEngagementDismissed(false);
     setLoading(true);
     setStatus("queued");
     setError(null);
@@ -799,6 +811,7 @@ export default function ImportPage() {
     if (!selectedFile || durationLoading) return;
 
     setGenerationSuccess(false);
+    setEngagementDismissed(false);
     setLoading(true);
     setStatus('processing');
     setError(null);
@@ -1884,6 +1897,14 @@ export default function ImportPage() {
         </div>
       )}
       <ComingSoonModal isOpen={!!csmClip} onClose={() => setCsmClip(null)} videoUrl={csmClip?.url} clipTitle={csmClip?.title} />
+      {userId && engagementProfile !== null && (
+        <EngagementPanel
+          isClipping={isClipping && !engagementDismissed}
+          userId={userId}
+          profile={engagementProfile}
+          onDismiss={() => setEngagementDismissed(true)}
+        />
+      )}
     </DashboardLayout>
   );
 }
