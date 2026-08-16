@@ -5,7 +5,20 @@ import React, { useState, useRef } from 'react';
 import DashboardLayout from '@/components/DashboardLayout';
 import Icon from '@/components/Icon';
 import { useRouter } from 'next/navigation';
-import { colors, gradients, radius, inputField } from '@/lib/tokens';
+import { colors as _colors, gradients, radius, inputField as _inputField } from '@/lib/tokens';
+
+const colors = {
+  ..._colors,
+  background: '#E4E2DD',
+  surfaceContainer: '#EFECEA',
+  surfaceContainerHigh: '#EFECEA',
+  surfaceContainerHighest: '#E8E5DF',
+  surfaceContainerLowest: '#F5F3EF',
+  onSurface: '#1A1714',
+  onSurfaceVariant: '#6B6560',
+  outlineVariant: 'rgba(0,0,0,0.12)',
+};
+const inputField: React.CSSProperties = { ..._inputField, background: '#F5F3EF', color: '#1A1714', border: '1px solid rgba(0,0,0,0.12)' };
 
 const supabase = createClient();
 
@@ -151,7 +164,7 @@ export default function SettingsPage() {
 
   return (
     <>
-      <DashboardLayout title="Settings" subtitle="Manage your account, plan, and preferences.">
+      <DashboardLayout title="Settings" subtitle="Manage your account, plan, and preferences." bg="#E4E2DD" titleColor="#1A1714" subtitleColor="#6B6560">
 
         {/* Toast */}
         {toast && (

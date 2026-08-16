@@ -9,10 +9,11 @@ import { clearClipStorage } from '@/lib/clearClipStorage';
 
 const ADMIN_EMAIL = 'adminvangelclip@gmail.com';
 const NAV = [
-  { label: 'Home', icon: 'home', href: '/dashboard' },
-  { label: 'Projects', icon: 'video_library', href: '/import' },
-  { label: 'Clips', icon: 'movie_edit', href: '/clips' },
-  { label: 'Settings', icon: 'settings', href: '/settings' },
+  { label: 'Home',      icon: 'home',           href: '/dashboard' },
+  { label: 'Projects',  icon: 'video_library',  href: '/import' },
+  { label: 'Clips',     icon: 'movie_edit',     href: '/clips' },
+  { label: 'Scheduler', icon: 'calendar_month', href: '/scheduler', soon: true },
+  { label: 'Settings',  icon: 'settings',       href: '/settings' },
 ];
 export default function Sidebar() {
   const pathname = usePathname();
@@ -70,7 +71,8 @@ export default function Sidebar() {
           return (
             <button key={item.href} onClick={() => go(item.href)} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 12px', borderRadius: a ? '0 6px 6px 0' : '6px', background: a ? 'rgba(156,72,234,0.08)' : 'transparent', borderLeft: `2px solid ${a ? '#9c48ea' : 'transparent'}`, color: a ? '#cc97ff' : colors.onSurfaceVariant, fontWeight: a ? 600 : 500, fontSize: '13px', border: 'none', cursor: 'pointer', width: '100%', textAlign: 'left', fontFamily: "'Inter', sans-serif", borderLeftStyle: 'solid' as const, borderLeftWidth: '2px', borderLeftColor: a ? '#9c48ea' : 'transparent' }}>
               <Icon name={item.icon} size={20} style={{ color: a ? '#cc97ff' : colors.onSurfaceVariant }} />
-              <span>{item.label}</span>
+              <span style={{ flex: 1 }}>{item.label}</span>
+              {item.soon && <span style={{ fontSize: '9px', fontWeight: 700, letterSpacing: '0.06em', color: '#a78bfa', background: 'rgba(124,58,237,0.15)', padding: '2px 6px', borderRadius: '100px' }}>SOON</span>}
             </button>
           );
         })}
@@ -117,7 +119,7 @@ export default function Sidebar() {
     <>
       <aside className="sidebar-desktop" style={{ position: 'fixed', left: 0, top: 0, width: '256px', height: '100vh', background: colors.surfaceContainerLowest, borderRight: '1px solid rgba(70,69,85,0.15)', display: 'flex', flexDirection: 'column', padding: '16px', zIndex: 40, overflowY: 'auto' }}>{content}</aside>
       <nav className="sidebar-mobile" style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: colors.surfaceContainerLowest, borderTop: '1px solid rgba(70,69,85,0.15)', display: 'none', justifyContent: 'space-around', padding: '8px 4px', paddingBottom: 'env(safe-area-inset-bottom, 8px)', zIndex: 40 }}>
-        {[NAV[0],NAV[1],NAV[2],NAV[3]].map((item) => {
+        {NAV.map((item) => {
           const a = isActive(item.href);
           return (
             <button key={item.href} onClick={() => go(item.href)} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', background: 'none', border: 'none', cursor: 'pointer', color: a ? '#cc97ff' : colors.onSurfaceVariant, fontSize: '10px', fontWeight: a ? 600 : 400, fontFamily: "'Inter', sans-serif", padding: '4px 8px' }}>

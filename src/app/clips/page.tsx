@@ -3,7 +3,19 @@ import React, { useState, useEffect } from 'react';
 import DashboardLayout from '@/components/DashboardLayout';
 import Icon from '@/components/Icon';
 import { useRouter } from 'next/navigation';
-import { colors, gradients, radius } from '@/lib/tokens';
+import { colors as _colors, gradients, radius } from '@/lib/tokens';
+
+const colors = {
+  ..._colors,
+  background: '#E4E2DD',
+  surfaceContainer: '#EFECEA',
+  surfaceContainerHigh: '#EFECEA',
+  surfaceContainerHighest: '#E8E5DF',
+  surfaceContainerLowest: '#F5F3EF',
+  onSurface: '#1A1714',
+  onSurfaceVariant: '#6B6560',
+  outlineVariant: 'rgba(0,0,0,0.12)',
+};
 
 type Clip = {
   id?: string; title: string; hook_text: string; start_time: number; end_time: number;
@@ -81,11 +93,11 @@ export default function ClipsPage() {
   }
 
   return (
-    <DashboardLayout title="Generated Clips" subtitle={clips.length + ' clips ready'}>
+    <DashboardLayout title="Generated Clips" subtitle={clips.length + ' clips ready'} bg="#E4E2DD" titleColor="#1A1714" subtitleColor="#6B6560">
       {/* Filters */}
       <div className="clips-filters" style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'24px', flexWrap:'wrap', gap:'12px' }}>
         <div style={{ display:'flex', gap:'8px' }}>
-          {SORTS.map(o => <button key={o} onClick={() => setSort(o)} style={{ padding:'8px 16px', borderRadius:radius.full, background:sort===o?colors.primary:colors.surfaceContainerHigh, color:sort===o?'#000':colors.onSurfaceVariant, border:'none', fontWeight:600, fontSize:'12px', cursor:'pointer', fontFamily:"'Inter',sans-serif" }}>{o}</button>)}
+          {SORTS.map(o => <button key={o} onClick={() => setSort(o)} style={{ padding:'8px 16px', borderRadius:radius.full, background:sort===o?colors.primary:'#EFECEA', color:sort===o?'#fff':colors.onSurfaceVariant, border:sort===o?'none':'1px solid rgba(0,0,0,0.08)', fontWeight:600, fontSize:'12px', cursor:'pointer', fontFamily:"'Inter',sans-serif" }}>{o}</button>)}
         </div>
         <div style={{ display:'flex', gap:'8px' }}>
           {PLATS.map(p => <button key={p} onClick={() => setPlat(p)} style={{ padding:'8px 14px', borderRadius:radius.full, background:plat===p?colors.surfaceContainerHighest:'transparent', color:plat===p?colors.onSurface:colors.onSurfaceVariant, border:plat===p?'1px solid '+colors.outlineVariant:'1px solid transparent', fontWeight:500, fontSize:'12px', cursor:'pointer', fontFamily:"'Inter',sans-serif" }}>{p}</button>)}
@@ -120,7 +132,7 @@ export default function ClipsPage() {
 
             {/* Info */}
             <div style={{ padding:'16px' }}>
-              <p style={{ fontSize:'13px', fontWeight:600, marginBottom:'4px', lineHeight:1.4, overflow:'hidden', textOverflow:'ellipsis', display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical' as any }}>{clip.title}</p>
+              <p style={{ fontSize:'13px', fontWeight:600, marginBottom:'4px', lineHeight:1.4, overflow:'hidden', textOverflow:'ellipsis', display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical' as any, color:'#1A1714' }}>{clip.title}</p>
               <p style={{ fontSize:'11px', color:colors.onSurfaceVariant, textTransform:'capitalize', marginBottom:'12px' }}>
                 <Icon name="smart_display" size={12} style={{ verticalAlign:'middle', marginRight:4 }}/>{platMap(clip.platform)}
               </p>

@@ -1,390 +1,175 @@
 'use client';
-import { useState, useEffect } from 'react';
-import { createClient } from '@/lib/supabase-browser';
-import Link from 'next/link';
+import React from 'react';
+import DashboardLayout from '@/components/DashboardLayout';
+import { colors as _colors, gradients, radius } from '@/lib/tokens';
 
-interface ScheduledPost {
-  id: string;
-  clip_title: string;
-  video_url: string;
-  platform: string;
-  scheduled_at: string;
-  status: string;
-  caption: string;
-}
-
-const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-const PLATFORMS: Record<string, { icon: string; color: string }> = {
-  tiktok: { icon: '🎵', color: '#000000' },
-  instagram: { icon: '📸', color: '#E1306C' },
-  youtube: { icon: '▶', color: '#FF0000' },
-  facebook: { icon: '📘', color: '#1877F2' },
-  twitter: { icon: '𝕏', color: '#000000' },
+const colors = {
+  ..._colors,
+  background: '#E4E2DD',
+  surfaceContainer: '#EFECEA',
+  surfaceContainerHigh: '#EFECEA',
+  surfaceContainerHighest: '#E8E5DF',
+  surfaceContainerLowest: '#F5F3EF',
+  onSurface: '#1A1714',
+  onSurfaceVariant: '#6B6560',
+  outlineVariant: 'rgba(0,0,0,0.12)',
 };
 
+const PLATFORMS = [
+  { id: 'tiktok',    label: 'TikTok',            icon: '📱', color: '#010101' },
+  { id: 'instagram', label: 'Instagram Reels',   icon: '📸', color: '#E1306C' },
+  { id: 'youtube',   label: 'YouTube Shorts',    icon: '▶️', color: '#FF0000' },
+  { id: 'facebook',  label: 'Facebook',          icon: '👥', color: '#1877F2' },
+  { id: 'twitter',   label: 'X (Twitter)',       icon: '🐦', color: '#1DA1F2' },
+];
+
+const MOCK_QUEUE = [
+  { platform: 'TikTok',          title: 'Sunday Sermon Highlights', date: 'Mon, Aug 18', time: '9:00 AM', status: 'scheduled' },
+  { platform: 'Instagram Reels', title: 'Top 3 Quotes This Week',   date: 'Mon, Aug 18', time: '2:00 PM', status: 'scheduled' },
+  { platform: 'YouTube Shorts',  title: 'Faith Over Fear — Clip 1', date: 'Tue, Aug 19', time: '10:00 AM', status: 'scheduled' },
+];
+
 export default function SchedulerPage() {
-  const [currentDate, setCurrentDate] = useState(new Date());
-  const [posts, setPosts] = useState<ScheduledPost[]>([]);
-  const [selectedDay, setSelectedDay] = useState<number | null>(null);
-  const supabase = createClient();
-
-  useEffect(() => {
-    supabase
-      .from('scheduled_posts')
-      .select('*')
-      .order('scheduled_at', { ascending: true })
-      .then(({ data }) => {
-        setPosts(data || []);
-      });
-  }, []);
-
-  const year = currentDate.getFullYear();
-  const month = currentDate.getMonth();
-  const firstDay = new Date(year, month, 1).getDay();
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const monthName = currentDate.toLocaleDateString('en', {
-    month: 'long',
-    year: 'numeric',
-  });
-
-  const getPostsForDay = (day: number) => {
-    return posts.filter((p) => {
-      const d = new Date(p.scheduled_at);
-      return (
-        d.getFullYear() === year &&
-        d.getMonth() === month &&
-        d.getDate() === day
-      );
-    });
-  };
-
-  const calendarDays = [];
-  for (let i = 0; i < firstDay; i++) {
-    calendarDays.push(null);
-  }
-  for (let i = 1; i <= daysInMonth; i++) {
-    calendarDays.push(i);
-  }
-
   return (
-    <div>
+    <DashboardLayout
+      title="Scheduler"
+      subtitle="Schedule clips to social media"
+      bg="#E4E2DD"
+      titleColor="#1A1714"
+      subtitleColor="#6B6560"
+    >
+      {/* Coming Soon Banner */}
       <div style={{
+        background: '#1A1714',
+        borderRadius: radius.xl,
+        padding: '28px 32px',
+        marginBottom: 28,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        marginBottom: '20px',
+        flexWrap: 'wrap',
+        gap: 16,
+        border: '1px solid rgba(255,255,255,0.06)',
       }}>
-        <h1 style={{
-          fontSize: '22px',
-          fontWeight: 700,
-          color: '#ffffff',
-          margin: 0,
-        }}>
-          Content calendar
-        </h1>
-        <Link
-          href="/settings/social"
-          style={{
-            padding: '8px 16px',
-            background: 'rgba(124,58,237,0.2)',
-            border: '1px solid rgba(124,58,237,0.4)',
-            borderRadius: '8px',
-            color: '#a78bfa',
-            fontSize: '12px',
-            fontWeight: 600,
-            textDecoration: 'none',
-          }}
-        >
-          📱 Manage accounts
-        </Link>
-      </div>
-
-      {/* Month navigation */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        marginBottom: '16px',
-      }}>
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+            <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', background: gradients.primary, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+              Coming Soon
+            </span>
+          </div>
+          <h2 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: '#fff', lineHeight: 1.2, marginBottom: 6 }}>
+            Post for Me — Automatic Scheduling
+          </h2>
+          <p style={{ margin: 0, fontSize: 13, color: 'rgba(255,255,255,0.5)', maxWidth: 460 }}>
+            Connect your TikTok, Instagram, YouTube, and more. We&apos;ll post your clips at the best times automatically.
+          </p>
+        </div>
         <button
-          onClick={() =>
-            setCurrentDate(new Date(year, month - 1, 1))
-          }
-          style={{
-            padding: '6px 12px',
-            background: 'rgba(255,255,255,0.06)',
-            border: '1px solid rgba(255,255,255,0.1)',
-            borderRadius: '6px',
-            color: 'rgba(255,255,255,0.6)',
-            fontSize: '13px',
-            cursor: 'pointer',
-          }}
+          disabled
+          style={{ padding: '12px 24px', borderRadius: radius.md, background: 'rgba(155,93,229,0.2)', border: '1px solid rgba(155,93,229,0.35)', color: 'rgba(155,93,229,0.7)', fontWeight: 700, fontSize: 13, cursor: 'not-allowed', fontFamily: "'Inter',sans-serif", whiteSpace: 'nowrap' }}
         >
-          ← Prev
-        </button>
-        <span style={{
-          fontSize: '16px',
-          fontWeight: 600,
-          color: '#ffffff',
-        }}>
-          {monthName}
-        </span>
-        <button
-          onClick={() =>
-            setCurrentDate(new Date(year, month + 1, 1))
-          }
-          style={{
-            padding: '6px 12px',
-            background: 'rgba(255,255,255,0.06)',
-            border: '1px solid rgba(255,255,255,0.1)',
-            borderRadius: '6px',
-            color: 'rgba(255,255,255,0.6)',
-            fontSize: '13px',
-            cursor: 'pointer',
-          }}
-        >
-          Next →
+          Join Waitlist
         </button>
       </div>
 
-      {/* Calendar grid */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(7, 1fr)',
-        gap: '2px',
-        background: 'rgba(255,255,255,0.06)',
-        borderRadius: '12px',
-        overflow: 'hidden',
-        border: '1px solid rgba(255,255,255,0.08)',
-      }}>
-        {/* Day headers */}
-        {DAYS.map((day) => (
+      {/* Platform Connection Cards */}
+      <h3 style={{ fontSize: 13, fontWeight: 700, color: colors.onSurfaceVariant, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 14 }}>
+        Connected Platforms
+      </h3>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12, marginBottom: 32 }}>
+        {PLATFORMS.map(p => (
           <div
-            key={day}
+            key={p.id}
             style={{
-              padding: '10px',
-              textAlign: 'center',
-              fontSize: '11px',
-              fontWeight: 600,
-              color: 'rgba(255,255,255,0.4)',
-              background: 'rgba(255,255,255,0.04)',
+              background: colors.surfaceContainer,
+              border: '1px solid rgba(0,0,0,0.07)',
+              borderRadius: radius.lg,
+              padding: '16px 18px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12,
             }}
           >
-            {day}
+            <span style={{ fontSize: 22 }}>{p.icon}</span>
+            <div style={{ flex: 1 }}>
+              <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: colors.onSurface }}>{p.label}</p>
+              <p style={{ margin: '2px 0 0', fontSize: 11, color: colors.onSurfaceVariant }}>Not connected</p>
+            </div>
+            <button
+              disabled
+              style={{ padding: '6px 12px', borderRadius: radius.sm, background: 'rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.08)', color: colors.onSurfaceVariant, fontSize: 11, fontWeight: 600, cursor: 'not-allowed', fontFamily: "'Inter',sans-serif" }}
+            >
+              Connect
+            </button>
           </div>
         ))}
-
-        {/* Calendar days */}
-        {calendarDays.map((day, i) => {
-          const dayPosts = day ? getPostsForDay(day) : [];
-          const isToday =
-            day === new Date().getDate() &&
-            month === new Date().getMonth() &&
-            year === new Date().getFullYear();
-
-          return (
-            <div
-              key={i}
-              onClick={() => day && setSelectedDay(day)}
-              style={{
-                padding: '8px',
-                minHeight: '70px',
-                background: day
-                  ? selectedDay === day
-                    ? 'rgba(124,58,237,0.12)'
-                    : 'rgba(5,0,16,0.8)'
-                  : 'rgba(5,0,16,0.4)',
-                cursor: day ? 'pointer' : 'default',
-                borderLeft: isToday
-                  ? '2px solid #7c3aed'
-                  : '2px solid transparent',
-              }}
-            >
-              {day && (
-                <>
-                  <div style={{
-                    fontSize: '12px',
-                    fontWeight: isToday ? 700 : 400,
-                    color: isToday
-                      ? '#a78bfa'
-                      : 'rgba(255,255,255,0.6)',
-                    marginBottom: '4px',
-                  }}>
-                    {day}
-                  </div>
-                  {dayPosts.slice(0, 2).map((post, j) => (
-                    <div
-                      key={j}
-                      style={{
-                        fontSize: '9px',
-                        padding: '2px 4px',
-                        borderRadius: '3px',
-                        background:
-                          PLATFORMS[post.platform]?.color ||
-                          '#7c3aed',
-                        color: '#ffffff',
-                        marginBottom: '2px',
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                      }}
-                    >
-                      {PLATFORMS[post.platform]?.icon}{' '}
-                      {post.clip_title?.slice(0, 12)}
-                    </div>
-                  ))}
-                  {dayPosts.length > 2 && (
-                    <div style={{
-                      fontSize: '9px',
-                      color: 'rgba(255,255,255,0.4)',
-                    }}>
-                      +{dayPosts.length - 2} more
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-          );
-        })}
       </div>
 
-      {/* Selected day detail */}
-      {selectedDay && (
-        <div style={{
-          marginTop: '16px',
-          padding: '16px',
-          background: 'rgba(255,255,255,0.04)',
-          border: '1px solid rgba(255,255,255,0.08)',
-          borderRadius: '12px',
-        }}>
-          <div style={{
-            fontSize: '14px',
-            fontWeight: 600,
-            color: '#ffffff',
-            marginBottom: '12px',
-          }}>
-            {new Date(year, month, selectedDay).toLocaleDateString(
-              'en',
-              { weekday: 'long', month: 'long', day: 'numeric' }
-            )}
-          </div>
-          {getPostsForDay(selectedDay).length > 0 ? (
-            getPostsForDay(selectedDay).map((post, i) => (
-              <div
-                key={i}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '10px',
-                  padding: '10px',
-                  background: 'rgba(255,255,255,0.04)',
-                  borderRadius: '8px',
-                  marginBottom: '6px',
-                }}
-              >
-                <span style={{ fontSize: '16px' }}>
-                  {PLATFORMS[post.platform]?.icon || '📱'}
-                </span>
-                <div style={{ flex: 1 }}>
-                  <div style={{
-                    fontSize: '13px',
-                    fontWeight: 600,
-                    color: '#ffffff',
-                  }}>
-                    {post.clip_title}
-                  </div>
-                  <div style={{
-                    fontSize: '11px',
-                    color: 'rgba(255,255,255,0.4)',
-                  }}>
-                    {new Date(post.scheduled_at).toLocaleTimeString(
-                      'en',
-                      { hour: '2-digit', minute: '2-digit' }
-                    )}{' '}
-                    · {post.platform}
-                  </div>
-                </div>
-                <span style={{
-                  padding: '3px 8px',
-                  borderRadius: '100px',
-                  fontSize: '10px',
-                  fontWeight: 600,
-                  background:
-                    post.status === 'posted'
-                      ? 'rgba(16,185,129,0.15)'
-                      : post.status === 'failed'
-                      ? 'rgba(239,68,68,0.15)'
-                      : 'rgba(245,158,11,0.15)',
-                  color:
-                    post.status === 'posted'
-                      ? '#6ee7b7'
-                      : post.status === 'failed'
-                      ? '#fca5a5'
-                      : '#fcd34d',
-                }}>
-                  {post.status}
-                </span>
-              </div>
-            ))
-          ) : (
-            <div style={{
-              textAlign: 'center',
-              padding: '20px',
-              color: 'rgba(255,255,255,0.3)',
-              fontSize: '13px',
-            }}>
-              No posts scheduled for this day
-            </div>
-          )}
-        </div>
-      )}
+      {/* Scheduled Queue Preview */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+        <h3 style={{ fontSize: 13, fontWeight: 700, color: colors.onSurfaceVariant, textTransform: 'uppercase', letterSpacing: '0.07em', margin: 0 }}>
+          Upcoming Queue
+        </h3>
+        <span style={{ fontSize: 11, fontWeight: 600, color: colors.onSurfaceVariant, background: colors.surfaceContainerHighest, padding: '4px 10px', borderRadius: radius.full, border: '1px solid rgba(0,0,0,0.07)' }}>
+          Preview only
+        </span>
+      </div>
 
-      {/* Empty state */}
-      {posts.length === 0 && (
-        <div style={{
-          textAlign: 'center',
-          padding: '40px 20px',
-          marginTop: '16px',
-        }}>
-          <div style={{
-            fontSize: '32px',
-            marginBottom: '12px',
-          }}>
-            📅
-          </div>
-          <div style={{
-            fontSize: '15px',
-            fontWeight: 600,
-            color: '#ffffff',
-            marginBottom: '6px',
-          }}>
-            No scheduled posts yet
-          </div>
-          <div style={{
-            fontSize: '13px',
-            color: 'rgba(255,255,255,0.45)',
-            marginBottom: '16px',
-          }}>
-            Generate clips and schedule them to
-            publish automatically to your social accounts
-          </div>
-          <Link
-            href="/import"
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 32 }}>
+        {MOCK_QUEUE.map((item, i) => (
+          <div
+            key={i}
             style={{
-              display: 'inline-flex',
-              padding: '10px 20px',
-              background: 'linear-gradient(135deg, #7c3aed, #5b21b6)',
-              borderRadius: '8px',
-              color: '#ffffff',
-              fontSize: '13px',
-              fontWeight: 600,
-              textDecoration: 'none',
+              background: colors.surfaceContainer,
+              border: '1px solid rgba(0,0,0,0.07)',
+              borderRadius: radius.lg,
+              padding: '14px 18px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 14,
+              opacity: 0.6,
             }}
           >
-            Generate Clips →
-          </Link>
-        </div>
-      )}
-    </div>
+            <div style={{ width: 40, height: 40, borderRadius: radius.md, background: colors.surfaceContainerHighest, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 18 }}>
+              {PLATFORMS.find(p => p.label === item.platform)?.icon ?? '📱'}
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: colors.onSurface, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.title}</p>
+              <p style={{ margin: '2px 0 0', fontSize: 11, color: colors.onSurfaceVariant }}>{item.platform} · {item.date} at {item.time}</p>
+            </div>
+            <span style={{ fontSize: 11, fontWeight: 700, color: '#6B6560', background: colors.surfaceContainerHighest, padding: '4px 10px', borderRadius: radius.full, flexShrink: 0 }}>
+              Pending
+            </span>
+          </div>
+        ))}
+      </div>
+
+      {/* How it will work */}
+      <h3 style={{ fontSize: 13, fontWeight: 700, color: colors.onSurfaceVariant, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 14 }}>
+        How it Works
+      </h3>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 12 }}>
+        {[
+          { step: '01', title: 'Connect accounts', desc: 'Link your TikTok, Instagram, YouTube, and more in one place.' },
+          { step: '02', title: 'Generate clips', desc: 'Use VangelClip to extract your best moments automatically.' },
+          { step: '03', title: 'Set a schedule', desc: 'Choose your posting frequency and preferred times per platform.' },
+          { step: '04', title: 'We post for you', desc: 'Clips go live at the optimal time — no manual effort required.' },
+        ].map(item => (
+          <div
+            key={item.step}
+            style={{
+              background: colors.surfaceContainer,
+              border: '1px solid rgba(0,0,0,0.07)',
+              borderRadius: radius.lg,
+              padding: '18px 20px',
+            }}
+          >
+            <span style={{ fontSize: 11, fontWeight: 800, color: colors.primary, letterSpacing: '0.05em' }}>{item.step}</span>
+            <p style={{ margin: '6px 0 4px', fontSize: 14, fontWeight: 700, color: colors.onSurface }}>{item.title}</p>
+            <p style={{ margin: 0, fontSize: 12, color: colors.onSurfaceVariant, lineHeight: 1.5 }}>{item.desc}</p>
+          </div>
+        ))}
+      </div>
+    </DashboardLayout>
   );
 }

@@ -2,7 +2,21 @@
 import React, { useState, useRef, Suspense } from 'react';
 import DashboardLayout from '@/components/DashboardLayout';
 import { useSearchParams } from 'next/navigation';
-import { colors, gradients, radius, inputField } from '@/lib/tokens';
+import { colors as _colors, gradients, radius, inputField as _inputField } from '@/lib/tokens';
+
+const colors = {
+  ..._colors,
+  background: '#E4E2DD',
+  surfaceContainer: '#EFECEA',
+  surfaceContainerHigh: '#EFECEA',
+  surfaceContainerLow: '#EFECEA',
+  surfaceContainerHighest: '#E8E5DF',
+  surfaceContainerLowest: '#F5F3EF',
+  onSurface: '#1A1714',
+  onSurfaceVariant: '#6B6560',
+  outlineVariant: 'rgba(0,0,0,0.12)',
+};
+const inputField: React.CSSProperties = { ..._inputField, background: '#F5F3EF', color: '#1A1714', border: '1px solid rgba(0,0,0,0.12)' };
 
 function fmt(s: number) {
   if (!isFinite(s)) return '0:00';
@@ -98,13 +112,21 @@ function EditorPageInner() {
     aiScore >= 70 ? '#a78bfa' : '#ef4444';
 
   const panelStyle: React.CSSProperties = {
-    background: colors.surfaceContainerHigh,
+    background: '#EFECEA',
     borderRadius: radius.lg,
     padding: '16px 18px',
+    border: '1px solid rgba(0,0,0,0.06)',
+  };
+
+  const darkPanelStyle: React.CSSProperties = {
+    background: '#1A1714',
+    borderRadius: radius.lg,
+    padding: '16px 18px',
+    border: '1px solid rgba(255,255,255,0.06)',
   };
 
   return (
-    <DashboardLayout title="Review & Refine">
+    <DashboardLayout title="Review & Refine" bg="#E4E2DD" titleColor="#1A1714" subtitleColor="#6B6560">
       <div
         className="editor-layout"
         style={{ display: 'grid', gridTemplateColumns: '1fr 360px', gap: 24, alignItems: 'start' }}
@@ -113,7 +135,7 @@ function EditorPageInner() {
         {/* ═══ LEFT — Video player ═══ */}
         <div>
           {/* Video */}
-          <div style={{ maxWidth: 320, margin: '0 auto 14px', borderRadius: radius.xl, overflow: 'hidden', background: colors.surfaceContainerHigh, position: 'relative' }}>
+          <div style={{ maxWidth: 320, margin: '0 auto 14px', borderRadius: radius.xl, overflow: 'hidden', background: '#1A1714', position: 'relative' }}>
             {videoUrl ? (
               <>
                 <video
@@ -189,18 +211,18 @@ function EditorPageInner() {
         {/* ═══ RIGHT — Review & Refine ═══ */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
 
-          {/* Virality score */}
-          <div style={{ ...panelStyle, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <p style={{ margin: 0, fontSize: 11, fontWeight: 700, color: colors.onSurfaceVariant, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+          {/* Virality score — intentionally dark accent card */}
+          <div style={{ ...darkPanelStyle, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <p style={{ margin: 0, fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
               Virality Score
             </p>
             {aiScore > 0 ? (
               <span style={{ fontSize: 26, fontWeight: 900, color: scoreColor, fontVariantNumeric: 'tabular-nums', lineHeight: 1 }}>
                 {aiScore}
-                <span style={{ fontSize: 12, fontWeight: 600, color: colors.onSurfaceVariant }}>/100</span>
+                <span style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.4)' }}>/100</span>
               </span>
             ) : (
-              <span style={{ fontSize: 13, color: colors.onSurfaceVariant }}>—</span>
+              <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)' }}>—</span>
             )}
           </div>
 
@@ -270,9 +292,9 @@ function EditorPageInner() {
             style={{
               padding: '12px 16px',
               borderRadius: radius.md,
-              background:  copied ? 'rgba(16,185,129,0.12)' : colors.surfaceContainerHigh,
-              border:      `1px solid ${copied ? 'rgba(16,185,129,0.3)' : colors.outlineVariant}`,
-              color:       copied ? '#6ee7b7' : colors.onSurface,
+              background:  copied ? 'rgba(16,185,129,0.12)' : '#EFECEA',
+              border:      `1px solid ${copied ? 'rgba(16,185,129,0.3)' : 'rgba(0,0,0,0.10)'}`,
+              color:       copied ? '#059669' : '#1A1714',
               fontSize: 13,
               fontWeight: 700,
               cursor: 'pointer',

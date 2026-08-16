@@ -4,7 +4,20 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase-browser";
 import DashboardLayout from "@/components/DashboardLayout";
-import { colors, gradients, radius } from "@/lib/tokens";
+import { colors as _colors, gradients, radius } from "@/lib/tokens";
+
+const colors = {
+  ..._colors,
+  background: '#E4E2DD',
+  surfaceContainer: '#EFECEA',
+  surfaceContainerLow: '#EFECEA',
+  surfaceContainerHigh: '#EFECEA',
+  surfaceContainerHighest: '#E8E5DF',
+  surfaceContainerLowest: '#F5F3EF',
+  onSurface: '#1A1714',
+  onSurfaceVariant: '#6B6560',
+  outlineVariant: 'rgba(0,0,0,0.12)',
+};
 import ComingSoonModal from "@/components/ComingSoonModal";
 
 const RATIO_ENUM_MAP: Record<string, string> = {
@@ -491,7 +504,7 @@ function LazyVideo({ url, label }: { url: string; label?: string }) {
   }, [loaded]);
 
   return (
-    <div ref={containerRef} style={{ flexShrink: 0, width: 130, borderRadius: 14, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)', background: '#0e0e14', scrollSnapAlign: 'start' }}>
+    <div ref={containerRef} style={{ flexShrink: 0, width: 130, borderRadius: 14, overflow: 'hidden', border: '1px solid rgba(0,0,0,0.07)', background: '#0e0e14', scrollSnapAlign: 'start' }}>
       {loaded ? (
         <video
           ref={videoRef}
@@ -923,6 +936,9 @@ export default function ImportPage() {
     <DashboardLayout
       title="Import Video"
       subtitle="Paste a YouTube URL and AI will extract your best moments."
+      bg="#E4E2DD"
+      titleColor="#1A1714"
+      subtitleColor="#6B6560"
     >
       <div style={{ maxWidth: 900 }}>
         <div
@@ -961,12 +977,12 @@ export default function ImportPage() {
                     )}
                   </div>
                   {videoPreview && (
-                    <div style={{ display: 'flex', gap: '14px', padding: '14px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(124,58,237,0.25)', borderRadius: '12px', marginTop: '12px', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', gap: '14px', padding: '14px', background: '#EFECEA', border: '1px solid rgba(124,58,237,0.20)', borderRadius: '12px', marginTop: '12px', alignItems: 'center' }}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={videoPreview.thumbnail} alt="Video preview" style={{ width: '160px', height: '90px', objectFit: 'cover', borderRadius: '8px', flexShrink: 0 }} onError={(e) => { (e.target as HTMLImageElement).src = `https://img.youtube.com/vi/${videoPreview.videoId}/hqdefault.jpg`; }} />
                       <div>
-                        <div style={{ fontSize: '13px', fontWeight: 600, color: '#ffffff', marginBottom: '4px' }}>Video detected</div>
-                        <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)' }}>ID: {videoPreview.videoId}</div>
+                        <div style={{ fontSize: '13px', fontWeight: 600, color: '#1A1714', marginBottom: '4px' }}>Video detected</div>
+                        <div style={{ fontSize: '12px', color: '#6B6560' }}>ID: {videoPreview.videoId}</div>
                         <div style={{ fontSize: '11px', color: '#10b981', marginTop: '4px' }}>✓ Ready to clip</div>
                       </div>
                     </div>
@@ -1015,14 +1031,14 @@ export default function ImportPage() {
                         if (dur === null) { setDurationUnknown(true); } else { setUploadDuration(dur); }
                       }}
                     />
-                    <div style={{ fontSize: '14px', fontWeight: 600, color: '#ffffff', marginBottom: '6px' }}>
+                    <div style={{ fontSize: '14px', fontWeight: 600, color: '#1A1714', marginBottom: '6px' }}>
                       {isDragOver ? 'Drop your video here' : 'Drag & drop or click to upload'}
                     </div>
-                    <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)' }}>MP4 · MOV · MKV · WebM · AVI · MP3 · WAV · M4A · AAC · Max 1 GB</div>
+                    <div style={{ fontSize: '12px', color: '#6B6560' }}>MP4 · MOV · MKV · WebM · AVI · MP3 · WAV · M4A · AAC · Max 1 GB</div>
                   </div>
 
                   {/* Upload speed tip */}
-                  <div style={{ marginTop: '10px', fontSize: '11px', color: 'rgba(255,255,255,0.35)', lineHeight: 1.5 }}>
+                  <div style={{ marginTop: '10px', fontSize: '11px', color: '#8B8580', lineHeight: 1.5 }}>
                     Tip: 720p exports upload faster and look great as clips.
                   </div>
 
@@ -1030,8 +1046,8 @@ export default function ImportPage() {
                     <div style={{ padding: '12px 14px', background: uploadInsufficientCredits ? 'rgba(239,68,68,0.06)' : 'rgba(124,58,237,0.08)', border: `1px solid ${uploadInsufficientCredits ? 'rgba(239,68,68,0.3)' : 'rgba(124,58,237,0.25)'}`, borderRadius: '10px', marginTop: '10px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontSize: '13px', fontWeight: 600, color: '#ffffff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{selectedFile.name}</div>
-                          <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.45)', marginTop: '2px' }}>
+                          <div style={{ fontSize: '13px', fontWeight: 600, color: '#1A1714', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{selectedFile.name}</div>
+                          <div style={{ fontSize: '11px', color: '#6B6560', marginTop: '2px' }}>
                             {(selectedFile.size / (1024 * 1024)).toFixed(1)} MB
                             {uploadDuration !== null && uploadDuration > 0 && ` · ${Math.ceil(uploadDuration / 60)} min`}
                           </div>
@@ -1039,7 +1055,7 @@ export default function ImportPage() {
                         <button onClick={e => { e.stopPropagation(); setSelectedFile(null); setUploadDuration(null); setDurationLoading(false); setDurationUnknown(false); }} style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '6px', color: '#fca5a5', fontSize: '11px', padding: '4px 8px', cursor: 'pointer', flexShrink: 0 }}>✕ Remove</button>
                       </div>
                       {durationLoading && (
-                        <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginTop: '8px' }}>Estimating cost...</div>
+                        <div style={{ fontSize: '11px', color: '#6B6560', marginTop: '8px' }}>Estimating cost...</div>
                       )}
                       {uploadInsufficientCredits && (
                         <div style={{ marginTop: '8px', fontSize: '12px', fontWeight: 600, color: '#fca5a5' }}>
@@ -1051,10 +1067,10 @@ export default function ImportPage() {
 
                   {loading && uploadProgress > 0 && uploadProgress < 100 && (
                     <div style={{ marginTop: '12px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: 'rgba(255,255,255,0.6)', marginBottom: '6px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#4B4540', marginBottom: '6px' }}>
                         <span>Uploading...</span><span>{uploadProgress}%</span>
                       </div>
-                      <div style={{ width: '100%', height: '6px', background: 'rgba(255,255,255,0.08)', borderRadius: '3px', overflow: 'hidden' }}>
+                      <div style={{ width: '100%', height: '6px', background: 'rgba(0,0,0,0.08)', borderRadius: '3px', overflow: 'hidden' }}>
                         <div style={{ width: `${uploadProgress}%`, height: '100%', background: 'linear-gradient(90deg,#7c3aed,#5b21b6)', borderRadius: '3px', transition: 'width 0.3s' }} />
                       </div>
                       <div style={{ marginTop: '8px', fontSize: '11px', color: 'rgba(255,255,255,0.4)', textAlign: 'center' }}>
@@ -1097,15 +1113,15 @@ export default function ImportPage() {
             <div style={{
               marginTop: '20px',
               padding: '18px',
-              background: 'rgba(255,255,255,0.03)',
-              border: '1px solid rgba(255,255,255,0.08)',
+              background: 'rgba(0,0,0,0.02)',
+              border: '1px solid rgba(0,0,0,0.07)',
               borderRadius: '14px',
             }}>
               <div style={{ marginBottom: '14px' }}>
-                <div style={{ fontSize: '14px', fontWeight: 700, color: '#ffffff' }}>
+                <div style={{ fontSize: '14px', fontWeight: 700, color: '#1A1714' }}>
                   Content type
                 </div>
-                <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginTop: '2px' }}>
+                <div style={{ fontSize: '11px', color: '#6B6560', marginTop: '2px' }}>
                   Select what you are clipping so the AI knows what to look for
                 </div>
               </div>
@@ -1127,19 +1143,19 @@ export default function ImportPage() {
                         padding: '12px 14px',
                         borderRadius: '10px',
                         border: '1.5px solid',
-                        borderColor: isActive ? '#7c3aed' : 'rgba(255,255,255,0.08)',
-                        background: isActive ? 'rgba(124,58,237,0.14)' : 'rgba(255,255,255,0.02)',
+                        borderColor: isActive ? '#7c3aed' : 'rgba(0,0,0,0.10)',
+                        background: isActive ? 'rgba(124,58,237,0.10)' : 'rgba(0,0,0,0.02)',
                         cursor: 'pointer',
                         textAlign: 'left' as const,
                         transition: 'all 0.15s',
                       }}
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-                        <span style={{ fontSize: '12px', fontWeight: 700, color: isActive ? '#ffffff' : 'rgba(255,255,255,0.65)' }}>
+                        <span style={{ fontSize: '12px', fontWeight: 700, color: isActive ? '#1A1714' : '#6B6560' }}>
                           {preset.label}
                         </span>
                       </div>
-                      <div style={{ fontSize: '10px', color: isActive ? 'rgba(167,139,250,0.9)' : 'rgba(255,255,255,0.35)', lineHeight: 1.4 }}>
+                      <div style={{ fontSize: '10px', color: isActive ? '#7C3AED' : '#8B8580', lineHeight: 1.4 }}>
                         {preset.description}
                       </div>
                     </button>
@@ -1158,9 +1174,9 @@ export default function ImportPage() {
                         padding: '4px 12px',
                         borderRadius: '6px',
                         border: '1px solid',
-                        borderColor: contentMode === 'auto' ? 'rgba(124,58,237,0.5)' : 'rgba(255,255,255,0.1)',
-                        background: contentMode === 'auto' ? 'rgba(124,58,237,0.15)' : 'transparent',
-                        color: contentMode === 'auto' ? '#a78bfa' : 'rgba(255,255,255,0.4)',
+                        borderColor: contentMode === 'auto' ? 'rgba(124,58,237,0.5)' : 'rgba(0,0,0,0.10)',
+                        background: contentMode === 'auto' ? 'rgba(124,58,237,0.12)' : 'rgba(0,0,0,0.03)',
+                        color: contentMode === 'auto' ? '#7C3AED' : '#6B6560',
                         fontSize: '11px',
                         fontWeight: 600,
                         cursor: 'pointer',
@@ -1174,9 +1190,9 @@ export default function ImportPage() {
                         padding: '4px 12px',
                         borderRadius: '6px',
                         border: '1px solid',
-                        borderColor: contentMode === 'manual' ? 'rgba(124,58,237,0.5)' : 'rgba(255,255,255,0.1)',
-                        background: contentMode === 'manual' ? 'rgba(124,58,237,0.15)' : 'transparent',
-                        color: contentMode === 'manual' ? '#a78bfa' : 'rgba(255,255,255,0.4)',
+                        borderColor: contentMode === 'manual' ? 'rgba(124,58,237,0.5)' : 'rgba(0,0,0,0.10)',
+                        background: contentMode === 'manual' ? 'rgba(124,58,237,0.12)' : 'rgba(0,0,0,0.03)',
+                        color: contentMode === 'manual' ? '#7C3AED' : '#6B6560',
                         fontSize: '11px',
                         fontWeight: 600,
                         cursor: 'pointer',
@@ -1204,21 +1220,21 @@ export default function ImportPage() {
                               padding: '12px 14px',
                               borderRadius: '10px',
                               border: '1px solid',
-                              borderColor: isSelected ? type.borderColor : 'rgba(255,255,255,0.08)',
-                              background: isSelected ? type.bgColor : 'rgba(255,255,255,0.02)',
+                              borderColor: isSelected ? type.borderColor : 'rgba(0,0,0,0.08)',
+                              background: isSelected ? type.bgColor : 'rgba(0,0,0,0.02)',
                               cursor: 'pointer',
                               textAlign: 'left' as const,
                             }}
                           >
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                              <span style={{ fontSize: '13px', fontWeight: 700, color: isSelected ? type.color : 'rgba(255,255,255,0.6)' }}>
+                              <span style={{ fontSize: '13px', fontWeight: 700, color: isSelected ? type.color : '#6B6560' }}>
                                 {type.label}
                               </span>
                               <span style={{ fontSize: '10px', fontWeight: 600, color: type.color, opacity: isSelected ? 1 : 0.5 }}>
                                 {isSelected ? 'Selected' : type.emoji}
                               </span>
                             </div>
-                            <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.45)', lineHeight: 1.4, marginBottom: '6px' }}>
+                            <div style={{ fontSize: '11px', color: '#6B6560', lineHeight: 1.4, marginBottom: '6px' }}>
                               {type.description}
                             </div>
                             <div style={{ fontSize: '10px', fontWeight: 600, color: type.color, opacity: 0.8 }}>
@@ -1662,11 +1678,11 @@ export default function ImportPage() {
 
                   {/* Card info */}
                   <div style={{ padding: '10px 12px 12px' }}>
-                    <h3 style={{ fontSize: '13px', fontWeight: 700, color: '#fff', margin: '0 0 4px', lineHeight: 1.35, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                    <h3 style={{ fontSize: '13px', fontWeight: 700, color: '#1A1714', margin: '0 0 4px', lineHeight: 1.35, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
                       {clip.title}
                     </h3>
                     {clip.caption && (
-                      <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.45)', margin: '0 0 10px', lineHeight: 1.4, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
+                      <p style={{ fontSize: '11px', color: '#6B6560', margin: '0 0 10px', lineHeight: 1.4, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
                         {stripEmoji(clip.caption)}
                       </p>
                     )}
@@ -1700,7 +1716,7 @@ export default function ImportPage() {
                           const text = (clip.caption || '') + (clip.hashtags?.length ? '\n\n' + clip.hashtags.join(' ') : '');
                           navigator.clipboard.writeText(text);
                         }}
-                        style={{ padding: '8px 4px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '7px', color: 'rgba(255,255,255,0.7)', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}
+                        style={{ padding: '8px 4px', background: '#EFECEA', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '7px', color: '#1A1714', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}
                       >
                         Copy
                       </button>
@@ -1733,7 +1749,7 @@ export default function ImportPage() {
   @keyframes spin { to { transform: rotate(360deg); } }
   @media (max-width: 768px) { .import-settings-panel { display: none !important; } }
   .vc-clip-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
-  .vc-clip-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; overflow: hidden; transition: border-color 0.2s; }
+  .vc-clip-card { background: #EFECEA; border: 1px solid rgba(0,0,0,0.08); border-radius: 14px; overflow: hidden; transition: border-color 0.2s; }
   .vc-clip-card:hover { border-color: rgba(124,58,237,0.4); }
   @media (max-width: 480px) { .vc-clip-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; } }
 `}</style>
@@ -1764,7 +1780,7 @@ export default function ImportPage() {
                 value={importSchedCaption}
                 onChange={e => setImportSchedCaption(e.target.value)}
                 placeholder="Write your post caption..."
-                style={{ width: '100%', padding: '10px 14px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '8px', color: '#ffffff', fontSize: '13px', outline: 'none', resize: 'vertical', minHeight: '80px', boxSizing: 'border-box', fontFamily: "'Inter', sans-serif" }}
+                style={{ width: '100%', padding: '10px 14px', background: 'rgba(0,0,0,0.04)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '8px', color: '#ffffff', fontSize: '13px', outline: 'none', resize: 'vertical', minHeight: '80px', boxSizing: 'border-box', fontFamily: "'Inter', sans-serif" }}
               />
             </div>
 
@@ -1775,7 +1791,7 @@ export default function ImportPage() {
                 value={importSchedHashtags}
                 onChange={e => setImportSchedHashtags(e.target.value)}
                 placeholder="#faith #sermon #viral"
-                style={{ width: '100%', padding: '10px 14px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '8px', color: '#ffffff', fontSize: '13px', outline: 'none', boxSizing: 'border-box' }}
+                style={{ width: '100%', padding: '10px 14px', background: 'rgba(0,0,0,0.04)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '8px', color: '#ffffff', fontSize: '13px', outline: 'none', boxSizing: 'border-box' }}
               />
             </div>
 
@@ -1802,8 +1818,8 @@ export default function ImportPage() {
 
             <div style={{ fontSize: '13px', fontWeight: 600, color: 'rgba(255,255,255,0.6)', marginBottom: '10px' }}>Schedule date and time:</div>
             <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
-              <input type="date" value={scheduleDate || ''} onChange={e => setScheduleDate(e.target.value)} style={{ flex: 1, padding: '10px 14px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '8px', color: '#ffffff', fontSize: '13px', outline: 'none' }} />
-              <input type="time" value={scheduleTime || ''} onChange={e => setScheduleTime(e.target.value)} style={{ flex: 1, padding: '10px 14px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '8px', color: '#ffffff', fontSize: '13px', outline: 'none' }} />
+              <input type="date" value={scheduleDate || ''} onChange={e => setScheduleDate(e.target.value)} style={{ flex: 1, padding: '10px 14px', background: 'rgba(0,0,0,0.04)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '8px', color: '#ffffff', fontSize: '13px', outline: 'none' }} />
+              <input type="time" value={scheduleTime || ''} onChange={e => setScheduleTime(e.target.value)} style={{ flex: 1, padding: '10px 14px', background: 'rgba(0,0,0,0.04)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '8px', color: '#ffffff', fontSize: '13px', outline: 'none' }} />
             </div>
 
             <div style={{ display: 'flex', gap: '10px' }}>
@@ -1862,7 +1878,7 @@ export default function ImportPage() {
               >
                 {scheduling ? 'Scheduling...' : 'Schedule Post'}
               </button>
-              <button onClick={() => setScheduleModal(null)} style={{ padding: '13px 20px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', color: 'rgba(255,255,255,0.6)', fontSize: '14px', cursor: 'pointer' }}>Cancel</button>
+              <button onClick={() => setScheduleModal(null)} style={{ padding: '13px 20px', background: 'rgba(0,0,0,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', color: 'rgba(255,255,255,0.6)', fontSize: '14px', cursor: 'pointer' }}>Cancel</button>
             </div>
           </div>
         </div>
