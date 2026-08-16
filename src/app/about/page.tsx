@@ -2,7 +2,19 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { colors, gradients, radius, shadows } from '@/lib/tokens';
+import { colors as _colors, gradients, radius, shadows } from '@/lib/tokens';
+
+const colors = {
+  ..._colors,
+  background: '#E4E2DD',
+  surfaceContainer: '#EFECEA',
+  surfaceContainerHigh: '#EFECEA',
+  surfaceContainerHighest: '#E8E5DF',
+  surfaceContainerLowest: '#F5F3EF',
+  onSurface: '#1A1714',
+  onSurfaceVariant: '#6B6560',
+  outlineVariant: 'rgba(0,0,0,0.12)',
+};
 
 const BLOG_POSTS = [
   {
@@ -71,43 +83,43 @@ export default function AboutPage() {
 
   return (
     <div className="mkt-page" style={{ background: colors.background, color: colors.onSurface, fontFamily: "'Inter', sans-serif" }}>
-      <nav style={{ position: 'sticky', top: 0, zIndex: 50, background: 'rgba(14,14,14,0.9)', backdropFilter: 'blur(12px)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 24px', borderBottom: '1px solid rgba(70,69,85,0.2)' }}>
+      <nav style={{ position: 'sticky', top: 0, zIndex: 50, background: 'rgba(228,226,221,0.92)', backdropFilter: 'blur(12px)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 24px', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
         <Link href="/" style={{ textDecoration: 'none' }}>
-          <span style={{ fontSize: '22px', fontWeight: 800, color: '#ffffff', letterSpacing: '-0.5px', fontFamily: 'Arial Black, Arial, sans-serif', cursor: 'pointer' }}>Vangel<span style={{ color: '#7C3AED' }}>Clip</span></span>
+          <span style={{ fontSize: '22px', fontWeight: 800, color: '#1A1714', letterSpacing: '-0.5px', fontFamily: 'Arial Black, Arial, sans-serif', cursor: 'pointer' }}>Vangel<span style={{ color: '#7C3AED' }}>Clip</span></span>
         </Link>
         <div className="about-nav-links" style={{ display: 'flex', alignItems: 'center', gap: '32px', fontSize: '14px', fontWeight: 500 }}>
-          <a href="/#features" style={{ color: colors.onSurfaceVariant, textDecoration: 'none' }}>Features</a>
-          <a href="/#pricing" style={{ color: colors.onSurfaceVariant, textDecoration: 'none' }}>Pricing</a>
-          <span style={{ color: colors.primary, fontWeight: 600 }}>About</span>
+          <a href="/#features" style={{ color: '#6B6560', textDecoration: 'none' }}>Features</a>
+          <a href="/#pricing" style={{ color: '#6B6560', textDecoration: 'none' }}>Pricing</a>
+          <span style={{ color: '#7C3AED', fontWeight: 600 }}>About</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <button onClick={() => router.push('/auth')} className="about-nav-cta" style={{ background: gradients.primary, color: '#FAF7FF', fontSize: '13px', fontWeight: 700, padding: '8px 18px', borderRadius: radius.md, border: 'none', cursor: 'pointer', fontFamily: "'Inter', sans-serif" }}>Start Free</button>
           <button className="about-hamburger" onClick={() => setMenuOpen(o => !o)} aria-label="Toggle menu" style={{ display: 'none', flexDirection: 'column', gap: 5, background: 'none', border: 'none', cursor: 'pointer', padding: 6 }}>
-            <span style={{ display: 'block', width: 22, height: 2, background: '#fff', borderRadius: 2 }} />
-            <span style={{ display: 'block', width: 22, height: 2, background: '#fff', borderRadius: 2 }} />
-            <span style={{ display: 'block', width: 22, height: 2, background: '#fff', borderRadius: 2 }} />
+            <span style={{ display: 'block', width: 22, height: 2, background: '#1A1714', borderRadius: 2 }} />
+            <span style={{ display: 'block', width: 22, height: 2, background: '#1A1714', borderRadius: 2 }} />
+            <span style={{ display: 'block', width: 22, height: 2, background: '#1A1714', borderRadius: 2 }} />
           </button>
         </div>
       </nav>
       {menuOpen && (
-        <div style={{ position: 'fixed', top: 57, left: 0, right: 0, background: 'rgba(10,0,30,0.97)', backdropFilter: 'blur(16px)', padding: '16px 24px 24px', zIndex: 49, borderBottom: '1px solid rgba(124,58,237,0.2)', display: 'flex', flexDirection: 'column', gap: 4 }}>
-          <a href="/#features" onClick={() => setMenuOpen(false)} style={{ padding: '12px 16px', borderRadius: 8, fontSize: 15, fontWeight: 600, color: 'rgba(255,255,255,0.85)', textDecoration: 'none' }}>Features</a>
-          <a href="/#pricing" onClick={() => setMenuOpen(false)} style={{ padding: '12px 16px', borderRadius: 8, fontSize: 15, fontWeight: 600, color: 'rgba(255,255,255,0.85)', textDecoration: 'none' }}>Pricing</a>
-          <a href="/about" onClick={() => setMenuOpen(false)} style={{ padding: '12px 16px', borderRadius: 8, fontSize: 15, fontWeight: 600, color: '#a78bfa', textDecoration: 'none' }}>About</a>
+        <div style={{ position: 'fixed', top: 57, left: 0, right: 0, background: 'rgba(228,226,221,0.97)', backdropFilter: 'blur(16px)', padding: '16px 24px 24px', zIndex: 49, borderBottom: '1px solid rgba(0,0,0,0.08)', display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <a href="/#features" onClick={() => setMenuOpen(false)} style={{ padding: '12px 16px', borderRadius: 8, fontSize: 15, fontWeight: 600, color: '#1A1714', textDecoration: 'none' }}>Features</a>
+          <a href="/#pricing" onClick={() => setMenuOpen(false)} style={{ padding: '12px 16px', borderRadius: 8, fontSize: 15, fontWeight: 600, color: '#1A1714', textDecoration: 'none' }}>Pricing</a>
+          <a href="/about" onClick={() => setMenuOpen(false)} style={{ padding: '12px 16px', borderRadius: 8, fontSize: 15, fontWeight: 600, color: '#7C3AED', textDecoration: 'none' }}>About</a>
           <button onClick={() => { setMenuOpen(false); router.push('/auth'); }} style={{ padding: '12px 16px', borderRadius: 8, fontSize: 15, fontWeight: 700, color: '#FAF7FF', background: gradients.primary, border: 'none', cursor: 'pointer', fontFamily: "'Inter',sans-serif", textAlign: 'left', marginTop: 4 }}>Start Free</button>
         </div>
       )}
 
       <style>{`
-        .about-hero { position:relative; min-height:100vh; display:flex; align-items:center; overflow:hidden; background:linear-gradient(135deg,#080014 0%,#0d0021 60%,#080014 100%); }
+        .about-hero { position:relative; min-height:100vh; display:flex; align-items:center; overflow:hidden; background:linear-gradient(135deg,#F5F3EF 0%,#E4E2DD 60%,#EFECEA 100%); }
         .about-hero-inner { display:flex; align-items:center; gap:60px; max-width:1200px; margin:0 auto; width:100%; padding:120px 80px; position:relative; z-index:1; }
         .about-left { flex:1; min-width:0; }
-        .about-badge { display:inline-flex; align-items:center; gap:6px; background:rgba(124,58,237,.15); border:1px solid rgba(124,58,237,.4); border-radius:100px; padding:6px 16px; margin-bottom:24px; font-size:12px; color:#a78bfa; font-weight:600; }
-        .about-h1 { font-size:clamp(36px,5vw,64px); font-weight:800; line-height:1.1; color:#fff; margin:0 0 24px; }
+        .about-badge { display:inline-flex; align-items:center; gap:6px; background:rgba(124,58,237,.10); border:1px solid rgba(124,58,237,.3); border-radius:100px; padding:6px 16px; margin-bottom:24px; font-size:12px; color:#6D28D9; font-weight:600; }
+        .about-h1 { font-size:clamp(36px,5vw,64px); font-weight:800; line-height:1.1; color:#1A1714; margin:0 0 24px; }
         .about-h1 em { color:#7c3aed; font-style:normal; }
-        .about-sub { font-size:clamp(14px,1.8vw,17px); line-height:1.75; color:rgba(255,255,255,.7); margin:0 0 28px; max-width:460px; }
+        .about-sub { font-size:clamp(14px,1.8vw,17px); line-height:1.75; color:#6B6560; margin:0 0 28px; max-width:460px; }
         .about-tags { display:flex; flex-wrap:wrap; gap:10px; margin-bottom:36px; }
-        .about-tag { padding:6px 14px; border-radius:100px; border:1px solid rgba(124,58,237,.4); font-size:12px; color:#a78bfa; background:rgba(124,58,237,.08); }
+        .about-tag { padding:6px 14px; border-radius:100px; border:1px solid rgba(124,58,237,.3); font-size:12px; color:#6D28D9; background:rgba(124,58,237,.07); }
         .about-cta { display:inline-flex; align-items:center; gap:8px; padding:14px 28px; background:linear-gradient(135deg,#7c3aed,#5b21b6); border-radius:100px; color:#fff; font-weight:700; font-size:15px; text-decoration:none; box-shadow:0 8px 32px rgba(124,58,237,.35); transition:transform .2s; }
         .about-cta:hover { transform:translateY(-2px); }
         .about-right { flex-shrink:0; position:relative; }
@@ -117,9 +129,9 @@ export default function AboutPage() {
         .c-overlay { position:absolute; bottom:0; left:0; right:0; padding:20px 16px 16px; background:linear-gradient(transparent,rgba(10,0,30,.92)); }
         .c-type { font-size:10px; font-weight:700; letter-spacing:.1em; color:#a78bfa; text-transform:uppercase; margin-bottom:3px; }
         .c-name { font-size:15px; font-weight:700; color:#fff; }
-        .c-counter { position:absolute; top:-28px; right:0; font-size:12px; color:rgba(255,255,255,.4); font-weight:500; }
-        .c-counter b { color:rgba(255,255,255,.85); font-weight:700; }
-        .c-nav { position:absolute; top:50%; transform:translateY(-50%); width:38px; height:38px; border-radius:50%; background:rgba(124,58,237,.2); border:1px solid rgba(124,58,237,.5); color:#fff; font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center; z-index:10; transition:background .2s; font-family:inherit; }
+        .c-counter { position:absolute; top:-28px; right:0; font-size:12px; color:rgba(0,0,0,.4); font-weight:500; }
+        .c-counter b { color:rgba(0,0,0,.7); font-weight:700; }
+        .c-nav { position:absolute; top:50%; transform:translateY(-50%); width:38px; height:38px; border-radius:50%; background:rgba(124,58,237,.18); border:1px solid rgba(124,58,237,.5); color:#fff; font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center; z-index:10; transition:background .2s; font-family:inherit; }
         .c-nav:hover { background:rgba(124,58,237,.45); }
         .c-prev { left:-20px; }
         .c-next { right:-20px; }
@@ -249,7 +261,7 @@ export default function AboutPage() {
             { title: 'Education & Knowledge', color: '#06b6d4', body: 'African educators, professors, coaches, and thought leaders produce world-class content every day. VangelClip gives them the same AI clipping technology global creators use, designed for the African classroom, conference, and content studio.' },
             { title: 'Inspiration & Transformation', color: '#10b981', body: 'Motivational speakers, life coaches, and community leaders whose words transform lives deserve global reach. VangelClip makes every profound statement clip-ready for the platforms where the next generation lives.' },
           ].map(p => (
-            <div key={p.title} style={{ background: colors.surfaceContainerHigh, borderRadius: radius.xl, padding: 36 }}>
+            <div key={p.title} style={{ background: colors.surfaceContainerHigh, borderRadius: radius.xl, padding: 36, border: '1px solid rgba(0,0,0,0.08)' }}>
               <h3 style={{ fontSize: 20, fontWeight: 700, marginBottom: 14, color: p.color }}>{p.title}</h3>
               <p style={{ fontSize: 14, color: colors.onSurfaceVariant, lineHeight: 1.8 }}>{p.body}</p>
             </div>
@@ -271,7 +283,7 @@ export default function AboutPage() {
             { v: '10M+', l: 'African TikTok creators' },
             { v: 'First', l: 'African-built AI clip platform' },
           ].map(s => (
-            <div key={s.v} style={{ background: colors.surfaceContainerHigh, borderRadius: radius.xl, padding: '28px 20px', textAlign: 'center', border: '1px solid rgba(124,58,237,0.15)' }}>
+            <div key={s.v} style={{ background: colors.surfaceContainerHigh, borderRadius: radius.xl, padding: '28px 20px', textAlign: 'center', border: '1px solid rgba(0,0,0,0.08)' }}>
               <p style={{ fontSize: 32, fontWeight: 800, color: colors.primary, marginBottom: 8 }}>{s.v}</p>
               <p style={{ fontSize: 13, color: colors.onSurfaceVariant, lineHeight: 1.5 }}>{s.l}</p>
             </div>
@@ -293,7 +305,7 @@ export default function AboutPage() {
         <p style={{ fontSize: 15, color: colors.onSurfaceVariant, marginBottom: 40 }}>Stories, insights, and inspiration for African creators.</p>
         <div className="pillars-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 24 }}>
           {BLOG_POSTS.map(post => (
-            <div key={post.title} style={{ background: colors.surfaceContainerHigh, borderRadius: radius.xl, overflow: 'hidden', cursor: 'pointer' }}>
+            <div key={post.title} style={{ background: colors.surfaceContainerHigh, borderRadius: radius.xl, overflow: 'hidden', cursor: 'pointer', border: '1px solid rgba(0,0,0,0.08)' }}>
               <div style={{ height: 6, background: post.color }} />
               <div style={{ padding: 28 }}>
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 12 }}>
@@ -314,13 +326,13 @@ export default function AboutPage() {
         <h2 style={{ fontSize: 32, fontWeight: 800, marginBottom: 8, textAlign: 'center' }}>Support</h2>
         <p style={{ fontSize: 15, color: colors.onSurfaceVariant, marginBottom: 40, textAlign: 'center' }}>Have a question or need help? Send us a message and we&apos;ll get back to you within 2 business days.</p>
         {supportSent ? (
-          <div style={{ textAlign: 'center', padding: '40px 20px', background: colors.surfaceContainerHigh, borderRadius: radius.xl, border: '1px solid rgba(74,222,128,0.2)' }}>
+          <div style={{ textAlign: 'center', padding: '40px 20px', background: colors.surfaceContainerHigh, borderRadius: radius.xl, border: '1px solid rgba(0,0,0,0.08)' }}>
             <h3 style={{ fontSize: 20, fontWeight: 700, marginBottom: 8 }}>Message Sent!</h3>
             <p style={{ color: colors.onSurfaceVariant }}>Your email client should open. We&apos;ll reply to <strong>{supportEmail}</strong> within 2 business days.</p>
             <button onClick={() => { setSupportSent(false); setSupportName(''); setSupportEmail(''); setSupportMessage(''); }} style={{ marginTop: 20, padding: '10px 24px', borderRadius: radius.md, background: colors.surfaceContainerHighest, border: '1px solid ' + colors.outlineVariant, color: colors.onSurface, cursor: 'pointer', fontFamily: "'Inter',sans-serif", fontWeight: 600, fontSize: 13 }}>Send Another</button>
           </div>
         ) : (
-          <form onSubmit={handleSupport} style={{ background: colors.surfaceContainerHigh, borderRadius: radius.xl, padding: 32, display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <form onSubmit={handleSupport} style={{ background: colors.surfaceContainerHigh, borderRadius: radius.xl, padding: 32, display: 'flex', flexDirection: 'column', gap: 16, border: '1px solid rgba(0,0,0,0.08)' }}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
               <div>
                 <label style={{ fontSize: 12, fontWeight: 600, color: colors.onSurfaceVariant, display: 'block', marginBottom: 6 }}>Your Name</label>

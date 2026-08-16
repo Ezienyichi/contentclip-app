@@ -80,15 +80,18 @@ export default function DashboardPage() {
 
   const STATS = [
     { label: 'Clips Generated', value: loading ? '—' : String(clipCount),         icon: 'movie_edit',        color: '#C0C1FF' },
-    { label: 'Credits Remaining', value: loading ? '—' : String(profile?.credits ?? 0), icon: 'toll',         color: '#89CEFF' },
-    { label: 'Projects',          value: loading ? '—' : String(jobTotal),         icon: 'folder_open',       color: '#ff97b5' },
-    { label: 'Plan',              value: loading ? '—' : planLabel,                icon: 'workspace_premium', color: '#4ade80' },
+    { label: 'Minutes Used',    value: loading ? '—' : String(profile?.credits ?? 0), icon: 'timer',          color: '#89CEFF' },
+    { label: 'Projects',        value: loading ? '—' : String(jobTotal),           icon: 'folder_open',       color: '#ff97b5' },
+    { label: 'Plan',            value: loading ? '—' : planLabel,                  icon: 'workspace_premium', color: '#4ade80' },
   ];
 
   return (
     <DashboardLayout
       title={`Welcome back${userName ? `, ${userName.split(' ')[0]}` : ''}`}
       subtitle={userEmail ?? "Here's your account at a glance."}
+      bg="#E4E2DD"
+      titleColor="#1A1714"
+      subtitleColor="#6B6560"
       actions={
         <button
           onClick={() => router.push('/import')}
@@ -98,21 +101,22 @@ export default function DashboardPage() {
         </button>
       }
     >
+      {/* Stat cards — intentionally dark on light background */}
       <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '16px', marginBottom: '32px' }}>
         {STATS.map(s => (
-          <div key={s.label} style={{ background: colors.surfaceContainerHigh, borderRadius: radius.lg, padding: '24px' }}>
-            <div style={{ width: 40, height: 40, borderRadius: radius.md, background: s.color + '18', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px' }}>
+          <div key={s.label} style={{ background: '#1A1714', borderRadius: radius.lg, padding: '24px', border: '1px solid rgba(255,255,255,0.06)' }}>
+            <div style={{ width: 40, height: 40, borderRadius: radius.md, background: s.color + '22', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px' }}>
               <Icon name={s.icon} size={20} style={{ color: s.color }} />
             </div>
-            <p style={{ fontSize: '28px', fontWeight: 800, letterSpacing: '-0.02em', marginBottom: '4px' }}>{s.value}</p>
-            <p style={{ fontSize: '12px', color: colors.onSurfaceVariant }}>{s.label}</p>
+            <p style={{ fontSize: '28px', fontWeight: 800, letterSpacing: '-0.02em', marginBottom: '4px', color: '#fff' }}>{s.value}</p>
+            <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)' }}>{s.label}</p>
           </div>
         ))}
       </div>
 
       <div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-          <h2 style={{ fontSize: '18px', fontWeight: 700 }}>Recent Projects</h2>
+          <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#1A1714' }}>Recent Projects</h2>
           <button
             onClick={() => router.push('/import')}
             style={{ background: 'none', border: 'none', color: colors.primary, fontSize: '13px', fontWeight: 600, cursor: 'pointer', fontFamily: "'Inter',sans-serif" }}
@@ -122,14 +126,14 @@ export default function DashboardPage() {
         </div>
 
         {loading ? (
-          <div style={{ background: colors.surfaceContainerHigh, borderRadius: radius.lg, padding: '32px', textAlign: 'center' }}>
-            <span style={{ color: colors.onSurfaceVariant, fontSize: '14px' }}>Loading…</span>
+          <div style={{ background: '#EFECEA', borderRadius: radius.lg, padding: '32px', textAlign: 'center', border: '1px solid rgba(0,0,0,0.06)' }}>
+            <span style={{ color: '#6B6560', fontSize: '14px' }}>Loading…</span>
           </div>
         ) : jobs.length === 0 ? (
-          <div style={{ background: colors.surfaceContainerHigh, borderRadius: radius.lg, padding: '48px 24px', textAlign: 'center' }}>
-            <div style={{ marginBottom: '16px' }}><Icon name="movie_creation" size={40} style={{ color: colors.onSurfaceVariant }} /></div>
-            <p style={{ fontSize: '16px', fontWeight: 600, marginBottom: '8px' }}>No projects yet</p>
-            <p style={{ fontSize: '14px', color: colors.onSurfaceVariant, marginBottom: '24px' }}>
+          <div style={{ background: '#EFECEA', borderRadius: radius.lg, padding: '48px 24px', textAlign: 'center', border: '1px solid rgba(0,0,0,0.06)' }}>
+            <div style={{ marginBottom: '16px' }}><Icon name="movie_creation" size={40} style={{ color: '#6B6560' }} /></div>
+            <p style={{ fontSize: '16px', fontWeight: 600, marginBottom: '8px', color: '#1A1714' }}>No projects yet</p>
+            <p style={{ fontSize: '14px', color: '#6B6560', marginBottom: '24px' }}>
               Import a YouTube video to generate your first clips.
             </p>
             <button
@@ -145,16 +149,16 @@ export default function DashboardPage() {
               <div
                 key={j.id}
                 onClick={() => j.status === 'complete' ? router.push('/clips') : undefined}
-                style={{ background: colors.surfaceContainerHigh, borderRadius: radius.lg, padding: '16px 20px', display: 'flex', alignItems: 'center', gap: '16px', cursor: j.status === 'complete' ? 'pointer' : 'default' }}
+                style={{ background: '#EFECEA', borderRadius: radius.lg, padding: '16px 20px', display: 'flex', alignItems: 'center', gap: '16px', cursor: j.status === 'complete' ? 'pointer' : 'default', border: '1px solid rgba(0,0,0,0.06)' }}
               >
-                <div style={{ width: 56, height: 42, borderRadius: radius.md, background: colors.surfaceContainer, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <Icon name="play_circle" size={22} style={{ color: colors.onSurfaceVariant }} />
+                <div style={{ width: 56, height: 42, borderRadius: radius.md, background: '#E4E2DD', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <Icon name="play_circle" size={22} style={{ color: '#6B6560' }} />
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ fontSize: '14px', fontWeight: 600, marginBottom: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <p style={{ fontSize: '14px', fontWeight: 600, marginBottom: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: '#1A1714' }}>
                     {sourceLabel(j.source_url)}
                   </p>
-                  <span style={{ fontSize: '11px', color: colors.onSurfaceVariant }}>{timeAgo(j.created_at)}</span>
+                  <span style={{ fontSize: '11px', color: '#6B6560' }}>{timeAgo(j.created_at)}</span>
                 </div>
                 <div style={{ textAlign: 'right', flexShrink: 0 }}>
                   {j.status === 'complete'

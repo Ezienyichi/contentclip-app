@@ -3,15 +3,15 @@ import React from 'react';
 import Sidebar from './Sidebar';
 import NotificationBell from './NotificationBell';
 import { colors } from '@/lib/tokens';
-export default function DashboardLayout({ children, title, subtitle, actions }: { children: React.ReactNode; title?: string; subtitle?: string; actions?: React.ReactNode }) {
+export default function DashboardLayout({ children, title, subtitle, actions, bg, titleColor, subtitleColor }: { children: React.ReactNode; title?: string; subtitle?: string; actions?: React.ReactNode; bg?: string; titleColor?: string; subtitleColor?: string }) {
   return (
-    <div style={{ minHeight: '100vh', background: colors.background }}>
+    <div style={{ minHeight: '100vh', background: bg ?? colors.background }}>
       <Sidebar />
       <main className="dashboard-main" style={{ minHeight: '100vh', position: 'relative', overflowX: 'hidden' }}>
         <header style={{ padding: '24px 32px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
           <div>
-            {title && <h1 style={{ fontSize: '28px', fontWeight: 800, color: '#fff', letterSpacing: '-0.02em' }}>{title}</h1>}
-            {subtitle && <p style={{ fontSize: '14px', color: colors.onSurfaceVariant, marginTop: '4px' }}>{subtitle}</p>}
+            {title && <h1 style={{ fontSize: '28px', fontWeight: 800, color: titleColor ?? '#fff', letterSpacing: '-0.02em' }}>{title}</h1>}
+            {subtitle && <p style={{ fontSize: '14px', color: subtitleColor ?? colors.onSurfaceVariant, marginTop: '4px' }}>{subtitle}</p>}
           </div>
           <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
             <NotificationBell />
