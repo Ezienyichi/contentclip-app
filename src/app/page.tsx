@@ -1,8 +1,9 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { CSSProperties } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase-browser';
 import { mkt as _mkt, mktBtn as _mktBtn, mktCard as _mktCard } from '@/theme';
 import type { CSSProperties as CP } from 'react';
 import { PLAN_DATA, COMPARISON_KEYS } from '@/lib/pricingData';
@@ -101,6 +102,11 @@ export default function HomePage() {
   const [annual,     setAnnual]     = useState(false);
   const [openFaq,    setOpenFaq]    = useState<number | null>(null);
   const [tableOpen,  setTableOpen]  = useState(false);
+  const [authUser,   setAuthUser]   = useState<any>(null);
+
+  useEffect(() => {
+    createClient().auth.getUser().then(({ data }) => setAuthUser(data.user));
+  }, []);
 
   function startClipping() {
     const url = heroUrl.trim();
@@ -265,8 +271,14 @@ export default function HomePage() {
             {NAV_LINKS.map(l => <a key={l.label} href={l.href}>{l.label}</a>)}
           </div>
           <div style={{ display:'flex', gap:10, alignItems:'center' }}>
-            <a href="/auth" className="vc-nav-sighin" style={{ ...mktBtn.ghost, fontSize:13.5, padding:'8px 14px', minHeight:36 }}>Sign in</a>
-            <a href="/auth?mode=signup" style={{ ...mktBtn.primary, fontSize:13.5, padding:'10px 18px', minHeight:36 }}>Start Free</a>
+            {authUser ? (
+              <a href="/dashboard" style={{ ...mktBtn.primary, fontSize:13.5, padding:'10px 18px', minHeight:36 }}>Dashboard</a>
+            ) : (
+              <>
+                <a href="/auth" className="vc-nav-sighin" style={{ ...mktBtn.ghost, fontSize:13.5, padding:'8px 14px', minHeight:36 }}>Sign in</a>
+                <a href="/auth?mode=signup" style={{ ...mktBtn.primary, fontSize:13.5, padding:'10px 18px', minHeight:36 }}>Start Free</a>
+              </>
+            )}
             <button className="vc-hamburger" onClick={() => setMenuOpen(o => !o)} aria-label="Toggle menu" aria-expanded={menuOpen}>
               <span /><span /><span />
             </button>
@@ -276,8 +288,14 @@ export default function HomePage() {
 
       <div className={`vc-mobile-menu${menuOpen ? ' open' : ''}`} onClick={() => setMenuOpen(false)}>
         {NAV_LINKS.map(l => <a key={l.label} href={l.href}>{l.label}</a>)}
-        <a href="/auth" style={{ color:mkt.muted }}>Sign in</a>
-        <a href="/auth?mode=signup" style={{ background:mkt.brandGrad, color:'#fff', borderRadius:mkt.r, textAlign:'center', marginTop:12, padding:'15px 0', boxShadow:`inset 1px 1px 0 rgba(255,255,255,.25),${mkt.glow}`, border:'none' }}>Start Free</a>
+        {authUser ? (
+          <a href="/dashboard" style={{ background:mkt.brandGrad, color:'#fff', borderRadius:mkt.r, textAlign:'center', marginTop:12, padding:'15px 0', boxShadow:`inset 1px 1px 0 rgba(255,255,255,.25),${mkt.glow}`, border:'none' }}>Dashboard</a>
+        ) : (
+          <>
+            <a href="/auth" style={{ color:mkt.muted }}>Sign in</a>
+            <a href="/auth?mode=signup" style={{ background:mkt.brandGrad, color:'#fff', borderRadius:mkt.r, textAlign:'center', marginTop:12, padding:'15px 0', boxShadow:`inset 1px 1px 0 rgba(255,255,255,.25),${mkt.glow}`, border:'none' }}>Start Free</a>
+          </>
+        )}
       </div>
 
       {/* ══ HERO ═══════════════════════════════════════════════════════════════ */}

@@ -1,9 +1,10 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Icon from '@/components/Icon';
 import { colors as _colors, gradients, radius, shadows } from '@/lib/tokens';
 import { PLAN_DATA, COMPARISON_KEYS } from '@/lib/pricingData';
+import { createClient } from '@/lib/supabase-browser';
 
 const colors = {
   ..._colors,
@@ -20,19 +21,27 @@ const colors = {
 export default function PricingPage() {
   const router = useRouter();
   const [annual, setAnnual] = useState(false);
+  const [authUser, setAuthUser] = useState<any>(null);
+
+  useEffect(() => {
+    createClient().auth.getUser().then(({ data }) => setAuthUser(data.user));
+  }, []);
 
   return (
     <div className="mkt-page" style={{ background: colors.background, color: colors.onSurface, fontFamily: "'Inter',sans-serif", minHeight: '100vh' }}>
       <nav style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 24px', maxWidth: 1200, margin: '0 auto' }}>
-        <div onClick={() => router.push('/')} style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
-          <div style={{ width: 32, height: 32, borderRadius: radius.md, background: gradients.cta, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Icon name="auto_awesome" size={18} style={{ color: '#fff' }} />
-          </div>
-          <span style={{ fontSize: '18px', fontWeight: 800, color: '#1A1714' }}>VangelClip</span>
-        </div>
-        <button onClick={() => router.push('/auth')} style={{ background: gradients.primary, color: '#fff', fontSize: '13px', fontWeight: 700, padding: '8px 18px', borderRadius: radius.md, border: 'none', cursor: 'pointer' }}>
-          Get Started
-        </button>
+        <a href="/" style={{ fontWeight: 800, fontSize: 21, letterSpacing: '-.02em', color: '#1A1714', textDecoration: 'none', fontFamily: "'Figtree',sans-serif" }}>
+          Vangel<span style={{ color: '#9B5DE5' }}>Clip</span>
+        </a>
+        {authUser ? (
+          <button onClick={() => router.push('/dashboard')} style={{ background: gradients.primary, color: '#fff', fontSize: '13px', fontWeight: 700, padding: '8px 18px', borderRadius: radius.md, border: 'none', cursor: 'pointer' }}>
+            Dashboard
+          </button>
+        ) : (
+          <button onClick={() => router.push('/auth')} style={{ background: gradients.primary, color: '#fff', fontSize: '13px', fontWeight: 700, padding: '8px 18px', borderRadius: radius.md, border: 'none', cursor: 'pointer' }}>
+            Get Started
+          </button>
+        )}
       </nav>
 
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '48px 24px 96px' }}>
