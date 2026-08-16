@@ -37,6 +37,10 @@ export default function SettingsPage() {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [savingPw, setSavingPw] = useState(false);
+  const [pwError, setPwError] = useState('');
+  const [pwSuccess, setPwSuccess] = useState(false);
   const [memberSince, setMemberSince] = useState('');
 
   // Plan / usage state
@@ -219,23 +223,70 @@ export default function SettingsPage() {
             {/* Change password */}
             <div style={{ background: colors.surfaceContainerHigh, borderRadius: radius.lg, padding: '28px', marginBottom: '16px' }}>
               <h3 style={{ fontSize: '15px', fontWeight: 700, marginBottom: '20px' }}>Change Password</h3>
-              <div>
-                <label style={{ fontSize: '12px', fontWeight: 600, color: colors.onSurfaceVariant, display: 'block', marginBottom: '6px' }}>New Password</label>
-                <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="Min 8 characters" style={inputField} />
-                <p style={{ fontSize: '11px', color: colors.onSurfaceVariant, marginTop: '4px' }}>Use 8+ characters with uppercase, numbers, and symbols.</p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 600, color: colors.onSurfaceVariant, display: 'block', marginBottom: '6px' }}>New Password</label>
+                  <input
+                    type="password"
+                    value={newPassword}
+                    onChange={e => { setNewPassword(e.target.value); setPwError(''); setPwSuccess(false); }}
+                    placeholder="Min 8 characters"
+                    style={inputField}
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 600, color: colors.onSurfaceVariant, display: 'block', marginBottom: '6px' }}>Confirm New Password</label>
+                  <input
+                    type="password"
+                    value={confirmPassword}
+                    onChange={e => { setConfirmPassword(e.target.value); setPwError(''); setPwSuccess(false); }}
+                    placeholder="Re-enter new password"
+                    style={inputField}
+                  />
+                </div>
+                {pwError && (
+                  <div style={{ padding: '10px 14px', borderRadius: radius.md, background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)', color: '#ef4444', fontSize: '13px', lineHeight: 1.5 }}>
+                    {pwError}
+                  </div>
+                )}
+                {pwSuccess && (
+                  <div style={{ padding: '10px 14px', borderRadius: radius.md, background: 'rgba(74,222,128,0.12)', border: '1px solid rgba(74,222,128,0.3)', color: '#4ade80', fontSize: '13px', fontWeight: 600 }}>
+                    Password updated successfully!
+                  </div>
+                )}
               </div>
               <button
+                disabled={savingPw}
                 onClick={async () => {
-                  if (!newPassword || newPassword.length < 8) { showToast('Password must be at least 8 characters', false); return; }
-                  setSaving(true);
-                  const { error } = await supabase.auth.updateUser({ password: newPassword });
-                  if (error) { showToast(error.message, false); }
-                  else { setNewPassword(''); showToast('Password updated'); }
-                  setSaving(false);
+                  setPwError('');
+                  setPwSuccess(false);
+                  if (!newPassword || newPassword.length < 8) {
+                    setPwError('Password must be at least 8 characters.');
+                    return;
+                  }
+                  if (newPassword !== confirmPassword) {
+                    setPwError('Passwords do not match.');
+                    return;
+                  }
+                  setSavingPw(true);
+                  try {
+                    const { error } = await supabase.auth.updateUser({ password: newPassword });
+                    if (error) {
+                      setPwError(error.message);
+                    } else {
+                      setNewPassword('');
+                      setConfirmPassword('');
+                      setPwSuccess(true);
+                    }
+                  } catch (e: unknown) {
+                    setPwError(e instanceof Error ? e.message : 'Failed to update password. Please try again.');
+                  } finally {
+                    setSavingPw(false);
+                  }
                 }}
-                style={{ background: colors.surfaceContainer, color: colors.onSurface, border: '1px solid ' + colors.outlineVariant, fontWeight: 600, padding: '10px 22px', borderRadius: radius.md, cursor: 'pointer', fontSize: '13px', marginTop: '16px', fontFamily: "'Inter',sans-serif" }}
+                style={{ background: savingPw ? colors.surfaceContainer : gradients.primary, color: savingPw ? colors.onSurfaceVariant : '#FAF7FF', border: 'none', fontWeight: 700, padding: '11px 24px', borderRadius: radius.md, cursor: savingPw ? 'not-allowed' : 'pointer', fontSize: '13px', marginTop: '20px', fontFamily: "'Inter',sans-serif", opacity: savingPw ? 0.7 : 1 }}
               >
-                Update Password
+                {savingPw ? 'Updating…' : 'Update Password'}
               </button>
             </div>
 
