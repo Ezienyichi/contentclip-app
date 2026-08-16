@@ -1,12 +1,23 @@
 'use client';
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase-browser';
 import { clearClipStorage } from '@/lib/clearClipStorage';
 import Icon from '@/components/Icon';
 import { colors, gradients, radius, inputField } from '@/lib/tokens';
 
+declare global {
+  interface Window {
+    turnstile: {
+      render: (el: HTMLElement, opts: Record<string, unknown>) => string;
+      reset:  (id: string) => void;
+      remove: (id: string) => void;
+    };
+  }
+}
+
 const supabase = createClient();
+const TURNSTILE_SITE_KEY = '0x4AAAAAAER6mHi3zRsSLwKp';
 
 type View = 'signin' | 'signup' | 'forgot' | 'forgot_sent';
 
@@ -16,22 +27,80 @@ function AuthPageInner() {
   const [view, setView] = useState<View>(
     () => searchParams.get('mode') === 'signup' ? 'signup' : 'signin'
   );
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
+  const [email,         setEmail]         = useState('');
+  const [password,      setPassword]      = useState('');
+  const [name,          setName]          = useState('');
+  const [loading,       setLoading]       = useState(false);
+  const [error,         setError]         = useState('');
+  const [success,       setSuccess]       = useState('');
+  const [showPassword,  setShowPassword]  = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
+  const [captchaToken,  setCaptchaToken]  = useState('');
+  const turnstileRef = useRef<HTMLDivElement>(null);
+  const widgetIdRef  = useRef<string>('');
 
-  // Show error if the OAuth callback redirected back with ?error=
+  // Show error if OAuth callback redirected back with ?error=
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get('error')) {
       setError('Google sign-in failed. Please try again or use email/password.');
     }
   }, []);
+
+  // Load Turnstile script once
+  useEffect(() => {
+    if (document.getElementById('cf-turnstile-script')) return;
+    const s = document.createElement('script');
+    s.id    = 'cf-turnstile-script';
+    s.src   = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
+    s.async = true;
+    s.defer = true;
+    document.head.appendChild(s);
+  }, []);
+
+  // Render / re-render widget on every view change that has a form
+  useEffect(() => {
+    if (view === 'forgot_sent') return;
+    setCaptchaToken('');
+
+    const renderWidget = () => {
+      if (!turnstileRef.current || !window.turnstile) return;
+      if (widgetIdRef.current) {
+        try { window.turnstile.remove(widgetIdRef.current); } catch {}
+      }
+      widgetIdRef.current = window.turnstile.render(turnstileRef.current, {
+        sitekey:            TURNSTILE_SITE_KEY,
+        theme:              'light',
+        callback:           (token: string) => setCaptchaToken(token),
+        'expired-callback': ()              => setCaptchaToken(''),
+        'error-callback':   ()              => setCaptchaToken(''),
+      });
+    };
+
+    if (window.turnstile) {
+      renderWidget();
+    } else {
+      const script = document.getElementById('cf-turnstile-script');
+      if (script) {
+        script.addEventListener('load', renderWidget);
+        return () => script.removeEventListener('load', renderWidget);
+      }
+    }
+
+    return () => {
+      if (widgetIdRef.current && window.turnstile) {
+        try { window.turnstile.remove(widgetIdRef.current); } catch {}
+        widgetIdRef.current = '';
+      }
+    };
+  }, [view]);
+
+  const resetCaptcha = () => {
+    if (widgetIdRef.current && window.turnstile) {
+      window.turnstile.reset(widgetIdRef.current);
+    }
+    setCaptchaToken('');
+  };
 
   const getStrength = (p: string) => {
     let s = 0;
@@ -41,7 +110,7 @@ function AuthPageInner() {
     if (/[^A-Za-z0-9]/.test(p)) s++;
     return s;
   };
-  const str = getStrength(password);
+  const str      = getStrength(password);
   const strLabel = ['', 'Weak', 'Fair', 'Good', 'Strong'][str] || '';
   const strColor = ['', '#ef4444', '#fbbf24', '#89CEFF', '#4ade80'][str] || '';
 
@@ -52,31 +121,24 @@ function AuthPageInner() {
     setSuccess('');
 
     try {
-      const { data, error } =
-        await supabase.auth.signInWithPassword({
-          email: email.trim().toLowerCase(),
-          password: password,
-        });
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email:    email.trim().toLowerCase(),
+        password,
+        options:  { captchaToken },
+      });
 
       if (error) {
-        if (
-          error.message.includes('Email not confirmed') ||
-          error.message.includes('not confirmed')
-        ) {
+        if (error.message.includes('Email not confirmed') || error.message.includes('not confirmed')) {
           setError(
             'Your email is not confirmed. ' +
-            'Please contact support at ' +
-            'adminvangelclip@gmail.com to ' +
-            'activate your account manually.'
+            'Please contact support at adminvangelclip@gmail.com to activate your account manually.'
           );
         } else if (
           error.message.includes('Invalid login') ||
           error.message.includes('invalid credentials') ||
           error.message.includes('Invalid credentials')
         ) {
-          setError(
-            'Wrong email or password. Please try again.'
-          );
+          setError('Wrong email or password. Please try again.');
         } else {
           setError(error.message);
         }
@@ -84,7 +146,8 @@ function AuthPageInner() {
       }
 
       if (data.session) {
-        clearClipStorage(); router.push('/dashboard');
+        clearClipStorage();
+        router.push('/dashboard');
         return;
       }
 
@@ -94,6 +157,7 @@ function AuthPageInner() {
       setError(err.message || 'Sign in failed.');
     } finally {
       setLoading(false);
+      resetCaptcha();
     }
   };
 
@@ -109,47 +173,44 @@ function AuthPageInner() {
 
     try {
       const { data, error } = await supabase.auth.signUp({
-        email: email.trim().toLowerCase(),
-        password: password,
+        email:    email.trim().toLowerCase(),
+        password,
         options: {
           emailRedirectTo: 'https://vangelclip.app/auth',
-          data: {
-            full_name: name || '',
-          },
+          captchaToken,
+          data: { full_name: name || '' },
         },
       });
 
       if (error) {
-        if (error.message.includes('already registered') ||
-            error.message.includes('already exists') ||
-            error.message.includes('User already')) {
-          setError(
-            'This email is already registered. ' +
-            'Please sign in instead.'
-          );
+        if (
+          error.message.includes('already registered') ||
+          error.message.includes('already exists') ||
+          error.message.includes('User already')
+        ) {
+          setError('This email is already registered. Please sign in instead.');
         } else {
           setError(error.message);
         }
         return;
       }
 
-      // If we have a session go straight to dashboard
       if (data.session) {
         await supabase.auth.setSession(data.session);
-        clearClipStorage(); router.push('/dashboard');
+        clearClipStorage();
+        router.push('/dashboard');
         return;
       }
 
-      // If we have a user but no session, try to sign in immediately
       if (data.user) {
-        const { data: signInData, error: signInError } =
-          await supabase.auth.signInWithPassword({
-            email: email.trim().toLowerCase(),
-            password: password,
-          });
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+          email:    email.trim().toLowerCase(),
+          password,
+        });
 
         if (signInData.session) {
-          clearClipStorage(); router.push('/dashboard');
+          clearClipStorage();
+          router.push('/dashboard');
           return;
         }
 
@@ -162,13 +223,13 @@ function AuthPageInner() {
         }
       }
 
-      // Fallback
       router.push('/dashboard');
 
     } catch (err: any) {
       setError(err.message || 'Failed to create account.');
     } finally {
       setLoading(false);
+      resetCaptcha();
     }
   };
 
@@ -176,16 +237,23 @@ function AuthPageInner() {
     e.preventDefault();
     setLoading(true);
     setError('');
-    const { error: err } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/reset-password`,
-    });
-    if (err) {
-      setError(err.message);
+
+    try {
+      const { error: err } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo:   `${window.location.origin}/auth/reset-password`,
+        captchaToken,
+      });
+      if (err) {
+        setError(err.message);
+        return;
+      }
+      setView('forgot_sent');
+    } catch (err: any) {
+      setError(err instanceof Error ? err.message : 'Failed to send reset link.');
+    } finally {
       setLoading(false);
-      return;
+      resetCaptcha();
     }
-    setLoading(false);
-    setView('forgot_sent');
   };
 
   // SUPABASE DASHBOARD SETUP REQUIRED:
@@ -210,16 +278,10 @@ function AuthPageInner() {
         provider: 'google',
         options: {
           redirectTo: `${window.location.origin}/api/auth/callback`,
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'consent',
-          },
+          queryParams: { access_type: 'offline', prompt: 'consent' },
         },
       });
-
-      if (err) {
-        setError(err.message);
-      }
+      if (err) setError(err.message);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to sign in with Google');
     } finally {
@@ -229,23 +291,23 @@ function AuthPageInner() {
 
   const inputStyle: React.CSSProperties = {
     ...inputField,
-    width: '100%',
-    boxSizing: 'border-box' as const,
+    width:      '100%',
+    boxSizing:  'border-box' as const,
     background: '#F5F3EF',
-    color: '#1A1714',
-    border: '1px solid rgba(0,0,0,0.12)',
+    color:      '#1A1714',
+    border:     '1px solid rgba(0,0,0,0.12)',
   };
 
   const pageBg: React.CSSProperties = {
-    position: 'relative',
-    minHeight: '100vh',
-    display: 'flex',
-    alignItems: 'center',
+    position:       'relative',
+    minHeight:      '100vh',
+    display:        'flex',
+    alignItems:     'center',
     justifyContent: 'center',
-    fontFamily: "'Inter',sans-serif",
+    fontFamily:     "'Inter',sans-serif",
   };
 
-  // ── Forgot Password Sent Screen ───────────────────────────────────────────────
+  // ── Forgot Password Sent ──────────────────────────────────────────────────────
   if (view === 'forgot_sent') return (
     <main style={pageBg}>
       <div style={{ position: 'absolute', inset: 0, backgroundImage: 'url(/auth-bg.jpg)', backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }} />
@@ -299,7 +361,12 @@ function AuthPageInner() {
             <label style={{ fontSize: 12, fontWeight: 600, color: '#6B6560', display: 'block', marginBottom: 6 }}>Email</label>
             <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" required style={inputStyle} />
           </div>
-          <button type="submit" disabled={loading} style={{ background: gradients.primary, color: '#FAF7FF', fontWeight: 700, padding: 14, borderRadius: radius.md, border: 'none', cursor: 'pointer', fontSize: 14, opacity: loading ? 0.7 : 1, fontFamily: "'Inter',sans-serif" }}>
+          <div ref={turnstileRef} style={{ marginTop: 4 }} />
+          <button
+            type="submit"
+            disabled={loading || !captchaToken}
+            style={{ background: gradients.primary, color: '#FAF7FF', fontWeight: 700, padding: 14, borderRadius: radius.md, border: 'none', cursor: (loading || !captchaToken) ? 'not-allowed' : 'pointer', fontSize: 14, opacity: (loading || !captchaToken) ? 0.5 : 1, fontFamily: "'Inter',sans-serif" }}
+          >
             {loading ? 'Sending...' : 'Send Reset Link'}
           </button>
         </form>
@@ -312,12 +379,9 @@ function AuthPageInner() {
 
   return (
     <main style={pageBg}>
-      {/* Full-page background image */}
       <div style={{ position: 'absolute', inset: 0, backgroundImage: 'url(/auth-bg.jpg)', backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }} />
-      {/* Light overlay + blur */}
       <div style={{ position: 'absolute', inset: 0, background: 'rgba(228,226,221,0.45)', backdropFilter: 'blur(4px)' }} />
 
-      {/* Centered card — frosted glass, no hard border */}
       <div style={{ position: 'relative', zIndex: 1, width: '100%', maxWidth: 440, margin: '24px', background: 'rgba(255,255,255,0.72)', backdropFilter: 'blur(16px)', borderRadius: 16, padding: 40 }}>
 
         {/* Logo */}
@@ -338,22 +402,11 @@ function AuthPageInner() {
           disabled={loading}
           type="button"
           style={{
-            width: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 10,
-            padding: '12px 16px',
-            borderRadius: radius.md,
-            background: '#fff',
-            border: '1px solid rgba(0,0,0,0.15)',
-            color: '#1A1714',
-            fontWeight: 600,
-            fontSize: 15,
-            cursor: loading ? 'not-allowed' : 'pointer',
-            marginBottom: 20,
-            fontFamily: "'Inter',sans-serif",
-            transition: 'background 0.2s',
+            width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+            padding: '12px 16px', borderRadius: radius.md, background: '#fff',
+            border: '1px solid rgba(0,0,0,0.15)', color: '#1A1714', fontWeight: 600, fontSize: 15,
+            cursor: loading ? 'not-allowed' : 'pointer', marginBottom: 20,
+            fontFamily: "'Inter',sans-serif", transition: 'background 0.2s',
             boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
           }}
         >
@@ -372,21 +425,17 @@ function AuthPageInner() {
           <div style={{ flex: 1, height: 1, background: 'rgba(0,0,0,0.12)' }} />
         </div>
 
-        {/* Error */}
         {error && (
           <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '8px', padding: '12px 16px', color: '#dc2626', fontSize: '14px', marginBottom: '16px', lineHeight: 1.5 }}>
             {error}
           </div>
         )}
-
-        {/* Success */}
         {success && (
           <div style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.3)', borderRadius: '8px', padding: '12px 16px', color: '#059669', fontSize: '14px', marginBottom: '16px', lineHeight: 1.5 }}>
             {success}
           </div>
         )}
 
-        {/* Form */}
         <form onSubmit={isSignUp ? handleSignUp : handleSignIn} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           {isSignUp && (
             <div>
@@ -441,14 +490,37 @@ function AuthPageInner() {
               </span>
             </label>
           )}
-          <button type="submit" disabled={loading || (isSignUp && !termsAccepted)} style={{ background: gradients.primary, color: '#FAF7FF', fontWeight: 700, padding: 14, borderRadius: radius.md, border: 'none', cursor: (loading || (isSignUp && !termsAccepted)) ? 'not-allowed' : 'pointer', fontSize: 14, opacity: (loading || (isSignUp && !termsAccepted)) ? 0.5 : 1, marginTop: 8, fontFamily: "'Inter',sans-serif" }}>
+
+          {/* Turnstile widget */}
+          <div ref={turnstileRef} style={{ marginTop: 4 }} />
+
+          <button
+            type="submit"
+            disabled={loading || !captchaToken || (isSignUp && !termsAccepted)}
+            style={{
+              background:  gradients.primary,
+              color:       '#FAF7FF',
+              fontWeight:  700,
+              padding:     14,
+              borderRadius: radius.md,
+              border:      'none',
+              cursor:      (loading || !captchaToken || (isSignUp && !termsAccepted)) ? 'not-allowed' : 'pointer',
+              fontSize:    14,
+              opacity:     (loading || !captchaToken || (isSignUp && !termsAccepted)) ? 0.5 : 1,
+              marginTop:   4,
+              fontFamily:  "'Inter',sans-serif",
+            }}
+          >
             {loading ? 'Please wait...' : isSignUp ? 'Create Account' : 'Sign In'}
           </button>
         </form>
 
         <p style={{ textAlign: 'center', fontSize: 13, color: '#6B6560', marginTop: 24 }}>
           {isSignUp ? 'Already have an account? ' : "Don't have an account? "}
-          <button onClick={() => { setError(''); setTermsAccepted(false); setView(isSignUp ? 'signin' : 'signup'); }} style={{ background: 'none', border: 'none', color: '#7C3AED', fontWeight: 600, cursor: 'pointer', fontSize: 13, fontFamily: "'Inter',sans-serif" }}>
+          <button
+            onClick={() => { setError(''); setTermsAccepted(false); setView(isSignUp ? 'signin' : 'signup'); }}
+            style={{ background: 'none', border: 'none', color: '#7C3AED', fontWeight: 600, cursor: 'pointer', fontSize: 13, fontFamily: "'Inter',sans-serif" }}
+          >
             {isSignUp ? 'Sign in' : 'Create one'}
           </button>
         </p>
