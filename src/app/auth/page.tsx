@@ -249,8 +249,8 @@ function AuthPageInner() {
   if (view === 'forgot_sent') return (
     <main style={pageBg}>
       <div style={{ position: 'absolute', inset: 0, backgroundImage: 'url(/auth-bg.jpg)', backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }} />
-      <div style={{ position: 'absolute', inset: 0, background: 'rgba(228,226,221,0.82)', backdropFilter: 'blur(10px)' }} />
-      <div style={{ position: 'relative', zIndex: 1, width: '100%', maxWidth: 440, margin: '24px', background: '#fff', borderRadius: 16, padding: 40, boxShadow: '0 24px 80px rgba(0,0,0,0.16)', textAlign: 'center' }}>
+      <div style={{ position: 'absolute', inset: 0, background: 'rgba(228,226,221,0.45)', backdropFilter: 'blur(4px)' }} />
+      <div style={{ position: 'relative', zIndex: 1, width: '100%', maxWidth: 440, margin: '24px', background: 'rgba(255,255,255,0.72)', backdropFilter: 'blur(16px)', borderRadius: 16, padding: 40, textAlign: 'center' }}>
         <div style={{ width: 72, height: 72, borderRadius: '50%', background: 'rgba(124,58,237,0.10)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px' }}>
           <Icon name="lock_reset" size={36} style={{ color: '#7C3AED' }} />
         </div>
@@ -274,8 +274,8 @@ function AuthPageInner() {
   if (view === 'forgot') return (
     <main style={pageBg}>
       <div style={{ position: 'absolute', inset: 0, backgroundImage: 'url(/auth-bg.jpg)', backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }} />
-      <div style={{ position: 'absolute', inset: 0, background: 'rgba(228,226,221,0.82)', backdropFilter: 'blur(10px)' }} />
-      <div style={{ position: 'relative', zIndex: 1, width: '100%', maxWidth: 440, margin: '24px', background: '#fff', borderRadius: 16, padding: 40, boxShadow: '0 24px 80px rgba(0,0,0,0.16)' }}>
+      <div style={{ position: 'absolute', inset: 0, background: 'rgba(228,226,221,0.45)', backdropFilter: 'blur(4px)' }} />
+      <div style={{ position: 'relative', zIndex: 1, width: '100%', maxWidth: 440, margin: '24px', background: 'rgba(255,255,255,0.72)', backdropFilter: 'blur(16px)', borderRadius: 16, padding: 40 }}>
         <div style={{ marginBottom: 28 }}>
           <span onClick={() => router.push('/')} style={{ fontSize: 22, fontWeight: 900, color: '#1A1714', cursor: 'pointer', fontFamily: 'Arial Black, Arial, sans-serif' }}>Vangel<span style={{ color: '#7C3AED' }}>Clip</span></span>
         </div>
@@ -315,10 +315,10 @@ function AuthPageInner() {
       {/* Full-page background image */}
       <div style={{ position: 'absolute', inset: 0, backgroundImage: 'url(/auth-bg.jpg)', backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }} />
       {/* Light overlay + blur */}
-      <div style={{ position: 'absolute', inset: 0, background: 'rgba(228,226,221,0.82)', backdropFilter: 'blur(10px)' }} />
+      <div style={{ position: 'absolute', inset: 0, background: 'rgba(228,226,221,0.45)', backdropFilter: 'blur(4px)' }} />
 
-      {/* Centered card */}
-      <div style={{ position: 'relative', zIndex: 1, width: '100%', maxWidth: 440, margin: '24px', background: '#fff', borderRadius: 16, padding: 40, boxShadow: '0 24px 80px rgba(0,0,0,0.16)' }}>
+      {/* Centered card — frosted glass, no hard border */}
+      <div style={{ position: 'relative', zIndex: 1, width: '100%', maxWidth: 440, margin: '24px', background: 'rgba(255,255,255,0.72)', backdropFilter: 'blur(16px)', borderRadius: 16, padding: 40 }}>
 
         {/* Logo */}
         <div style={{ marginBottom: 28 }}>
