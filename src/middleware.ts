@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
+import { ADMIN_EMAILS } from '@/lib/adminEmails';
 
 const publicRoutes = [
   '/',
@@ -10,8 +11,6 @@ const publicRoutes = [
   '/api/auth',
   '/api/auth/callback',
 ];
-
-const ADMIN_EMAILS = ['adminvangelclip@gmail.com'];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -47,7 +46,7 @@ export async function middleware(request: NextRequest) {
       if (!user) {
         return NextResponse.redirect(new URL('/auth?next=/admin', request.url));
       }
-      if (!ADMIN_EMAILS.includes(user.email || '')) {
+      if (!ADMIN_EMAILS.includes((user.email ?? '').toLowerCase())) {
         return NextResponse.redirect(new URL('/dashboard', request.url));
       }
     } catch {

@@ -3,8 +3,7 @@ import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { createClient } from '@/lib/supabase-browser';
 import Link from 'next/link';
-
-const ADMIN_EMAILS = ['chiemerieama29@gmail.com'];
+import { ADMIN_EMAILS } from '@/lib/adminEmails';
 
 const NAV_LINKS = [
   { label: 'Overview', href: '/admin' },

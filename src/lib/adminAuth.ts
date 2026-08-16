@@ -1,6 +1,7 @@
 import { createServerSupabase } from '@/lib/supabase-server';
+import { ADMIN_EMAILS } from '@/lib/adminEmails';
 
-export const ADMIN_EMAILS = ['chiemerieama29@gmail.com'];
+export { ADMIN_EMAILS };
 
 export async function checkAdminAuth() {
   try {
