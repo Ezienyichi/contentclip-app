@@ -579,7 +579,7 @@ export default function ImportPage() {
   const [durationLoading, setDurationLoading] = useState(false);
   const [durationUnknown, setDurationUnknown] = useState(false);
 
-  const PLAN_MAX: Record<string, number> = { free: 30, starter: 180, pro: 500, agency: 5000 };
+  const PLAN_MAX: Record<string, number> = { free: 30, starter: 150, pro: 400, agency: 1200 };
   const minutesRemaining = Math.max(0, (PLAN_MAX[userPlan] ?? 30) - userCredits);
   const insufficientCredits = userCredits > 0 && minutesRemaining <= 0;
   const uploadInsufficientCredits = userCredits > 0 && minutesRemaining <= 0;
@@ -1395,7 +1395,7 @@ export default function ImportPage() {
                   </span>
                   <input
                     type="number"
-                    max={180}
+                    max={150}
                     value={maxDuration ?? 60}
                     onChange={(e) => setMaxDuration(Number(e.target.value))}
                     style={{

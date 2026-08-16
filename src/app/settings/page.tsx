@@ -25,11 +25,11 @@ const supabase = createClient();
 // Minute budgets per plan (1 credit = 1 minute)
 const PLAN_INFO: Record<string, { label: string; minutes: number }> = {
   free:         { label: 'Free',    minutes: 30   },
-  starter:      { label: 'Starter', minutes: 300  },
-  solo:         { label: 'Starter', minutes: 300  },
-  pro:          { label: 'Pro',     minutes: 750  },
-  professional: { label: 'Pro',     minutes: 750  },
-  agency:       { label: 'Agency',  minutes: 1500 },
+  starter:      { label: 'Starter', minutes: 150  },
+  solo:         { label: 'Starter', minutes: 150  },
+  pro:          { label: 'Pro',     minutes: 400  },
+  professional: { label: 'Pro',     minutes: 400  },
+  agency:       { label: 'Agency',  minutes: 1200 },
 };
 
 const TOP_TIERS = new Set(['pro', 'professional', 'agency']);

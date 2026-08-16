@@ -23,7 +23,7 @@ export default function Sidebar() {
   const [plan, setPlan] = useState<string>('free');
   const isActive = (href: string) => href === '/dashboard' ? pathname === '/dashboard' : pathname.startsWith(href);
 
-  const PLAN_MAX: Record<string, number> = { free: 30, starter: 180, pro: 500, agency: 5000 };
+  const PLAN_MAX: Record<string, number> = { free: 30, starter: 150, pro: 400, agency: 1200 };
 
   useEffect(() => {
     const supabase = createClient();
