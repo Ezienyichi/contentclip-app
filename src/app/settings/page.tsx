@@ -6,6 +6,10 @@ import DashboardLayout from '@/components/DashboardLayout';
 import Icon from '@/components/Icon';
 import { useRouter } from 'next/navigation';
 import { colors as _colors, gradients, radius, inputField as _inputField } from '@/lib/tokens';
+import { useTour } from '@/lib/useTour';
+import Tour from '@/components/tour/Tour';
+import TourInfoIcon from '@/components/tour/TourInfoIcon';
+import { SETTINGS_STEPS } from '@/components/tour/tourSteps';
 
 const colors = {
   ..._colors,
@@ -41,6 +45,7 @@ function fmtDate(iso: string) {
 
 export default function SettingsPage() {
   const router = useRouter();
+  const tour = useTour('settings', SETTINGS_STEPS.length);
   const [tab, setTab] = useState('profile');
 
   // Profile state
@@ -164,7 +169,7 @@ export default function SettingsPage() {
 
   return (
     <>
-      <DashboardLayout title="Settings" subtitle="Manage your account, plan, and preferences." bg="#E4E2DD" titleColor="#1A1714" subtitleColor="#6B6560">
+      <DashboardLayout title="Settings" subtitle="Manage your account, plan, and preferences." bg="#E4E2DD" titleColor="#1A1714" subtitleColor="#6B6560" actions={<TourInfoIcon onClick={tour.restart} />}>
 
         {/* Toast */}
         {toast && (
@@ -176,7 +181,7 @@ export default function SettingsPage() {
         {/* Tab bar */}
         <div style={{ display: 'flex', gap: '4px', marginBottom: '28px', background: colors.surfaceContainerHigh, borderRadius: radius.lg, padding: '4px', overflowX: 'auto', WebkitOverflowScrolling: 'touch', maxWidth: '100%', boxSizing: 'border-box' }}>
           {tabs.map(t => (
-            <button key={t.id} onClick={() => setTab(t.id)} style={{ padding: '10px 20px', borderRadius: radius.md, background: tab === t.id ? colors.surfaceContainerHighest : 'transparent', color: tab === t.id ? colors.onSurface : colors.onSurfaceVariant, border: 'none', fontWeight: 600, fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontFamily: "'Inter',sans-serif", whiteSpace: 'nowrap' }}>
+            <button key={t.id} data-tour={`settings-tab-${t.id}`} onClick={() => setTab(t.id)} style={{ padding: '10px 20px', borderRadius: radius.md, background: tab === t.id ? colors.surfaceContainerHighest : 'transparent', color: tab === t.id ? colors.onSurface : colors.onSurfaceVariant, border: 'none', fontWeight: 600, fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontFamily: "'Inter',sans-serif", whiteSpace: 'nowrap' }}>
               <Icon name={t.icon} size={16} />{t.label}
             </button>
           ))}
@@ -454,6 +459,8 @@ export default function SettingsPage() {
             </div>
           </div>
         )}
+
+        <Tour steps={SETTINGS_STEPS} isOpen={tour.isOpen} step={tour.step} onNext={tour.next} onBack={tour.back} onSkip={tour.skip} />
 
         {/* ── CANCEL MODAL ── */}
         {showCancel && (

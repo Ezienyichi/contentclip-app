@@ -5,6 +5,10 @@ import Icon from '@/components/Icon';
 import { useRouter } from 'next/navigation';
 import { colors, gradients, radius } from '@/lib/tokens';
 import { createClient } from '@/lib/supabase-browser';
+import { useTour } from '@/lib/useTour';
+import Tour from '@/components/tour/Tour';
+import TourInfoIcon from '@/components/tour/TourInfoIcon';
+import { DASHBOARD_STEPS } from '@/components/tour/tourSteps';
 
 type Job = {
   id: string;
@@ -40,6 +44,7 @@ function sourceLabel(url: string): string {
 
 export default function DashboardPage() {
   const router = useRouter();
+  const tour = useTour('dashboard', DASHBOARD_STEPS.length);
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [jobs, setJobs] = useState<Job[]>([]);
@@ -93,16 +98,20 @@ export default function DashboardPage() {
       titleColor="#1A1714"
       subtitleColor="#6B6560"
       actions={
-        <button
-          onClick={() => router.push('/import')}
-          style={{ background: gradients.cta, color: '#fff', padding: '10px 20px', borderRadius: radius.md, fontWeight: 700, fontSize: '13px', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontFamily: "'Inter',sans-serif" }}
-        >
-          <Icon name="add_circle" size={18} /> New Project
-        </button>
+        <>
+          <button
+            onClick={() => router.push('/import')}
+            data-tour="new-project-btn"
+            style={{ background: gradients.cta, color: '#fff', padding: '10px 20px', borderRadius: radius.md, fontWeight: 700, fontSize: '13px', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontFamily: "'Inter',sans-serif" }}
+          >
+            <Icon name="add_circle" size={18} /> New Project
+          </button>
+          <TourInfoIcon onClick={tour.restart} />
+        </>
       }
     >
       {/* Stat cards — intentionally dark on light background */}
-      <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '16px', marginBottom: '32px' }}>
+      <div data-tour="stats-grid" className="stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '16px', marginBottom: '32px' }}>
         {STATS.map(s => (
           <div key={s.label} style={{ background: '#1A1714', borderRadius: radius.lg, padding: '24px', border: '1px solid rgba(255,255,255,0.06)' }}>
             <div style={{ width: 40, height: 40, borderRadius: radius.md, background: s.color + '22', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px' }}>
@@ -114,7 +123,7 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      <div>
+      <div data-tour="recent-projects">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
           <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#1A1714' }}>Recent Projects</h2>
           <button
@@ -173,6 +182,7 @@ export default function DashboardPage() {
       </div>
 
       <style>{'@media(max-width:1024px){.stats-grid{grid-template-columns:repeat(2,1fr)!important}}@media(max-width:480px){.stats-grid{grid-template-columns:1fr!important}}'}</style>
+      <Tour steps={DASHBOARD_STEPS} isOpen={tour.isOpen} step={tour.step} onNext={tour.next} onBack={tour.back} onSkip={tour.skip} />
     </DashboardLayout>
   );
 }

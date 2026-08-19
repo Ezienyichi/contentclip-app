@@ -6,6 +6,10 @@ import { createClient } from "@/lib/supabase-browser";
 import DashboardLayout from "@/components/DashboardLayout";
 import { colors as _colors, gradients, radius } from "@/lib/tokens";
 import EngagementPanel, { EngagementProfile } from "@/components/engagement/EngagementPanel";
+import { useTour } from '@/lib/useTour';
+import Tour from '@/components/tour/Tour';
+import TourInfoIcon from '@/components/tour/TourInfoIcon';
+import { IMPORT_STEPS } from '@/components/tour/tourSteps';
 
 const colors = {
   ..._colors,
@@ -584,6 +588,7 @@ export default function ImportPage() {
   const [engagementDismissed, setEngagementDismissed] = useState(false);
 
   const isClipping = Status === 'queued' || Status === 'preprocessing' || Status === 'processing';
+  const tour = useTour('import', IMPORT_STEPS.length);
 
   const PLAN_MAX: Record<string, number> = { free: 30, starter: 150, pro: 400, agency: 1200 };
   const minutesRemaining = Math.max(0, (PLAN_MAX[userPlan] ?? 30) - userCredits);
@@ -952,6 +957,7 @@ export default function ImportPage() {
       bg="#E4E2DD"
       titleColor="#1A1714"
       subtitleColor="#6B6560"
+      actions={<TourInfoIcon onClick={tour.restart} />}
     >
       <div style={{ maxWidth: 900 }}>
         <div
@@ -960,7 +966,7 @@ export default function ImportPage() {
           {/* Left: Form */}
           <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
             {/* Input tab switcher */}
-            <div>
+            <div data-tour="url-input">
               <div style={{ display: 'flex', gap: '4px', marginBottom: '12px', background: colors.surfaceContainerHigh, borderRadius: radius.md, padding: '4px' }}>
                 {(['youtube', 'upload'] as const).map(tab => (
                   <button
@@ -1123,7 +1129,7 @@ export default function ImportPage() {
             </div>
 
             {/* ── CONTENT INTELLIGENCE ── */}
-            <div style={{
+            <div data-tour="content-category" style={{
               marginTop: '20px',
               padding: '18px',
               background: 'rgba(0,0,0,0.02)',
@@ -1180,7 +1186,7 @@ export default function ImportPage() {
               {/* 4T Content Type Cards — faith only */}
               {category === 'faith' && (
                 <>
-                  <div style={{ display: 'flex', gap: '4px', marginBottom: '12px' }}>
+                  <div data-tour="content-mode" style={{ display: 'flex', gap: '4px', marginBottom: '12px' }}>
                     <button
                       onClick={() => setContentMode('auto')}
                       style={{
@@ -1284,6 +1290,7 @@ export default function ImportPage() {
 
             {/* Clip Settings */}
             <div
+              data-tour="clip-settings"
               style={{
                 borderRadius: radius.xl,
                 border: `1px solid ${colors.outlineVariant}`,
@@ -1481,6 +1488,7 @@ export default function ImportPage() {
                 const uploadMins = uploadDuration != null ? Math.ceil(uploadDuration / 60) : null;
                 return (
                   <div
+                    data-tour="minutes-indicator"
                     style={{
                       borderRadius: radius.md,
                       background: notEnough ? `${colors.error}10` : `${colors.primaryContainer}20`,
@@ -1526,6 +1534,7 @@ export default function ImportPage() {
 
             {/* Generate Button */}
             <button
+              data-tour="generate-btn"
               onClick={inputTab === 'upload' ? handleUpload : handleProcess}
               disabled={isGenerateDisabled}
               style={{
@@ -1897,6 +1906,7 @@ export default function ImportPage() {
         </div>
       )}
       <ComingSoonModal isOpen={!!csmClip} onClose={() => setCsmClip(null)} videoUrl={csmClip?.url} clipTitle={csmClip?.title} />
+      <Tour steps={IMPORT_STEPS} isOpen={tour.isOpen} step={tour.step} onNext={tour.next} onBack={tour.back} onSkip={tour.skip} />
       {userId && engagementProfile !== null && (
         <EngagementPanel
           isClipping={isClipping && !engagementDismissed}
