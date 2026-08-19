@@ -19,7 +19,7 @@ export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const [isAdmin, setIsAdmin] = useState(false);
-  const [credits, setCredits] = useState<number | null>(null);
+  const [credits, setCredits] = useState(0);
   const [plan, setPlan] = useState<string>('free');
   const isActive = (href: string) => href === '/dashboard' ? pathname === '/dashboard' : pathname.startsWith(href);
 
@@ -87,7 +87,7 @@ export default function Sidebar() {
               <span style={{ fontSize: '10px', fontWeight: 700, color: '#cc97ff', background: 'rgba(156,72,234,0.15)', padding: '2px 8px', borderRadius: radius.full }}>{plan.toUpperCase()}</span>
             </div>
             <div style={{ fontSize: '22px', fontWeight: 800, color: '#fff' }}>
-              {credits !== null ? credits : '—'}{' '}
+              {credits}{' '}
               <span style={{ fontSize: '12px', color: colors.onSurfaceVariant, fontWeight: 500 }}>/ {maxCr}</span>
             </div>
             <div style={{ width: '100%', height: '4px', background: colors.surfaceContainer, borderRadius: radius.full, marginTop: '8px', overflow: 'hidden' }}>
