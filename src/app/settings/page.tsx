@@ -444,7 +444,7 @@ export default function SettingsPage() {
                       </div>
                     </div>
                     <button
-                      onClick={() => alert(int.connected ? int.name + ' disconnected' : int.name + ' connection started — you will be redirected to authorize.')}
+                      onClick={() => alert(int.connected ? int.name + ' disconnected' : int.name + ' connection started. You will be redirected to authorize.')}
                       style={{ padding: '8px 16px', borderRadius: radius.md, background: int.connected ? 'transparent' : gradients.primary, color: int.connected ? colors.onSurfaceVariant : '#FAF7FF', border: int.connected ? '1px solid ' + colors.outlineVariant : 'none', fontWeight: 600, fontSize: '12px', cursor: 'pointer', fontFamily: "'Inter',sans-serif" }}
                     >
                       {int.connected ? 'Disconnect' : 'Connect'}

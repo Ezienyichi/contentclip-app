@@ -10,7 +10,7 @@ const bodoni = Bodoni_Moda({
   display: 'swap',
 });
 
-export const metadata: Metadata = { title: 'VangelClip — Clip. Spread. Transform.', description: "Africa's AI-powered clip platform for gospel creators, educators, and inspirational voices." };
+export const metadata: Metadata = { title: 'VangelClip: Clip. Spread. Transform.', description: "Africa's AI-powered clip platform for gospel creators, educators, and inspirational voices." };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

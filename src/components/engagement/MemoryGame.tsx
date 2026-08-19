@@ -93,7 +93,7 @@ export default function MemoryGame({ onDismiss }: Props) {
             Mini game
           </p>
           <p style={{ margin: '2px 0 0', fontSize: 13, fontWeight: 700, color: '#1A1714' }}>
-            Memory Match — find all 8 pairs
+            Memory Match: find all 8 pairs
           </p>
         </div>
         <span style={{ fontSize: 12, color: '#6B6560', background: '#EFECEA', padding: '3px 10px', borderRadius: 100, border: '1px solid rgba(0,0,0,0.08)' }}>

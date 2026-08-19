@@ -56,7 +56,7 @@ export default function ComingSoonModal({ isOpen, onClose, videoUrl, clipTitle }
         </h3>
         <p style={{ fontSize: '14px', color: colors.onSurfaceVariant, lineHeight: 1.7, margin: '0 0 28px' }}>
           Your clips are ready to share right now. Download them and post directly to
-          your platforms — it takes seconds. Auto-scheduling is coming soon and
+          your platforms. It takes seconds. Auto-scheduling is coming soon and
           you&apos;ll be the first to know.
         </p>
 
@@ -93,7 +93,7 @@ export default function ComingSoonModal({ isOpen, onClose, videoUrl, clipTitle }
               background: 'rgba(74,222,128,0.08)', border: '1px solid rgba(74,222,128,0.2)',
               color: '#4ade80', fontSize: '13px', fontWeight: 600,
             }}>
-              You&apos;re on the list — we&apos;ll let you know!
+              You&apos;re on the list. We&apos;ll let you know!
             </div>
           )}
 

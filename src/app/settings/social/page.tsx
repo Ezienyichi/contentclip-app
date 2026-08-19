@@ -158,7 +158,7 @@ export default function SocialConnectionsPage() {
           <div>
             <p style={{ fontSize: '13px', fontWeight: 700, color: colors.onSurface, marginBottom: '3px' }}>Social scheduling is coming soon</p>
             <p style={{ fontSize: '12px', color: colors.onSurfaceVariant, lineHeight: 1.6 }}>
-              Platform connections go live with the scheduling feature. In the meantime, download your clips and post directly — it takes seconds.
+              Platform connections go live with the scheduling feature. In the meantime, download your clips and post directly. It takes seconds.
             </p>
           </div>
         </div>

@@ -65,8 +65,8 @@ const PLATFORMS: { id: string; label: string; sublabel: string; icon: React.Reac
 const POST_STATUSES = [
   { label: 'Scheduled',  desc: 'Queued and waiting for its posting time.',              bg: 'rgba(59,130,246,0.10)',  color: '#2563EB' },
   { label: 'Publishing', desc: 'Being sent to the platform right now.',                 bg: 'rgba(245,158,11,0.10)',  color: '#D97706' },
-  { label: 'Published',  desc: 'Live on the platform — shareable link available.',      bg: 'rgba(5,150,105,0.10)',   color: '#059669' },
-  { label: 'Failed',     desc: 'Something went wrong — we\'ll retry or notify you.',   bg: 'rgba(220,38,38,0.10)',   color: '#DC2626' },
+  { label: 'Published',  desc: 'Live on the platform. Shareable link available.',       bg: 'rgba(5,150,105,0.10)',   color: '#059669' },
+  { label: 'Failed',     desc: 'Something went wrong. We\'ll retry or notify you.',    bg: 'rgba(220,38,38,0.10)',   color: '#DC2626' },
 ];
 
 const MOCK_QUEUE: { platform: string; title: string; date: string; time: string; status: string }[] = [
@@ -106,10 +106,10 @@ export default function SchedulerPage() {
               Coming Soon
             </span>
             <h2 style={{ margin: '0 0 8px', fontSize: 22, fontWeight: 800, color: '#fff', lineHeight: 1.2 }}>
-              Post for Me — Automatic Scheduling
+              Post for Me: Automatic Scheduling
             </h2>
             <p style={{ margin: 0, fontSize: 13.5, color: 'rgba(255,255,255,0.55)', maxWidth: 480, lineHeight: 1.6 }}>
-              Generate your clips, connect your accounts once, and let VangelClip handle the rest. Your content goes live at the right time on every platform — no manual uploading, no missed posting windows.
+              Generate your clips, connect your accounts once, and let VangelClip handle the rest. Your content goes live at the right time on every platform, with no manual uploading and no missed posting windows.
             </p>
           </div>
           <button
@@ -125,7 +125,7 @@ export default function SchedulerPage() {
           {[
             { icon: '🔗', step: 'Connect your accounts', desc: 'Link TikTok, Instagram, YouTube, Facebook & X in one place' },
             { icon: '🗓️', step: 'Schedule your clips',   desc: 'Pick posting times or let us suggest the best windows'     },
-            { icon: '🚀', step: 'We post automatically', desc: 'Clips go live on schedule — you focus on creating'          },
+            { icon: '🚀', step: 'We post automatically', desc: 'Clips go live on schedule so you can focus on creating'     },
           ].map((s, i) => (
             <React.Fragment key={s.step}>
               <div style={{ flex: 1, minWidth: 160, background: 'rgba(255,255,255,0.04)', borderRadius: radius.md, padding: '14px 16px', border: '1px solid rgba(255,255,255,0.07)' }}>
@@ -147,7 +147,7 @@ export default function SchedulerPage() {
           Platforms Coming at Launch
         </h3>
         <p style={{ fontSize: 13, color: colors.onSurfaceVariant, margin: '0 0 14px', opacity: 0.8 }}>
-          Connect once — we handle posting, timing, and retries across all of them.
+          Connect once and we handle posting, timing, and retries across all of them.
         </p>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(210px, 1fr))', gap: 12, marginBottom: 32 }}>
@@ -253,7 +253,7 @@ export default function SchedulerPage() {
           {
             step: '01',
             title: 'Connect your accounts',
-            desc:  'Link TikTok, Instagram, YouTube, Facebook, and X once. VangelClip stores your tokens securely — you never re-authenticate.',
+            desc:  'Link TikTok, Instagram, YouTube, Facebook, and X once. VangelClip stores your tokens securely, so you never re-authenticate.',
           },
           {
             step: '02',
@@ -268,7 +268,7 @@ export default function SchedulerPage() {
           {
             step: '04',
             title: 'We post for you',
-            desc:  'Clips go live at exactly the right time. Track every post\'s status — Scheduled, Publishing, Published, or Failed — from one dashboard.',
+            desc:  'Clips go live at exactly the right time. Track every post\'s status from one dashboard: Scheduled, Publishing, Published, or Failed.',
           },
         ].map(item => (
           <div

@@ -26,7 +26,7 @@ export const COMPARISON_KEYS = [
 export const PLAN_DATA: PlanData[] = [
   {
     name:    'Free',
-    tagline: "Try it — about one sermon's worth.",
+    tagline: "Try it. About one sermon's worth.",
     monthly: 0,
     annual:  0,
     min:     30,

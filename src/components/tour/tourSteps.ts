@@ -8,7 +8,7 @@ export const HOME_STEPS: TourStep[] = [
   {
     target: 'hero-headline',
     title: 'Welcome to VangelClip',
-    body: 'AI finds your best moments from any YouTube video and turns them into ready-to-post short clips — no editing required.',
+    body: 'AI finds your best moments from any YouTube video and turns them into ready-to-post short clips. No editing required.',
   },
   {
     target: 'hero-cta-btn',
@@ -21,7 +21,7 @@ export const DASHBOARD_STEPS: TourStep[] = [
   {
     target: 'stats-grid',
     title: 'Your account at a glance',
-    body: 'Clips generated, minutes used, total projects, and your current plan — all updated in real time.',
+    body: 'Clips generated, minutes used, total projects, and your current plan, all updated in real time.',
   },
   {
     target: 'new-project-btn',
@@ -44,7 +44,7 @@ export const IMPORT_STEPS: TourStep[] = [
   {
     target: 'content-category',
     title: 'Choose your content type',
-    body: 'Pick the category that fits your video — Sermons & Faith, Podcasts, Music, or Film & Media Marketing. This tells the AI what kind of moments to look for.',
+    body: 'Pick the category that fits your video: Sermons & Faith, Podcasts, Music, or Film & Media Marketing. This tells the AI what kind of moments to look for.',
   },
   {
     target: 'content-mode',
@@ -82,11 +82,11 @@ export const SETTINGS_STEPS: TourStep[] = [
   {
     target: 'settings-tab-notifications',
     title: 'Notifications',
-    body: 'Choose when to receive email updates — clip completions, weekly reports, and more.',
+    body: 'Choose when to receive email updates: clip completions, weekly reports, and more.',
   },
   {
     target: 'settings-tab-integrations',
     title: 'Integrations (coming soon)',
-    body: 'Preview the platforms you\'ll be able to connect — YouTube, TikTok, Instagram, and LinkedIn. Direct publishing is in development.',
+    body: 'Preview the platforms you\'ll be able to connect: YouTube, TikTok, Instagram, and LinkedIn. Direct publishing is in development.',
   },
 ];

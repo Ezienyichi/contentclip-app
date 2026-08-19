@@ -3,7 +3,7 @@ import React, { useState, useMemo } from 'react';
 
 const TIPS: Record<string, string[]> = {
   'Sermons & Faith': [
-    "Clip the moment of your key scripture reveal — it's your natural hook.",
+    "Clip the moment of your key scripture reveal. It's your natural hook.",
     "Testimonies make powerful standalone shorts; look for the turning-point sentence.",
     "A single convicting question from your message works great as a caption.",
     "Worship-to-word transitions are emotional peaks worth clipping.",
@@ -16,7 +16,7 @@ const TIPS: Record<string, string[]> = {
   ],
   'Podcasts': [
     "The boldest opinion or hot take is your scroll-stopper.",
-    "Look for the 'wait, say that again' moment — that's your clip.",
+    "Look for the 'wait, say that again' moment. That's your clip.",
     "Guest surprise reactions make great short-form hooks.",
     "A surprising stat or story beats a slow intro every time.",
   ],
@@ -37,7 +37,7 @@ const TIPS: Record<string, string[]> = {
 const GENERAL_TIPS = [
   "Your most emotional or surprising moment is usually your best clip.",
   "Strong first 3 seconds matter more than anything else.",
-  "One idea per clip — resist cramming.",
+  "One idea per clip: resist cramming.",
   "End on a question to drive comments.",
 ];
 
@@ -85,7 +85,7 @@ export default function ContentTips({ contentCategory, onDismiss }: Props) {
           <p style={{ margin: 0, fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#9B5DE5' }}>
             {label}
           </p>
-          <p style={{ margin: 0, fontSize: 12, color: '#6B6560' }}>While you wait — a tip to make your clips land harder</p>
+          <p style={{ margin: 0, fontSize: 12, color: '#6B6560' }}>While you wait: a tip to make your clips land harder</p>
         </div>
       </div>
 

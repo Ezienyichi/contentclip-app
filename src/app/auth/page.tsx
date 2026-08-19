@@ -470,7 +470,7 @@ function AuthPageInner() {
                   ))}
                 </div>
                 <p style={{ fontSize: 11, color: strColor, fontWeight: 600 }}>
-                  {strLabel}{str < 3 ? ' — add uppercase, numbers, or symbols' : ''}
+                  {strLabel}{str < 3 ? '. Add uppercase, numbers, or symbols.' : ''}
                 </p>
               </div>
             )}

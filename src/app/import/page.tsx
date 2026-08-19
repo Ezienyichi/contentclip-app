@@ -829,7 +829,7 @@ export default function ImportPage() {
 
       // Guard: check balance upfront
       if (userCredits > 0 && userCredits < numClips) {
-        setError('Not enough credits — upgrade or buy more.');
+        setError('Not enough credits. Upgrade or buy more.');
         setLoading(false);
         return;
       }
@@ -1078,7 +1078,7 @@ export default function ImportPage() {
                       )}
                       {uploadInsufficientCredits && (
                         <div style={{ marginTop: '8px', fontSize: '12px', fontWeight: 600, color: '#fca5a5' }}>
-                          Not enough credits — upgrade or buy more
+                          Not enough credits. Upgrade or buy more.
                         </div>
                       )}
                     </div>
@@ -1093,7 +1093,7 @@ export default function ImportPage() {
                         <div style={{ width: `${uploadProgress}%`, height: '100%', background: 'linear-gradient(90deg,#7c3aed,#5b21b6)', borderRadius: '3px', transition: 'width 0.3s' }} />
                       </div>
                       <div style={{ marginTop: '8px', fontSize: '11px', color: 'rgba(255,255,255,0.4)', textAlign: 'center' }}>
-                        Uploading... {uploadProgress}% — please keep this tab open.
+                        Uploading... {uploadProgress}%. Please keep this tab open.
                       </div>
                     </div>
                   )}
@@ -1367,7 +1367,7 @@ export default function ImportPage() {
                     marginBottom: 8,
                   }}
                 >
-                  Number of Clips —{" "}
+                  Number of Clips:{" "}
                   <strong style={{ color: colors.onSurface }}>{numClips}</strong>
                 </label>
                 <input
@@ -1507,7 +1507,7 @@ export default function ImportPage() {
                     </p>
                     <p style={{ margin: "6px 0 0", fontSize: 11, color: notEnough ? colors.error : colors.onSurfaceVariant }}>
                       {notEnough
-                        ? <><span>Not enough minutes — </span><a href="/pricing" style={{ color: colors.primary, fontWeight: 700 }}>upgrade to continue</a></>
+                        ? <><span>Not enough minutes. </span><a href="/pricing" style={{ color: colors.primary, fontWeight: 700 }}>Upgrade to continue</a></>
                         : `You have ${minutesRemaining} min remaining`}
                     </p>
                   </div>
@@ -1584,7 +1584,7 @@ export default function ImportPage() {
 
             {generationSuccess && !loading && (
               <div style={{ padding: '12px 16px', borderRadius: radius.md, background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.3)', color: '#4ade80', fontSize: '13px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                ✓ Your clips are ready — scroll down to view them
+                ✓ Your clips are ready. Scroll down to view them.
               </div>
             )}
           </div>

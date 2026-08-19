@@ -484,7 +484,7 @@ export default function HomePage() {
               How&nbsp;<span style={{ fontStyle:'italic', color:mkt.brand }}>VangelClip Workflow Automation Works</span>
             </h2>
             <p style={{ fontSize:16, color:mkt.muted, margin:0, maxWidth:520, marginLeft:'auto', marginRight:'auto' }}>
-              Watch a 90-second walkthrough — paste a link, let the AI clip, publish everywhere.
+              Watch a 90-second walkthrough: paste a link, let the AI clip, and publish everywhere.
             </p>
           </div>
           <div style={{ maxWidth:880, margin:'0 auto' }}>
