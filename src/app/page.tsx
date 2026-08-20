@@ -7,10 +7,6 @@ import { createClient } from '@/lib/supabase-browser';
 import { mkt as _mkt, mktBtn as _mktBtn, mktCard as _mktCard } from '@/theme';
 import type { CSSProperties as CP } from 'react';
 import { PLAN_DATA, COMPARISON_KEYS } from '@/lib/pricingData';
-import { useTour } from '@/lib/useTour';
-import Tour from '@/components/tour/Tour';
-import TourInfoIcon from '@/components/tour/TourInfoIcon';
-import { HOME_STEPS } from '@/components/tour/tourSteps';
 
 // ── Light theme override (homepage only) ──────────────────────────────────────
 const mkt = {
@@ -101,7 +97,6 @@ const FOOTER_COLS = [
 // ── Component ─────────────────────────────────────────────────────────────────
 export default function HomePage() {
   const router  = useRouter();
-  const tour = useTour('home', HOME_STEPS.length);
   const [menuOpen,   setMenuOpen]   = useState(false);
   const [heroUrl,    setHeroUrl]    = useState('');
   const [annual,     setAnnual]     = useState(false);
@@ -360,7 +355,7 @@ export default function HomePage() {
           </svg>
         </span>
 
-        <h1 data-tour="hero-headline" style={{ fontFamily:mkt.fontHead, fontWeight:800, fontSize:'clamp(32px,6vw,62px)', lineHeight:1.04, letterSpacing:'-.03em', margin:'0 auto 20px', maxWidth:820 }}>
+        <h1 style={{ fontFamily:mkt.fontHead, fontWeight:800, fontSize:'clamp(32px,6vw,62px)', lineHeight:1.04, letterSpacing:'-.03em', margin:'0 auto 20px', maxWidth:820 }}>
           Spread your Content.<br />
           <span style={{ fontStyle:'italic', fontWeight:700, color:mkt.brand }}>One Video, Seen Everywhere.</span>
         </h1>
@@ -382,7 +377,7 @@ export default function HomePage() {
               style={{ flex:1, minWidth:0, border:'none', outline:'none', background:'transparent', color:mkt.text, fontFamily:mkt.fontBody, fontSize:14.5, padding:'8px 0' }}
             />
           </div>
-          <button data-tour="hero-cta-btn" onClick={startClipping} className="vc-hero-cta">Start Clipping Free →</button>
+          <button onClick={startClipping} className="vc-hero-cta">Start Clipping Free →</button>
         </div>
         <p style={{ fontSize:13, color:mkt.muted, marginTop:14 }}>No card needed · First clip is on us. Try any link above.</p>
       </section>
@@ -742,12 +737,6 @@ export default function HomePage() {
         </div>
       </footer>
 
-      <Tour steps={HOME_STEPS} isOpen={tour.isOpen} step={tour.step} onNext={tour.next} onBack={tour.back} onSkip={tour.skip} />
-
-      {/* Fixed help icon — bottom-right corner */}
-      <div style={{ position: 'fixed', bottom: 28, right: 28, zIndex: 8999 }}>
-        <TourInfoIcon onClick={tour.restart} />
-      </div>
     </div>
   );
 }
