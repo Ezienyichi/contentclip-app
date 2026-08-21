@@ -307,7 +307,7 @@ export default function SchedulerPage() {
               ) : (
                 <button
                   onClick={() => handleConnect(p.id)}
-                  disabled={isConnecting || !!connecting}
+                  disabled={isConnecting}
                   style={{
                     fontSize: 11,
                     fontWeight: 700,
@@ -316,12 +316,11 @@ export default function SchedulerPage() {
                     border: '1px solid rgba(155,93,229,0.25)',
                     padding: '6px 14px',
                     borderRadius: radius.full,
-                    cursor: (isConnecting || !!connecting) ? 'default' : 'pointer',
+                    cursor: isConnecting ? 'default' : 'pointer',
                     fontFamily: "'Inter',sans-serif",
                     whiteSpace: 'nowrap',
                     flexShrink: 0,
                     transition: 'opacity 0.15s',
-                    opacity: (!isConnecting && !!connecting) ? 0.4 : 1,
                   }}
                 >
                   {isConnecting ? 'Opening...' : 'Connect'}

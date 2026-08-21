@@ -9,7 +9,6 @@ const VALID_PLATFORMS = ['tiktok', 'instagram', 'youtube', 'facebook', 'twitter'
 type Platform = typeof VALID_PLATFORMS[number];
 
 export async function POST(req: NextRequest) {
-  // ── Verify session server-side ──
   const cookieStore = await cookies();
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -27,7 +26,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Not authenticated.' }, { status: 401 });
   }
 
-  // ── Validate request body ──
   let platform: Platform;
   try {
     const body = await req.json();
@@ -40,32 +38,57 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid platform.' }, { status: 400 });
   }
 
-  // ── Call Post for Me to generate the OAuth auth URL ──
-  // external_id ties this OAuth session to our user — returned in PfM's account record
-  const pfmRes = await fetch(`${PFM_API}/social-accounts/auth-url`, {
+  const apiKey = process.env.POST_FOR_ME_API_KEY;
+  if (!apiKey) {
+    console.error('[social/connect] POST_FOR_ME_API_KEY is not set');
+    return NextResponse.json({ error: 'Server misconfiguration: API key missing.' }, { status: 500 });
+  }
+
+  const payload = { platform, external_id: user.id };
+  const endpoint = `${PFM_API}/social-accounts/auth-url`;
+
+  console.log('[social/connect] Calling PfM', { endpoint, payload });
+
+  const pfmRes = await fetch(endpoint, {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${process.env.POST_FOR_ME_API_KEY!}`,
+      'Authorization': `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({
-      platform,
-      external_id: user.id,
-    }),
+    body: JSON.stringify(payload),
+  });
+
+  const responseText = await pfmRes.text().catch(() => '(unreadable)');
+
+  console.log('[social/connect] PfM response', {
+    status: pfmRes.status,
+    contentType: pfmRes.headers.get('content-type'),
+    body: responseText,
   });
 
   if (!pfmRes.ok) {
-    const detail = await pfmRes.text().catch(() => '');
-    console.error('[social/connect] PfM error', pfmRes.status, detail);
-    return NextResponse.json({ error: 'Failed to generate connection URL.' }, { status: 502 });
+    return NextResponse.json(
+      { error: `Post for Me error ${pfmRes.status}: ${responseText}` },
+      { status: 502 }
+    );
   }
 
-  const pfmData = await pfmRes.json();
-  const authUrl: string | undefined = pfmData.url;
+  let pfmData: Record<string, unknown>;
+  try {
+    pfmData = JSON.parse(responseText);
+  } catch {
+    console.error('[social/connect] PfM returned non-JSON on 2xx', responseText);
+    return NextResponse.json({ error: 'Unexpected response from Post for Me.' }, { status: 502 });
+  }
+
+  const authUrl = pfmData.url as string | undefined;
 
   if (!authUrl) {
-    console.error('[social/connect] PfM response missing url field', pfmData);
-    return NextResponse.json({ error: 'No auth URL returned from Post for Me.' }, { status: 502 });
+    console.error('[social/connect] PfM response has no url field', pfmData);
+    return NextResponse.json(
+      { error: `Post for Me returned no URL. Keys present: ${Object.keys(pfmData).join(', ')}` },
+      { status: 502 }
+    );
   }
 
   return NextResponse.json({ authUrl });
