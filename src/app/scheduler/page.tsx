@@ -132,13 +132,13 @@ export default function SchedulerPage() {
   const [savedClips, setSavedClips] = useState<SavedClip[]>([]);
 
   // Modal
-  const [showModal,     setShowModal]     = useState(false);
-  const [modalClipId,   setModalClipId]   = useState('');
-  const [modalPlatform, setModalPlatform] = useState('');
-  const [modalCaption,  setModalCaption]  = useState('');
-  const [modalDate,     setModalDate]     = useState('');
-  const [modalTime,     setModalTime]     = useState('');
-  const [submitting,    setSubmitting]    = useState(false);
+  const [showModal,      setShowModal]      = useState(false);
+  const [modalClipId,    setModalClipId]    = useState('');
+  const [modalPlatforms, setModalPlatforms] = useState<string[]>([]);
+  const [modalCaption,   setModalCaption]   = useState('');
+  const [modalDate,      setModalDate]      = useState('');
+  const [modalTime,      setModalTime]      = useState('');
+  const [submitting,     setSubmitting]     = useState(false);
 
   // Banner
   const [banner, setBanner] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
@@ -216,7 +216,7 @@ export default function SchedulerPage() {
     const next = new Date(); next.setHours(next.getHours() + 1, 0, 0, 0);
     setModalDate(next.toISOString().split('T')[0]);
     setModalTime(`${String(next.getHours()).padStart(2, '0')}:00`);
-    setModalClipId(''); setModalPlatform(''); setModalCaption('');
+    setModalClipId(''); setModalPlatforms([]); setModalCaption('');
     setShowModal(true);
   };
 
@@ -227,14 +227,30 @@ export default function SchedulerPage() {
   };
 
   const handleSchedule = async () => {
-    if (!modalClipId || !modalPlatform || !modalDate || !modalTime) return;
+    if (!modalClipId || modalPlatforms.length === 0 || !modalDate || !modalTime) return;
     setSubmitting(true);
     try {
       const scheduled_at = new Date(`${modalDate}T${modalTime}`).toISOString();
-      const res  = await fetch('/api/scheduled-posts', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ clip_id: modalClipId, platform: modalPlatform, caption: modalCaption, scheduled_at }) });
-      const data = await res.json();
-      if (res.ok) { setShowModal(false); setBanner({ type: 'success', msg: 'Post scheduled.' }); loadScheduledPosts(); }
-      else { setBanner({ type: 'error', msg: data.error ?? 'Failed to schedule post.' }); }
+      const results = await Promise.all(
+        modalPlatforms.map(platform =>
+          fetch('/api/scheduled-posts', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ clip_id: modalClipId, platform, caption: modalCaption, scheduled_at }) })
+            .then(async r => ({ platform, ok: r.ok, data: await r.json() }))
+            .catch(() => ({ platform, ok: false, data: { error: 'Network error.' } }))
+        )
+      );
+      const failures = results.filter(r => !r.ok);
+      if (failures.length === 0) {
+        const n = results.length;
+        setShowModal(false);
+        setBanner({ type: 'success', msg: `${n} post${n !== 1 ? 's' : ''} scheduled.` });
+        loadScheduledPosts();
+      } else if (failures.length < results.length) {
+        const platLabels = failures.map(f => PLATFORMS.find(p => p.id === f.platform)?.label ?? f.platform).join(', ');
+        setBanner({ type: 'error', msg: `Scheduled on some platforms. Failed: ${platLabels}.` });
+        loadScheduledPosts();
+      } else {
+        setBanner({ type: 'error', msg: failures[0].data?.error ?? 'Failed to schedule posts.' });
+      }
     } catch { setBanner({ type: 'error', msg: 'Network error. Please try again.' }); }
     finally { setSubmitting(false); }
   };
@@ -263,7 +279,7 @@ export default function SchedulerPage() {
     .map(g => ({ key: g, label: GROUP_LABELS[g], posts: upcomingPosts.filter(p => getGroup(p.scheduled_at) === g) }))
     .filter(g => g.posts.length > 0);
 
-  const canSchedule = modalClipId && modalPlatform && modalDate && modalTime && !submitting;
+  const canSchedule = modalClipId && modalPlatforms.length > 0 && modalDate && modalTime && !submitting;
 
   // ── Render helpers ──
   const renderPostCard = (post: ScheduledPost) => {
@@ -476,16 +492,38 @@ export default function SchedulerPage() {
                 <a href="/import" style={{ color: colors.primary, fontWeight: 600, textDecoration: 'none' }}>Generate clips first →</a>
               </div>
             ) : (
-              <select value={modalClipId} onChange={e => handleClipSelect(e.target.value)} style={{ width: '100%', padding: '10px 12px', borderRadius: radius.md, border: '1px solid rgba(0,0,0,0.12)', background: '#fff', fontSize: 13, color: colors.onSurface, marginBottom: 20, fontFamily: "'Inter',sans-serif", appearance: 'none', cursor: 'pointer' }}>
-                <option value="">Select a clip...</option>
-                {savedClips.map(c => (
-                  <option key={c.id} value={c.id}>{c.title} (score {c.virality_score})</option>
-                ))}
-              </select>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, maxHeight: 240, overflowY: 'auto', marginBottom: 20, paddingRight: 2 }}>
+                {savedClips.map(c => {
+                  const selected = modalClipId === c.id;
+                  return (
+                    <button key={c.id} onClick={() => handleClipSelect(c.id)} style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'stretch', background: 'none', border: selected ? `2px solid ${colors.primary}` : '2px solid rgba(0,0,0,0.08)', borderRadius: radius.md, overflow: 'hidden', cursor: 'pointer', padding: 0, textAlign: 'left' }}>
+                      {/* Thumbnail */}
+                      <div style={{ width: '100%', aspectRatio: '9/16', background: '#2A2624', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden', position: 'relative' }}>
+                        {c.thumbnail_url
+                          ? <img src={c.thumbnail_url} alt={c.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          : <span style={{ fontSize: 22, opacity: 0.4 }}>▶</span>}
+                        {/* Virality badge */}
+                        <span style={{ position: 'absolute', top: 5, right: 5, fontSize: 9, fontWeight: 800, color: '#fff', background: 'rgba(0,0,0,0.55)', padding: '2px 5px', borderRadius: 4, letterSpacing: '0.02em' }}>{c.virality_score}</span>
+                        {/* Selected checkmark */}
+                        {selected && (
+                          <div style={{ position: 'absolute', inset: 0, background: 'rgba(155,93,229,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <span style={{ fontSize: 22, color: '#fff', fontWeight: 800 }}>✓</span>
+                          </div>
+                        )}
+                      </div>
+                      {/* Title */}
+                      <div style={{ padding: '5px 7px', background: selected ? 'rgba(155,93,229,0.08)' : '#fff' }}>
+                        <p style={{ margin: 0, fontSize: 10, fontWeight: 600, color: selected ? colors.primary : colors.onSurface, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', lineHeight: 1.4 }}>{c.title}</p>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
             )}
 
-            {/* 2. Platform */}
-            <label style={{ fontSize: 12, fontWeight: 700, color: colors.onSurfaceVariant, textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: 8 }}>Platform</label>
+            {/* 2. Platforms (multi-select) */}
+            <label style={{ fontSize: 12, fontWeight: 700, color: colors.onSurfaceVariant, textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: 4 }}>Platforms</label>
+            <p style={{ fontSize: 11, color: colors.onSurfaceVariant, margin: '0 0 8px', opacity: 0.75 }}>Select one or more. A separate post is created for each.</p>
             {connections.length === 0 ? (
               <div style={{ padding: '14px 16px', borderRadius: radius.md, background: colors.surfaceContainerHighest, border: '1px solid rgba(0,0,0,0.07)', fontSize: 13, color: colors.onSurfaceVariant, marginBottom: 20 }}>
                 No connected accounts.{' '}
@@ -494,12 +532,14 @@ export default function SchedulerPage() {
             ) : (
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 20 }}>
                 {connections.map(conn => {
-                  const plat     = PLATFORMS.find(p => p.id === conn.platform);
-                  const selected = modalPlatform === conn.platform;
+                  const plat    = PLATFORMS.find(p => p.id === conn.platform);
+                  const selected = modalPlatforms.includes(conn.platform);
+                  const toggle  = () => setModalPlatforms(prev => selected ? prev.filter(p => p !== conn.platform) : [...prev, conn.platform]);
                   return (
-                    <button key={conn.id} onClick={() => setModalPlatform(conn.platform)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: radius.full, border: selected ? `2px solid ${colors.primary}` : '1px solid rgba(0,0,0,0.12)', background: selected ? 'rgba(155,93,229,0.08)' : '#fff', cursor: 'pointer', fontFamily: "'Inter',sans-serif", fontSize: 12, fontWeight: 600, color: selected ? colors.primary : colors.onSurface }}>
+                    <button key={conn.id} onClick={toggle} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: radius.full, border: selected ? `2px solid ${colors.primary}` : '1px solid rgba(0,0,0,0.12)', background: selected ? 'rgba(155,93,229,0.08)' : '#fff', cursor: 'pointer', fontFamily: "'Inter',sans-serif", fontSize: 12, fontWeight: 600, color: selected ? colors.primary : colors.onSurface }}>
                       {plat?.iconSm}
                       {plat?.label ?? conn.platform}
+                      {selected && <span style={{ fontSize: 10, marginLeft: 2 }}>✓</span>}
                     </button>
                   );
                 })}
@@ -521,7 +561,7 @@ export default function SchedulerPage() {
             <div style={{ display: 'flex', gap: 10 }}>
               <button onClick={() => setShowModal(false)} style={{ flex: 1, padding: '11px', borderRadius: radius.md, border: '1px solid rgba(0,0,0,0.1)', background: colors.surfaceContainerHighest, color: colors.onSurface, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: "'Inter',sans-serif" }}>Cancel</button>
               <button onClick={handleSchedule} disabled={!canSchedule} style={{ flex: 2, padding: '11px', borderRadius: radius.md, border: 'none', background: canSchedule ? gradients.primary : colors.surfaceContainerHighest, color: canSchedule ? '#fff' : colors.onSurfaceVariant, fontSize: 13, fontWeight: 700, cursor: canSchedule ? 'pointer' : 'default', fontFamily: "'Inter',sans-serif", transition: 'opacity 0.15s' }}>
-                {submitting ? 'Scheduling...' : 'Schedule Post'}
+                {submitting ? 'Scheduling...' : modalPlatforms.length > 1 ? `Schedule to ${modalPlatforms.length} Platforms` : 'Schedule Post'}
               </button>
             </div>
           </div>
