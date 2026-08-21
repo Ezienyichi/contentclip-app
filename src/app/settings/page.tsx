@@ -133,6 +133,35 @@ export default function SettingsPage() {
     if (f) { const r = new FileReader(); r.onload = ev => setAvatar(ev.target?.result as string); r.readAsDataURL(f); }
   };
 
+  // Load connected social accounts from the same DB source as the Scheduler
+  React.useEffect(() => {
+    fetch('/api/social/connections')
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.connections) setSettingsConnections(d.connections); })
+      .catch(() => {})
+      .finally(() => setSettingsLoadingConns(false));
+  }, []);
+
+  const handleSettingsConnect = async (platformId: string) => {
+    setSettingsConnecting(platformId);
+    try {
+      const res  = await fetch('/api/social/connect', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ platform: platformId }) });
+      const data = await res.json();
+      if (!res.ok || !data.authUrl) { showToast(data.error ?? 'Failed to start connection.', false); setSettingsConnecting(null); return; }
+      window.location.href = data.authUrl;
+    } catch { showToast('Network error. Please try again.', false); setSettingsConnecting(null); }
+  };
+
+  const handleSettingsDisconnect = async (connectionId: string, platformLabel: string) => {
+    setSettingsDisconnecting(connectionId);
+    try {
+      const res = await fetch(`/api/social/connections/${connectionId}`, { method: 'DELETE' });
+      if (res.ok) { setSettingsConnections(prev => prev.filter(c => c.id !== connectionId)); showToast(`${platformLabel} disconnected.`); }
+      else { const d = await res.json(); showToast(d.error ?? 'Failed to disconnect.', false); }
+    } catch { showToast('Network error. Please try again.', false); }
+    finally { setSettingsDisconnecting(null); }
+  };
+
   const toggleNotif = async (key: keyof typeof notifs) => {
     const v = !notifs[key];
     setNotifs(p => ({ ...p, [key]: v }));
@@ -145,12 +174,11 @@ export default function SettingsPage() {
     }
   };
 
-  const integrations = [
-    { name: 'YouTube',   icon: 'smart_display', connected: true,  color: '#FF0000', info: "Connect your YouTube channel to publish Shorts directly from VangelClip. You'll need to authorize with your Google account." },
-    { name: 'TikTok',    icon: 'music_note',    connected: false, color: '#fff',    info: 'Link your TikTok account to schedule and auto-publish clips. Requires a TikTok Business or Creator account.' },
-    { name: 'Instagram', icon: 'photo_camera',  connected: false, color: '#E1306C', info: 'Connect Instagram to publish Reels. Requires a Professional Instagram account linked to a Facebook Business page.' },
-    { name: 'LinkedIn',  icon: '',              connected: false, color: '#0A66C2', info: 'Connect LinkedIn to share clips as posts or native video directly to your professional network. Requires a LinkedIn Business or Creator account.' },
-  ];
+  // Connection state (integrations tab)
+  const [settingsConnections,   setSettingsConnections]   = React.useState<{ id: string; platform: string; account_name: string | null }[]>([]);
+  const [settingsLoadingConns,  setSettingsLoadingConns]  = React.useState(true);
+  const [settingsConnecting,    setSettingsConnecting]    = React.useState<string | null>(null);
+  const [settingsDisconnecting, setSettingsDisconnecting] = React.useState<string | null>(null);
 
   const tabs = [
     { id: 'profile',       label: 'Profile',       icon: 'person' },
@@ -425,40 +453,64 @@ export default function SettingsPage() {
         )}
 
         {/* ── INTEGRATIONS TAB ── */}
-        {tab === 'integrations' && (
-          <div style={{ maxWidth: '640px' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {integrations.map(int => (
-                <div key={int.name} style={{ background: colors.surfaceContainerHigh, borderRadius: radius.lg, padding: '20px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                      <div style={{ width: 44, height: 44, borderRadius: radius.md, background: int.color + '15', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        {int.name === 'LinkedIn'
-                          ? <svg viewBox="0 0 24 24" width="22" height="22" fill={int.color}><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" /></svg>
-                          : <Icon name={int.icon} size={22} style={{ color: int.color }} />
-                        }
+        {tab === 'integrations' && (() => {
+          const PLATFORMS = [
+            { id: 'tiktok',    label: 'TikTok',           bgColor: 'rgba(1,1,1,0.08)',      info: 'Link your TikTok account to schedule and auto-publish clips. Requires a TikTok Business or Creator account.',
+              icon: <svg viewBox="0 0 24 24" width={22} height={22} fill="none"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.34 6.34 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.88a8.28 8.28 0 0 0 4.84 1.55V7a4.85 4.85 0 0 1-1.07-.31z" fill="#010101"/></svg> },
+            { id: 'instagram', label: 'Instagram Reels',  bgColor: 'rgba(214,36,159,0.10)', info: 'Connect Instagram to publish Reels. Requires a Professional Instagram account linked to a Facebook Business page.',
+              icon: <svg viewBox="0 0 24 24" width={22} height={22}><defs><radialGradient id="ig-set" cx="30%" cy="107%" r="150%"><stop offset="0%" stopColor="#fdf497"/><stop offset="5%" stopColor="#fdf497"/><stop offset="45%" stopColor="#fd5949"/><stop offset="60%" stopColor="#d6249f"/><stop offset="90%" stopColor="#285AEB"/></radialGradient></defs><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" fill="url(#ig-set)"/></svg> },
+            { id: 'youtube',   label: 'YouTube Shorts',  bgColor: 'rgba(255,0,0,0.08)',    info: "Connect your YouTube channel to publish Shorts directly from VangelClip. You'll need to authorize with your Google account.",
+              icon: <svg viewBox="0 0 24 24" width={22} height={22}><path d="M23.495 6.205a3.007 3.007 0 0 0-2.088-2.088c-1.87-.501-9.396-.501-9.396-.501s-7.507-.01-9.396.501A3.007 3.007 0 0 0 .527 6.205a31.247 31.247 0 0 0-.522 5.805 31.247 31.247 0 0 0 .522 5.783 3.007 3.007 0 0 0 2.088 2.088c1.868.502 9.396.502 9.396.502s7.506 0 9.396-.502a3.007 3.007 0 0 0 2.088-2.088 31.247 31.247 0 0 0 .5-5.783 31.247 31.247 0 0 0-.5-5.805zM9.609 15.601V8.408l6.264 3.602z" fill="#FF0000"/></svg> },
+            { id: 'facebook',  label: 'Facebook',        bgColor: 'rgba(24,119,242,0.10)', info: 'Connect Facebook to publish Reels and feed videos. Requires a Facebook Page (personal profiles are not supported).',
+              icon: <svg viewBox="0 0 24 24" width={22} height={22}><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" fill="#1877F2"/></svg> },
+            { id: 'twitter',   label: 'X (Twitter)',     bgColor: 'rgba(0,0,0,0.07)',      info: 'Link your X account to post video clips. Requires a standard X (Twitter) account.',
+              icon: <svg viewBox="0 0 24 24" width={22} height={22}><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.857L1.261 2.25H8.08l4.261 5.638L18.244 2.25zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z" fill="#000"/></svg> },
+          ];
+          return (
+            <div style={{ maxWidth: '640px' }}>
+              <p style={{ fontSize: 13, color: colors.onSurfaceVariant, marginBottom: 16 }}>
+                Accounts connected here are shared with the Scheduler — connect once, use everywhere.
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {PLATFORMS.map(p => {
+                  const conn          = settingsConnections.find(c => c.platform === p.id);
+                  const isConnected   = !!conn;
+                  const isConnecting  = settingsConnecting === p.id;
+                  const isDisconn     = conn ? settingsDisconnecting === conn.id : false;
+                  const busy          = isConnecting || isDisconn || settingsLoadingConns;
+                  return (
+                    <div key={p.id} style={{ background: colors.surfaceContainerHigh, borderRadius: radius.lg, padding: '20px', border: isConnected ? '1px solid rgba(5,150,105,0.25)' : '1px solid transparent' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                          <div style={{ width: 44, height: 44, borderRadius: radius.md, background: p.bgColor, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                            {p.icon}
+                          </div>
+                          <div>
+                            <p style={{ fontSize: '14px', fontWeight: 700, color: '#1A1714', margin: 0 }}>{p.label}</p>
+                            <p style={{ fontSize: '12px', color: isConnected ? '#059669' : colors.onSurfaceVariant, margin: '2px 0 0', fontWeight: isConnected ? 600 : 400 }}>
+                              {settingsLoadingConns ? '...' : isConnected ? (conn.account_name ?? 'Connected') : 'Not connected'}
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => isConnected ? handleSettingsDisconnect(conn.id, p.label) : handleSettingsConnect(p.id)}
+                          disabled={busy}
+                          style={{ padding: '8px 16px', borderRadius: radius.md, background: isConnected ? 'transparent' : gradients.primary, color: isConnected ? colors.onSurfaceVariant : '#FAF7FF', border: isConnected ? '1px solid ' + colors.outlineVariant : 'none', fontWeight: 600, fontSize: '12px', cursor: busy ? 'default' : 'pointer', fontFamily: "'Inter',sans-serif", opacity: busy ? 0.5 : 1, flexShrink: 0 }}
+                        >
+                          {isConnecting ? 'Opening...' : isDisconn ? 'Disconnecting...' : isConnected ? 'Disconnect' : 'Connect'}
+                        </button>
                       </div>
-                      <div>
-                        <p style={{ fontSize: '14px', fontWeight: 700, color: '#1A1714' }}>{int.name}</p>
-                        <p style={{ fontSize: '12px', color: int.connected ? '#4ade80' : colors.onSurfaceVariant }}>{int.connected ? 'Connected' : 'Not connected'}</p>
+                      <div style={{ background: colors.surfaceContainer, borderRadius: radius.md, padding: '12px', display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                        <Icon name="info" size={15} style={{ color: colors.primary, flexShrink: 0, marginTop: '1px' }} />
+                        <p style={{ fontSize: '12px', color: colors.onSurfaceVariant, lineHeight: 1.6, margin: 0 }}>{p.info}</p>
                       </div>
                     </div>
-                    <button
-                      onClick={() => alert(int.connected ? int.name + ' disconnected' : int.name + ' connection started. You will be redirected to authorize.')}
-                      style={{ padding: '8px 16px', borderRadius: radius.md, background: int.connected ? 'transparent' : gradients.primary, color: int.connected ? colors.onSurfaceVariant : '#FAF7FF', border: int.connected ? '1px solid ' + colors.outlineVariant : 'none', fontWeight: 600, fontSize: '12px', cursor: 'pointer', fontFamily: "'Inter',sans-serif" }}
-                    >
-                      {int.connected ? 'Disconnect' : 'Connect'}
-                    </button>
-                  </div>
-                  <div style={{ background: colors.surfaceContainer, borderRadius: radius.md, padding: '12px', display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-                    <Icon name="info" size={15} style={{ color: colors.primary, flexShrink: 0, marginTop: '1px' }} />
-                    <p style={{ fontSize: '12px', color: colors.onSurfaceVariant, lineHeight: 1.6 }}>{int.info}</p>
-                  </div>
-                </div>
-              ))}
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         <Tour steps={SETTINGS_STEPS} isOpen={tour.isOpen} step={tour.step} onNext={tour.next} onBack={tour.back} onSkip={tour.skip} />
 
