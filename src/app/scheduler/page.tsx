@@ -248,6 +248,25 @@ export default function SchedulerPage() {
         </div>
       </div>
 
+      {/* ── How it Works ── */}
+      <h3 style={{ fontSize: 13, fontWeight: 700, color: colors.onSurfaceVariant, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 14 }}>
+        How it Works
+      </h3>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 12, marginBottom: 32 }}>
+        {[
+          { step: '01', title: 'Connect your accounts',   desc: 'Link TikTok, Instagram, YouTube, Facebook, and X once. Your tokens are stored securely.' },
+          { step: '02', title: 'Generate your clips',      desc: 'Process any long video and get AI-selected, captioned clips ready to publish.' },
+          { step: '03', title: 'Set your schedule',        desc: 'Pick posting times manually, or let VangelClip suggest the highest-engagement windows per platform.' },
+          { step: '04', title: 'We post for you',          desc: "Clips go live at exactly the right time. Track every post's status from one dashboard: Scheduled, Publishing, Published, or Failed." },
+        ].map(item => (
+          <div key={item.step} style={{ background: colors.surfaceContainer, border: '1px solid rgba(0,0,0,0.07)', borderRadius: radius.lg, padding: '18px 20px' }}>
+            <span style={{ fontSize: 11, fontWeight: 800, color: colors.primary, letterSpacing: '0.05em' }}>{item.step}</span>
+            <p style={{ margin: '6px 0 6px', fontSize: 14, fontWeight: 700, color: colors.onSurface }}>{item.title}</p>
+            <p style={{ margin: 0, fontSize: 12.5, color: colors.onSurfaceVariant, lineHeight: 1.6 }}>{item.desc}</p>
+          </div>
+        ))}
+      </div>
+
       {/* ── Connected Accounts ── */}
       <div style={{ marginBottom: 10 }}>
         <h3 style={{ fontSize: 13, fontWeight: 700, color: colors.onSurfaceVariant, textTransform: 'uppercase', letterSpacing: '0.07em', margin: '0 0 4px' }}>
@@ -384,24 +403,6 @@ export default function SchedulerPage() {
         })}
       </div>
 
-      {/* ── How it Works ── */}
-      <h3 style={{ fontSize: 13, fontWeight: 700, color: colors.onSurfaceVariant, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 14 }}>
-        How it Works
-      </h3>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 12 }}>
-        {[
-          { step: '01', title: 'Connect your accounts',   desc: 'Link TikTok, Instagram, YouTube, Facebook, and X once. Your tokens are stored securely.' },
-          { step: '02', title: 'Generate your clips',      desc: 'Process any long video and get AI-selected, captioned clips ready to publish.' },
-          { step: '03', title: 'Set your schedule',        desc: 'Pick posting times manually, or let VangelClip suggest the highest-engagement windows per platform.' },
-          { step: '04', title: 'We post for you',          desc: "Clips go live at exactly the right time. Track every post's status from one dashboard: Scheduled, Publishing, Published, or Failed." },
-        ].map(item => (
-          <div key={item.step} style={{ background: colors.surfaceContainer, border: '1px solid rgba(0,0,0,0.07)', borderRadius: radius.lg, padding: '18px 20px' }}>
-            <span style={{ fontSize: 11, fontWeight: 800, color: colors.primary, letterSpacing: '0.05em' }}>{item.step}</span>
-            <p style={{ margin: '6px 0 6px', fontSize: 14, fontWeight: 700, color: colors.onSurface }}>{item.title}</p>
-            <p style={{ margin: 0, fontSize: 12.5, color: colors.onSurfaceVariant, lineHeight: 1.6 }}>{item.desc}</p>
-          </div>
-        ))}
-      </div>
     </DashboardLayout>
   );
 }
