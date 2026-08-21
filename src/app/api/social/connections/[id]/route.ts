@@ -37,19 +37,19 @@ export async function DELETE(
 
   // ── Soft-delete: mark disconnected, double-locked by user_id ──
   // Even with service role, the WHERE user_id = user.id ensures no cross-user deletions
-  const { error, count } = await supabaseAdmin
+  const { data, error } = await supabaseAdmin
     .from('social_connections')
     .update({ status: 'disconnected' })
     .eq('id', connectionId)
     .eq('user_id', user.id)   // ownership check — cannot disconnect another user's connection
-    .select('id', { count: 'exact', head: true });
+    .select('id');
 
   if (error) {
     console.error('[social/connections/[id]] DB error', error);
     return NextResponse.json({ error: 'Failed to disconnect.' }, { status: 500 });
   }
 
-  if (count === 0) {
+  if (!data || data.length === 0) {
     // Connection not found or belongs to a different user — return 404, don't reveal which
     return NextResponse.json({ error: 'Connection not found.' }, { status: 404 });
   }
