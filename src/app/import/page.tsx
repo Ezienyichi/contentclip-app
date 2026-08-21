@@ -586,6 +586,16 @@ export default function ImportPage() {
   const [userId, setUserId] = useState<string>('');
   const [engagementProfile, setEngagementProfile] = useState<EngagementProfile | null>(null);
   const [engagementDismissed, setEngagementDismissed] = useState(false);
+  const [msgIdx, setMsgIdx] = useState(0);
+
+  const CLIPPING_MESSAGES = [
+    'Analyzing your video...',
+    'Finding the best moments...',
+    'Selecting the most shareable clips...',
+    'Adding captions...',
+    'Optimizing for social...',
+    'Almost ready...',
+  ];
 
   const isClipping = Status === 'queued' || Status === 'preprocessing' || Status === 'processing';
   const tour = useTour('import', IMPORT_STEPS.length);
