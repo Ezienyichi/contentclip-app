@@ -5,7 +5,6 @@ import { cookies } from 'next/headers';
 
 export const dynamic = 'force-dynamic';
 
-// Service role for the UPDATE — but also locked by the user_id WHERE clause
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -15,7 +14,6 @@ export async function DELETE(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  // ── Verify identity server-side ──
   const cookieStore = await cookies();
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -35,13 +33,11 @@ export async function DELETE(
 
   const { id: connectionId } = await params;
 
-  // ── Soft-delete: mark disconnected, double-locked by user_id ──
-  // Even with service role, the WHERE user_id = user.id ensures no cross-user deletions
   const { data, error } = await supabaseAdmin
     .from('social_connections')
     .update({ status: 'disconnected' })
     .eq('id', connectionId)
-    .eq('user_id', user.id)   // ownership check — cannot disconnect another user's connection
+    .eq('user_id', user.id)
     .select('id');
 
   if (error) {
@@ -50,7 +46,6 @@ export async function DELETE(
   }
 
   if (!data || data.length === 0) {
-    // Connection not found or belongs to a different user — return 404, don't reveal which
     return NextResponse.json({ error: 'Connection not found.' }, { status: 404 });
   }
 
