@@ -686,6 +686,12 @@ export default function ImportPage() {
 
   useEffect(() => () => stopPolling(), [stopPolling]);
 
+  useEffect(() => {
+    if (Status !== 'processing') { setMsgIdx(0); return; }
+    const id = setInterval(() => setMsgIdx(i => (i + 1) % CLIPPING_MESSAGES.length), 3500);
+    return () => clearInterval(id);
+  }, [Status]);
+
   const pollClipStatus = useCallback((taskId: string) => {
     pollDeadlineRef.current = Date.now() + POLL_TIMEOUT_MS;
 
@@ -1615,7 +1621,7 @@ export default function ImportPage() {
                     : Status === "preprocessing"
                     ? "AI is analysing your video..."
                     : Status === "processing"
-                    ? "Finding your best viral moments..."
+                    ? CLIPPING_MESSAGES[msgIdx]
                     : Status === "completed"
                     ? "Your clips are ready!"
                     : "Processing... this takes 2-4 minutes. Please wait."}
