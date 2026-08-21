@@ -12,7 +12,7 @@ const NAV = [
   { label: 'Home',      icon: 'home',           href: '/dashboard' },
   { label: 'Projects',  icon: 'video_library',  href: '/import' },
   { label: 'Clips',     icon: 'movie_edit',     href: '/clips' },
-  { label: 'Scheduler', icon: 'calendar_month', href: '/scheduler', soon: true },
+  { label: 'Scheduler', icon: 'calendar_month', href: '/scheduler' },
   { label: 'Settings',  icon: 'settings',       href: '/settings' },
 ];
 export default function Sidebar() {

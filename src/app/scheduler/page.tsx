@@ -226,7 +226,7 @@ export default function SchedulerPage() {
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 20 }}>
           <div style={{ flex: 1, minWidth: 260 }}>
             <h2 style={{ margin: '0 0 8px', fontSize: 22, fontWeight: 800, color: '#fff', lineHeight: 1.2 }}>
-              Post for Me: Automatic Scheduling
+              Automatic Scheduling
             </h2>
             <p style={{ margin: 0, fontSize: 13.5, color: 'rgba(255,255,255,0.55)', maxWidth: 480, lineHeight: 1.6 }}>
               Connect your accounts below, generate clips, then schedule them to go live automatically across all platforms.
@@ -390,7 +390,7 @@ export default function SchedulerPage() {
       </h3>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 12 }}>
         {[
-          { step: '01', title: 'Connect your accounts',   desc: 'Link TikTok, Instagram, YouTube, Facebook, and X once. Your tokens are stored securely by Post for Me.' },
+          { step: '01', title: 'Connect your accounts',   desc: 'Link TikTok, Instagram, YouTube, Facebook, and X once. Your tokens are stored securely.' },
           { step: '02', title: 'Generate your clips',      desc: 'Process any long video and get AI-selected, captioned clips ready to publish.' },
           { step: '03', title: 'Set your schedule',        desc: 'Pick posting times manually, or let VangelClip suggest the highest-engagement windows per platform.' },
           { step: '04', title: 'We post for you',          desc: "Clips go live at exactly the right time. Track every post's status from one dashboard: Scheduled, Publishing, Published, or Failed." },
