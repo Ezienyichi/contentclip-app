@@ -734,14 +734,24 @@ export default function ImportPage() {
           }));
 
           // Non-blocking batch save to DB — clips still show if this fails
+          console.log('[clips/save] firing save for', normalizedClips.length, 'clips');
           fetch('/api/clips/save', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ clips: normalizedClips, source_video_name: videoUrl }),
           })
-            .then(r => r.ok ? r.json() : null)
+            .then(async r => {
+              const text = await r.text();
+              console.log('[clips/save] response status:', r.status, 'body:', text);
+              if (!r.ok) return null;
+              try { return JSON.parse(text); } catch { return null; }
+            })
             .then((saved: any) => {
-              if (!saved?.savedClips?.length) return;
+              if (!saved?.savedClips?.length) {
+                console.warn('[clips/save] no savedClips in response:', saved);
+                return;
+              }
+              console.log('[clips/save] saved', saved.savedClips.length, 'clips to DB');
               const withDbIds = normalizedClips.map((c: any, i: number) => ({
                 ...c,
                 db_id: saved.savedClips[i]?.id ?? null,
@@ -753,7 +763,7 @@ export default function ImportPage() {
                 generatedAt: new Date().toISOString(),
               }));
             })
-            .catch(() => {}); // graceful degradation — clips already visible
+            .catch((err) => console.error('[clips/save] fetch error:', err));
 
           setTimeout(() => {
             setLoading(false);

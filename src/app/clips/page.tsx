@@ -63,9 +63,17 @@ export default function ClipsPage() {
 
     // Load from DB — replaces sessionStorage clips once resolved
     fetch('/api/clips/list')
-      .then(r => r.ok ? r.json() : null)
-      .then((data: any) => { if (data?.clips?.length > 0) setClips(data.clips); })
-      .catch(() => {})
+      .then(async r => {
+        const text = await r.text();
+        console.log('[clips/list] status:', r.status, 'body:', text);
+        if (!r.ok) return null;
+        try { return JSON.parse(text); } catch { return null; }
+      })
+      .then((data: any) => {
+        console.log('[clips/list] clips returned:', data?.clips?.length ?? 0);
+        if (data?.clips?.length > 0) setClips(data.clips);
+      })
+      .catch((err) => console.error('[clips/list] fetch error:', err))
       .finally(() => setDbLoaded(true));
   }, []);
 
