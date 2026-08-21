@@ -732,6 +732,29 @@ export default function ImportPage() {
             videoUrl,
             generatedAt: new Date().toISOString(),
           }));
+
+          // Non-blocking batch save to DB — clips still show if this fails
+          fetch('/api/clips/save', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ clips: normalizedClips, source_video_name: videoUrl }),
+          })
+            .then(r => r.ok ? r.json() : null)
+            .then((saved: any) => {
+              if (!saved?.savedClips?.length) return;
+              const withDbIds = normalizedClips.map((c: any, i: number) => ({
+                ...c,
+                db_id: saved.savedClips[i]?.id ?? null,
+              }));
+              setClips(withDbIds);
+              localStorage.setItem(CLIPS_STORAGE_KEY, JSON.stringify({
+                clips: withDbIds,
+                videoUrl,
+                generatedAt: new Date().toISOString(),
+              }));
+            })
+            .catch(() => {}); // graceful degradation — clips already visible
+
           setTimeout(() => {
             setLoading(false);
             setStatus("idle");

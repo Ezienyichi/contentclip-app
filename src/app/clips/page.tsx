@@ -18,10 +18,25 @@ const colors = {
 };
 
 type Clip = {
-  id?: string; title: string; hook_text: string; start_time: number; end_time: number;
-  virality_score: number; suggested_caption: string; hashtags: string;
-  platform: string; clip_url?: string; video_url?: string; download_url?: string; thumbnail_url?: string; duration: number; status?: string;
+  id?: string; db_id?: string; title: string; hook_text: string;
+  start_time: number; end_time: number; virality_score: number;
+  suggested_caption: string; hashtags: string; platform: string;
+  clip_url?: string; video_url?: string; download_url?: string;
+  thumbnail_url?: string; duration: number; status?: string;
+  expires_at?: string | null; source_video_name?: string;
 };
+
+function ExpiryBadge({ expiresAt }: { expiresAt?: string | null }) {
+  if (!expiresAt) return null;
+  const daysLeft = Math.ceil((new Date(expiresAt).getTime() - Date.now()) / 86_400_000);
+  if (daysLeft < 0)
+    return <span style={{ fontSize:10, fontWeight:600, color:'#DC2626', background:'rgba(220,38,38,0.1)', padding:'2px 7px', borderRadius:99 }}>Expired</span>;
+  if (daysLeft <= 2)
+    return <span style={{ fontSize:10, fontWeight:600, color:'#D97706', background:'rgba(245,158,11,0.1)', padding:'2px 7px', borderRadius:99 }}>Expires in {daysLeft}d</span>;
+  return <span style={{ fontSize:10, color:'#6B6560', background:'#E8E5DF', padding:'2px 7px', borderRadius:99 }}>
+    Until {new Date(expiresAt).toLocaleDateString('en-US', { month:'short', day:'numeric' })}
+  </span>;
+}
 
 const SORTS = ['Most Viral','Newest','Longest','Shortest'];
 const PLATS = ['All','TikTok','Reels','Shorts'];
@@ -34,21 +49,24 @@ export default function ClipsPage() {
   const [preview, setPreview] = useState<number|null>(null);
   const [playingUrl, setPlayingUrl] = useState<string|null>(null);
   const [downloadingIdx, setDownloadingIdx] = useState<number|null>(null);
+  const [, setDbLoaded] = useState(false);
 
-  // Load real clips from sessionStorage
   useEffect(() => {
+    // Seed immediately from sessionStorage — no flash of empty state while DB loads
     try {
       const stored = sessionStorage.getItem('hookclip_clips');
       if (stored) {
         const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setClips(parsed);
-          return;
-        }
+        if (Array.isArray(parsed) && parsed.length > 0) setClips(parsed);
       }
     } catch {}
-    // No demo clips - show empty state for new users
-    setClips([]);
+
+    // Load from DB — replaces sessionStorage clips once resolved
+    fetch('/api/clips/list')
+      .then(r => r.ok ? r.json() : null)
+      .then((data: any) => { if (data?.clips?.length > 0) setClips(data.clips); })
+      .catch(() => {})
+      .finally(() => setDbLoaded(true));
   }, []);
 
   const formatDuration = (s: number) => `${Math.floor(s/60)}:${(s%60).toString().padStart(2,'0')}`;
@@ -133,9 +151,15 @@ export default function ClipsPage() {
             {/* Info */}
             <div style={{ padding:'16px' }}>
               <p style={{ fontSize:'13px', fontWeight:600, marginBottom:'4px', lineHeight:1.4, overflow:'hidden', textOverflow:'ellipsis', display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical' as any, color:'#1A1714' }}>{clip.title}</p>
-              <p style={{ fontSize:'11px', color:colors.onSurfaceVariant, textTransform:'capitalize', marginBottom:'12px' }}>
+              <p style={{ fontSize:'11px', color:colors.onSurfaceVariant, textTransform:'capitalize', marginBottom:'6px' }}>
                 <Icon name="smart_display" size={12} style={{ verticalAlign:'middle', marginRight:4 }}/>{platMap(clip.platform)}
               </p>
+              <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:10, flexWrap:'wrap' }}>
+                <ExpiryBadge expiresAt={clip.expires_at} />
+                {clip.source_video_name && (
+                  <span style={{ fontSize:10, color:colors.onSurfaceVariant, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', maxWidth:120 }}>{clip.source_video_name}</span>
+                )}
+              </div>
 
               {/* Action buttons */}
               <div style={{ display:'flex', gap:'6px' }}>
