@@ -72,7 +72,6 @@ export default function Sidebar() {
             <button key={item.href} onClick={() => go(item.href)} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 12px', borderRadius: a ? '0 6px 6px 0' : '6px', background: a ? 'rgba(156,72,234,0.08)' : 'transparent', borderLeft: `2px solid ${a ? '#9c48ea' : 'transparent'}`, color: a ? '#cc97ff' : colors.onSurfaceVariant, fontWeight: a ? 600 : 500, fontSize: '13px', border: 'none', cursor: 'pointer', width: '100%', textAlign: 'left', fontFamily: "'Inter', sans-serif", borderLeftStyle: 'solid' as const, borderLeftWidth: '2px', borderLeftColor: a ? '#9c48ea' : 'transparent' }}>
               <Icon name={item.icon} size={20} style={{ color: a ? '#cc97ff' : colors.onSurfaceVariant }} />
               <span style={{ flex: 1 }}>{item.label}</span>
-              {item.soon && <span style={{ fontSize: '9px', fontWeight: 700, letterSpacing: '0.06em', color: '#a78bfa', background: 'rgba(124,58,237,0.15)', padding: '2px 6px', borderRadius: '100px' }}>SOON</span>}
             </button>
           );
         })}
