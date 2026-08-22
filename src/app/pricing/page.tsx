@@ -94,9 +94,10 @@ export default function PricingPage() {
         </div>
 
         {/* Feature comparison */}
-        <div style={{ background: colors.surfaceContainerHigh, borderRadius: radius.xl, padding: '32px', overflow: 'auto', border: '1px solid rgba(0,0,0,0.07)' }}>
+        <div style={{ background: colors.surfaceContainerHigh, borderRadius: radius.xl, padding: '32px', border: '1px solid rgba(0,0,0,0.07)' }}>
           <h2 style={{ fontSize: '22px', fontWeight: 700, marginBottom: '24px', color: '#1A1714' }}>Feature Comparison</h2>
-          <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '600px' }}>
+          <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '560px' }}>
             <thead>
               <tr>
                 <th style={{ textAlign: 'left', padding: '12px', fontSize: '12px', fontWeight: 600, color: colors.onSurfaceVariant, borderBottom: '1px solid rgba(0,0,0,0.08)' }}>Feature</th>
@@ -123,6 +124,7 @@ export default function PricingPage() {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       </div>
 

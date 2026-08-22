@@ -666,7 +666,7 @@ export default function SchedulerPage() {
                 <a href="/import" style={{ color: colors.primary, fontWeight: 600, textDecoration: 'none' }}>Generate clips first →</a>
               </div>
             ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, maxHeight: 240, overflowY: 'auto', marginBottom: 20, paddingRight: 2 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: 8, maxHeight: 240, overflowY: 'auto', marginBottom: 20, paddingRight: 2 }}>
                 {savedClips.map(c => {
                   const selected = modalClipId === c.id;
                   return (

@@ -131,7 +131,7 @@ export default function ClipsPage() {
       </div>
 
       {/* Clips grid */}
-      <div className="clips-grid" style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(220px,1fr))', gap:'16px' }}>
+      <div className="clips-grid" style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:'16px' }}>
         {filtered.map((clip, idx) => {
           const previewSrc = clip.clip_url || clip.video_url || '';
           return (
@@ -157,7 +157,7 @@ export default function ClipsPage() {
             </div>
 
             {/* Info */}
-            <div style={{ padding:'16px' }}>
+            <div style={{ padding:'12px' }}>
               <p style={{ fontSize:'13px', fontWeight:600, marginBottom:'4px', lineHeight:1.4, overflow:'hidden', textOverflow:'ellipsis', display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical' as any, color:'#1A1714' }}>{clip.title}</p>
               <p style={{ fontSize:'11px', color:colors.onSurfaceVariant, textTransform:'capitalize', marginBottom:'6px' }}>
                 <Icon name="smart_display" size={12} style={{ verticalAlign:'middle', marginRight:4 }}/>{platMap(clip.platform)}
@@ -221,7 +221,13 @@ export default function ClipsPage() {
         </div>
       )}
 
-      <style>{'@keyframes fadeInUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}@media(max-width:640px){.clips-grid{grid-template-columns:1fr!important}}'}</style>
+      <style>{`
+        @keyframes fadeInUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+        @media(max-width:640px){.clips-grid{grid-template-columns:repeat(2,1fr)!important;gap:10px!important}}
+        @media(min-width:641px) and (max-width:1024px){.clips-grid{grid-template-columns:repeat(3,1fr)!important}}
+        @media(max-width:640px){.clips-filters{flex-direction:column;align-items:flex-start!important}}
+        @media(max-width:640px){.clips-filters > div{flex-wrap:wrap}}
+      `}</style>
     </DashboardLayout>
   );
 }

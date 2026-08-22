@@ -240,7 +240,7 @@ export default function SettingsPage() {
                   <p style={{ fontSize: '11px', color: colors.onSurfaceVariant, marginTop: '4px' }}>JPG, PNG. Max 2MB.</p>
                 </div>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <div className="settings-name-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                 <div>
                   <label style={{ fontSize: '12px', fontWeight: 600, color: colors.onSurfaceVariant, display: 'block', marginBottom: '6px' }}>First Name</label>
                   <input value={firstName} onChange={e => setFirstName(e.target.value)} style={inputField} />
@@ -579,6 +579,7 @@ export default function SettingsPage() {
           </div>
         )}
 
+      <style>{`@media(max-width:640px){.settings-name-grid{grid-template-columns:1fr!important}}`}</style>
       </DashboardLayout>
     </>
   );

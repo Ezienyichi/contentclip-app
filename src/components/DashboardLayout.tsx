@@ -38,7 +38,13 @@ export default function DashboardLayout({ children, title, subtitle, actions, bg
 
       <style>{`
         @media (min-width: 769px) { .dashboard-main { margin-left: 256px; } }
-        @media (max-width: 768px) { .dashboard-main { margin-left: 0; } .dashboard-main header { padding: 16px 16px 0 !important; } .dashboard-main > div:last-child { padding: 16px !important; padding-bottom: 90px !important; } }
+        @media (max-width: 768px) {
+          .dashboard-main { margin-left: 0; }
+          .dashboard-main header { padding: 14px 14px 0 !important; }
+          .dashboard-main header h1 { font-size: 20px !important; }
+          .dashboard-main header p { font-size: 12px !important; }
+          .dashboard-main > div:last-child { padding: 14px !important; padding-bottom: 96px !important; }
+        }
       `}</style>
     </div>
   );
