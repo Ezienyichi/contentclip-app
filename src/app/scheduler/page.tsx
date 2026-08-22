@@ -107,6 +107,7 @@ type Connection = { id: string; platform: string; account_name: string | null; a
 type ScheduledPost = {
   id: string; platform: string; scheduled_at: string; caption: string | null;
   status: string; published_url: string | null; error_message: string | null;
+  pfm_post_id: string | null;
   clips: { id: string; title: string; thumbnail_url: string | null; video_url: string | null } | null;
 };
 type SavedClip = { id: string; title: string; suggested_caption: string; virality_score: number; thumbnail_url: string | null };
@@ -139,6 +140,12 @@ export default function SchedulerPage() {
   const [modalDate,      setModalDate]      = useState('');
   const [modalTime,      setModalTime]      = useState('');
   const [submitting,     setSubmitting]     = useState(false);
+
+  // Preview modal
+  const [previewPost,    setPreviewPost]    = useState<ScheduledPost | null>(null);
+  const [previewCaption, setPreviewCaption] = useState('');
+  const [savingCaption,  setSavingCaption]  = useState(false);
+  const [captionSaveErr, setCaptionSaveErr] = useState<string | null>(null);
 
   // Banner
   const [banner, setBanner] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
@@ -255,6 +262,45 @@ export default function SchedulerPage() {
     finally { setSubmitting(false); }
   };
 
+  // ── Preview modal ──
+  const openPreview = (post: ScheduledPost) => {
+    setPreviewPost(post);
+    setPreviewCaption(post.caption ?? '');
+    setCaptionSaveErr(null);
+  };
+
+  const closePreview = () => {
+    setPreviewPost(null);
+    setCaptionSaveErr(null);
+  };
+
+  const handleSaveCaption = async () => {
+    if (!previewPost) return;
+    setSavingCaption(true);
+    setCaptionSaveErr(null);
+    try {
+      const res = await fetch(`/api/scheduled-posts/${previewPost.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ caption: previewCaption }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setCaptionSaveErr(data.error ?? 'Failed to save caption.');
+      } else {
+        setScheduledPosts(prev => prev.map(p =>
+          p.id === previewPost.id ? { ...p, caption: data.caption } : p
+        ));
+        closePreview();
+        setBanner({ type: 'success', msg: 'Caption updated.' });
+      }
+    } catch {
+      setCaptionSaveErr('Network error. Please try again.');
+    } finally {
+      setSavingCaption(false);
+    }
+  };
+
   // ── Cancel post ──
   const handleCancelPost = async (postId: string) => {
     setCancellingId(postId);
@@ -290,7 +336,7 @@ export default function SchedulerPage() {
     const canCancel      = post.status === 'scheduled';
 
     return (
-      <div key={post.id} style={{ background: colors.surfaceContainer, border: '1px solid rgba(0,0,0,0.07)', borderRadius: radius.lg, padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 14 }}>
+      <div key={post.id} onClick={() => openPreview(post)} style={{ background: colors.surfaceContainer, border: '1px solid rgba(0,0,0,0.07)', borderRadius: radius.lg, padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 14, cursor: 'pointer' }}>
         <div style={{ width: 38, height: 38, borderRadius: radius.md, background: plat?.bgColor ?? colors.surfaceContainerHighest, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
           {plat?.icon ?? '📱'}
         </div>
@@ -304,12 +350,12 @@ export default function SchedulerPage() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
           <span style={{ fontSize: 11, fontWeight: 700, color: st.color, background: st.bg, padding: '4px 10px', borderRadius: radius.full, letterSpacing: '0.02em' }}>{st.label}</span>
           {canCancel && (
-            <button onClick={() => handleCancelPost(post.id)} disabled={isCancelling} style={{ fontSize: 11, fontWeight: 600, color: colors.onSurfaceVariant, background: 'none', border: '1px solid rgba(0,0,0,0.1)', borderRadius: radius.md, padding: '4px 10px', cursor: isCancelling ? 'default' : 'pointer', opacity: isCancelling ? 0.5 : 1, fontFamily: "'Inter',sans-serif" }}>
+            <button onClick={(e) => { e.stopPropagation(); handleCancelPost(post.id); }} disabled={isCancelling} style={{ fontSize: 11, fontWeight: 600, color: colors.onSurfaceVariant, background: 'none', border: '1px solid rgba(0,0,0,0.1)', borderRadius: radius.md, padding: '4px 10px', cursor: isCancelling ? 'default' : 'pointer', opacity: isCancelling ? 0.5 : 1, fontFamily: "'Inter',sans-serif" }}>
               {isCancelling ? '...' : 'Cancel'}
             </button>
           )}
           {post.published_url && (
-            <a href={post.published_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, fontWeight: 600, color: '#059669', textDecoration: 'none' }}>View ↗</a>
+            <a onClick={e => e.stopPropagation()} href={post.published_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, fontWeight: 600, color: '#059669', textDecoration: 'none' }}>View ↗</a>
           )}
         </div>
       </div>
@@ -472,6 +518,134 @@ export default function SchedulerPage() {
           </div>
         ))}
       </div>
+
+      {/* ── Post Preview Modal ── */}
+      {previewPost && (
+        <div onClick={closePreview} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 60, overflowY: 'auto', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '40px 20px' }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: '#F5F3EF', borderRadius: radius.xl, padding: '28px', width: '100%', maxWidth: 480, position: 'relative' }}>
+
+            {/* Header */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+              <h3 style={{ margin: 0, fontSize: 17, fontWeight: 800, color: colors.onSurface }}>Post Preview</h3>
+              <button onClick={closePreview} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: colors.onSurfaceVariant, lineHeight: 1, padding: '4px 6px' }}>×</button>
+            </div>
+
+            {/* Clip preview — 9:16, max 200px wide, centered */}
+            <div style={{ width: 160, margin: '0 auto 12px', aspectRatio: '9/16', background: '#1A1714', borderRadius: radius.lg, overflow: 'hidden', position: 'relative', flexShrink: 0 }}>
+              {previewPost.clips?.video_url ? (
+                <video src={previewPost.clips.video_url} controls muted playsInline preload="metadata" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+              ) : previewPost.clips?.thumbnail_url ? (
+                <img src={previewPost.clips.thumbnail_url} alt={previewPost.clips?.title ?? 'Clip'} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+              ) : (
+                <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <span style={{ fontSize: 32, opacity: 0.25 }}>▶</span>
+                </div>
+              )}
+            </div>
+
+            {/* Clip title */}
+            <p style={{ margin: '0 0 18px', fontSize: 13, fontWeight: 700, color: colors.onSurface, textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {previewPost.clips?.title ?? 'Clip'}
+            </p>
+
+            {/* Meta: platform + status + time */}
+            <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 20 }}>
+              {(() => {
+                const plat = PLATFORMS.find(p => p.id === previewPost.platform);
+                return (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 12px', borderRadius: radius.full, background: plat?.bgColor ?? colors.surfaceContainerHighest, border: '1px solid rgba(0,0,0,0.08)', fontSize: 12, fontWeight: 600, color: colors.onSurface, flexShrink: 0 }}>
+                    {plat?.iconSm}
+                    {plat?.label ?? previewPost.platform}
+                  </div>
+                );
+              })()}
+              {(() => {
+                const st = STATUS_STYLE[previewPost.status] ?? STATUS_STYLE.scheduled;
+                return <span style={{ fontSize: 11, fontWeight: 700, color: st.color, background: st.bg, padding: '4px 10px', borderRadius: radius.full, flexShrink: 0 }}>{st.label}</span>;
+              })()}
+              <span style={{ fontSize: 11, color: colors.onSurfaceVariant, marginLeft: 'auto', whiteSpace: 'nowrap' }}>
+                {(() => { const { date, time } = formatScheduledAt(previewPost.scheduled_at); return `🕐 ${date} at ${time}`; })()}
+              </span>
+            </div>
+
+            {/* Caption */}
+            <label style={{ fontSize: 12, fontWeight: 700, color: colors.onSurfaceVariant, textTransform: 'uppercase', letterSpacing: '0.06em', display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+              Caption
+              {previewPost.status !== 'scheduled' && <span style={{ fontSize: 11, fontWeight: 400, opacity: 0.6, textTransform: 'none', letterSpacing: 0 }}>🔒 locked</span>}
+            </label>
+            {previewPost.status === 'scheduled' ? (
+              <textarea
+                value={previewCaption}
+                onChange={e => { setPreviewCaption(e.target.value); setCaptionSaveErr(null); }}
+                rows={4}
+                placeholder="Write a caption…"
+                style={{ width: '100%', padding: '10px 12px', borderRadius: radius.md, border: '1px solid rgba(0,0,0,0.12)', background: '#fff', fontSize: 13, color: colors.onSurface, fontFamily: "'Inter',sans-serif", resize: 'vertical', boxSizing: 'border-box', marginBottom: 8 }}
+              />
+            ) : (
+              <div style={{ padding: '10px 12px', borderRadius: radius.md, border: '1px solid rgba(0,0,0,0.08)', background: colors.surfaceContainerHighest, fontSize: 13, color: previewPost.caption ? colors.onSurface : colors.onSurfaceVariant, lineHeight: 1.55, marginBottom: 8, whiteSpace: 'pre-wrap', minHeight: 56 }}>
+                {previewPost.caption || <span style={{ opacity: 0.5 }}>No caption</span>}
+              </div>
+            )}
+
+            {/* Caption save error */}
+            {captionSaveErr && (
+              <p style={{ margin: '0 0 10px', fontSize: 12, color: '#DC2626', fontWeight: 500 }}>{captionSaveErr}</p>
+            )}
+
+            {/* Post error_message */}
+            {previewPost.error_message && (
+              <div style={{ marginBottom: 14, padding: '9px 12px', borderRadius: radius.md, background: 'rgba(220,38,38,0.06)', border: '1px solid rgba(220,38,38,0.15)', fontSize: 12, color: '#DC2626', lineHeight: 1.5 }}>
+                ⚠️ {previewPost.error_message}
+              </div>
+            )}
+
+            {/* Actions */}
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              {/* Save caption — only visible when caption has changed */}
+              {previewPost.status === 'scheduled' && previewCaption !== (previewPost.caption ?? '') && (
+                <button
+                  onClick={handleSaveCaption}
+                  disabled={savingCaption}
+                  style={{ flex: 2, minWidth: 140, padding: '10px 14px', borderRadius: radius.md, border: 'none', background: savingCaption ? colors.surfaceContainerHighest : gradients.primary, color: savingCaption ? colors.onSurfaceVariant : '#fff', fontSize: 13, fontWeight: 700, cursor: savingCaption ? 'default' : 'pointer', fontFamily: "'Inter',sans-serif" }}
+                >
+                  {savingCaption ? 'Saving…' : 'Save Caption'}
+                </button>
+              )}
+
+              {/* Cancel post */}
+              {previewPost.status === 'scheduled' && (
+                <button
+                  onClick={async () => { await handleCancelPost(previewPost.id); closePreview(); }}
+                  disabled={cancellingId === previewPost.id}
+                  style={{ flex: 1, minWidth: 90, padding: '10px 14px', borderRadius: radius.md, border: '1px solid rgba(220,38,38,0.25)', background: 'rgba(220,38,38,0.06)', color: '#DC2626', fontSize: 13, fontWeight: 600, cursor: cancellingId === previewPost.id ? 'default' : 'pointer', fontFamily: "'Inter',sans-serif", opacity: cancellingId === previewPost.id ? 0.6 : 1 }}
+                >
+                  {cancellingId === previewPost.id ? '…' : 'Cancel Post'}
+                </button>
+              )}
+
+              {/* View published post */}
+              {previewPost.published_url && (
+                <a
+                  href={previewPost.published_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ flex: 1, minWidth: 90, padding: '10px 14px', borderRadius: radius.md, border: '1px solid rgba(5,150,105,0.25)', background: 'rgba(5,150,105,0.06)', color: '#059669', fontSize: 13, fontWeight: 600, textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}
+                >
+                  View ↗
+                </a>
+              )}
+
+              {/* Close */}
+              <button
+                onClick={closePreview}
+                style={{ flex: 1, minWidth: 80, padding: '10px 14px', borderRadius: radius.md, border: '1px solid rgba(0,0,0,0.1)', background: colors.surfaceContainerHighest, color: colors.onSurface, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: "'Inter',sans-serif" }}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Schedule a Post Modal ── */}
       {showModal && (

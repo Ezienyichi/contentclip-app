@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import DashboardLayout from '@/components/DashboardLayout';
 import Icon from '@/components/Icon';
 import { useRouter } from 'next/navigation';
@@ -50,9 +50,23 @@ export default function DashboardPage() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [clipCount, setClipCount] = useState(0);
   const [jobTotal, setJobTotal] = useState(0);
+  const [scheduledCount, setScheduledCount] = useState(0);
+  const [publishedCount, setPublishedCount] = useState(0);
+  const [userId, setUserId] = useState<string | null>(null);
   const [userName, setUserName] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState<string | null>(null);
 
+  const refetchCounts = useCallback(async (uid: string) => {
+    const supabase = createClient();
+    const [scheduledRes, publishedRes] = await Promise.all([
+      supabase.from('scheduled_posts').select('id', { count: 'exact', head: true }).eq('user_id', uid).eq('status', 'scheduled'),
+      supabase.from('scheduled_posts').select('id', { count: 'exact', head: true }).eq('user_id', uid).eq('status', 'published'),
+    ]);
+    setScheduledCount(scheduledRes.count ?? 0);
+    setPublishedCount(publishedRes.count ?? 0);
+  }, []);
+
+  // Initial data load
   useEffect(() => {
     const supabase = createClient();
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -61,12 +75,15 @@ export default function DashboardPage() {
         return;
       }
       setUserEmail(user.email ?? null);
+      setUserId(user.id);
       Promise.all([
         supabase.from('profiles').select('plan, credits, full_name').eq('id', user.id).single(),
         supabase.from('clip_jobs').select('id, source_url, status, num_clips, created_at').eq('user_id', user.id).order('created_at', { ascending: false }).limit(5),
         supabase.from('clip_jobs').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
         supabase.from('clips').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
-      ]).then(([profileRes, jobsRes, jobCountRes, clipsRes]) => {
+        supabase.from('scheduled_posts').select('id', { count: 'exact', head: true }).eq('user_id', user.id).eq('status', 'scheduled'),
+        supabase.from('scheduled_posts').select('id', { count: 'exact', head: true }).eq('user_id', user.id).eq('status', 'published'),
+      ]).then(([profileRes, jobsRes, jobCountRes, clipsRes, scheduledRes, publishedRes]) => {
         if (profileRes.data) {
           setProfile(profileRes.data);
           setUserName((profileRes.data as any).full_name ?? null);
@@ -74,20 +91,38 @@ export default function DashboardPage() {
         setJobs(jobsRes.data ?? []);
         setJobTotal(jobCountRes.count ?? 0);
         setClipCount(clipsRes.count ?? 0);
+        setScheduledCount(scheduledRes.count ?? 0);
+        setPublishedCount(publishedRes.count ?? 0);
         setLoading(false);
       });
     });
   }, []);
 
-  const planLabel = profile
-    ? profile.plan.charAt(0).toUpperCase() + profile.plan.slice(1)
-    : '—';
+  // Real-time: re-fetch counts on any scheduled_posts INSERT or UPDATE for this user
+  useEffect(() => {
+    if (!userId) return;
+    const supabase = createClient();
+    const channel = supabase
+      .channel(`dash-posts:${userId}`)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'scheduled_posts', filter: `user_id=eq.${userId}` },
+        () => refetchCounts(userId)
+      )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'scheduled_posts', filter: `user_id=eq.${userId}` },
+        () => refetchCounts(userId)
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [userId, refetchCounts]);
 
   const STATS = [
-    { label: 'Clips Generated', value: loading ? '—' : String(clipCount),         icon: 'movie_edit',        color: '#C0C1FF' },
-    { label: 'Minutes Used',    value: loading ? '—' : String(profile?.credits ?? 0), icon: 'timer',          color: '#89CEFF' },
-    { label: 'Projects',        value: loading ? '—' : String(jobTotal),           icon: 'folder_open',       color: '#ff97b5' },
-    { label: 'Plan',            value: loading ? '—' : planLabel,                  icon: 'workspace_premium', color: '#4ade80' },
+    { label: 'Clips Generated', value: loading ? '—' : String(clipCount),      icon: 'movie_edit',   color: '#C0C1FF' },
+    { label: 'Projects',        value: loading ? '—' : String(jobTotal),       icon: 'folder_open',  color: '#ff97b5' },
+    { label: 'Scheduled',       value: loading ? '—' : String(scheduledCount), icon: 'schedule',     color: '#89CEFF' },
+    { label: 'Published',       value: loading ? '—' : String(publishedCount), icon: 'check_circle', color: '#4ade80' },
   ];
 
   return (

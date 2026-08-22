@@ -39,7 +39,7 @@ export async function GET(_req: NextRequest) {
 
   const { data, error } = await supabase
     .from('scheduled_posts')
-    .select('id, platform, scheduled_at, caption, status, published_url, error_message, created_at, clips ( id, title, thumbnail_url, video_url )')
+    .select('id, platform, scheduled_at, caption, status, published_url, error_message, pfm_post_id, created_at, clips ( id, title, thumbnail_url, video_url )')
     .eq('user_id', user.id)
     .order('scheduled_at', { ascending: true })
     .limit(200);
