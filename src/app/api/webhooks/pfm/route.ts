@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { insertNotification } from '@/lib/notify';
 
 export const dynamic = 'force-dynamic';
 
@@ -53,7 +54,7 @@ export async function POST(req: NextRequest) {
   // ── Find the matching scheduled_post row ──────────────────────────────────────
   const { data: post, error: findError } = await supabaseAdmin
     .from('scheduled_posts')
-    .select('id')
+    .select('id, user_id, platform')
     .eq('pfm_post_id', pfmPostId)
     .single();
 
@@ -90,5 +91,20 @@ export async function POST(req: NextRequest) {
   }
 
   console.log('[pfm-webhook] Post', post.id, '→', success ? 'published' : 'failed', publishedUrl ?? '');
+
+  // Notify the post owner (fire and forget)
+  if (post.user_id) {
+    void insertNotification({
+      user_id: post.user_id,
+      title:   success ? 'Post published!' : 'Post failed to publish',
+      body:    success
+        ? `Your ${post.platform} post is live.`
+        : `Your ${post.platform} post could not be published.${errorMsg ? ' ' + errorMsg.slice(0, 120) : ''}`,
+      type:     success ? 'post_published' : 'post_failed',
+      link:     publishedUrl ?? '/scheduler',
+      metadata: publishedUrl ? { url: publishedUrl } : {},
+    });
+  }
+
   return NextResponse.json({ ok: true });
 }

@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { createClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
+import { insertNotification } from '@/lib/notify';
+
+const PLAN_LIMITS: Record<string, number> = { free: 30, starter: 150, pro: 400, agency: 1200 };
 
 export const dynamic = 'force-dynamic';
 
@@ -67,12 +70,14 @@ export async function GET(
         // Divide by 2 to approximate actual video minutes consumed.
         const minutesUsed = Math.round((data.cost_usage ?? 0) / 2);
 
+        // Fetch profile before deduction so we can compute remaining minutes
+        const { data: currentProfile } = await admin
+          .from('profiles')
+          .select('minutes_used, plan')
+          .eq('id', user.id)
+          .single();
+
         if (minutesUsed > 0) {
-          const { data: currentProfile } = await admin
-            .from('profiles')
-            .select('minutes_used')
-            .eq('id', user.id)
-            .single();
           await admin
             .from('profiles')
             .update({ minutes_used: (currentProfile?.minutes_used ?? 0) + minutesUsed })
@@ -83,6 +88,43 @@ export async function GET(
           .from('clip_jobs')
           .update({ minutes_charged: minutesUsed, status: 'completed' })
           .eq('id', job.id);
+
+        // Clip-ready notification (fire and forget)
+        void insertNotification({
+          user_id: user.id,
+          title: 'Your clip is ready!',
+          body: 'Your clip has been processed and is ready to use.',
+          type: 'clip_ready',
+          link: '/import',
+        });
+
+        // Low-minutes warning (dedup: at most once per 24h)
+        if (minutesUsed > 0 && currentProfile) {
+          const planLimit = PLAN_LIMITS[currentProfile.plan ?? 'free'] ?? 30;
+          const totalUsed = (currentProfile.minutes_used ?? 0) + minutesUsed;
+          const remaining = planLimit - totalUsed;
+          if (remaining < planLimit * 0.2) {
+            const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+            const { data: recent } = await admin
+              .from('notifications')
+              .select('id')
+              .eq('user_id', user.id)
+              .eq('type', 'credits_low')
+              .eq('read', false)
+              .gte('created_at', since)
+              .limit(1)
+              .maybeSingle();
+            if (!recent) {
+              void insertNotification({
+                user_id: user.id,
+                title: 'Running low on minutes',
+                body: `${Math.max(0, remaining)} of ${planLimit} minutes remaining. Upgrade to keep clipping.`,
+                type: 'credits_low',
+                link: '/settings',
+              });
+            }
+          }
+        }
       }
     }
 

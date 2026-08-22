@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { createClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
+import { insertNotification } from '@/lib/notify';
 
 export const dynamic = 'force-dynamic';
 
@@ -188,6 +189,15 @@ export async function POST(req: NextRequest) {
       console.error('[scheduled-posts POST] Failed to store pfm_post_id', updateErr);
     }
   }
+
+  // Notify user the post is queued (fire and forget)
+  void insertNotification({
+    user_id: user.id,
+    title: 'Post scheduled',
+    body: `Your ${platform} post is scheduled for ${new Date(scheduled_at).toLocaleString()}.`,
+    type: 'post_scheduled',
+    link: '/scheduler',
+  });
 
   return NextResponse.json({ post: { id: post.id, pfm_post_id: pfmPostId } });
 }
