@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase-browser';
 import { colors, gradients, radius, inputField } from '@/lib/tokens';
@@ -7,33 +7,60 @@ import { colors, gradients, radius, inputField } from '@/lib/tokens';
 const supabase = createClient();
 
 function ResetPasswordInner() {
-  const router = useRouter();
+  const router      = useRouter();
   const searchParams = useSearchParams();
 
-  // States: 'exchanging' | 'ready' | 'success' | 'error'
-  const [stage,       setStage]       = useState<'exchanging' | 'ready' | 'success' | 'error'>('exchanging');
-  const [password,    setPassword]    = useState('');
-  const [confirm,     setConfirm]     = useState('');
-  const [showPass,    setShowPass]    = useState(false);
-  const [loading,     setLoading]     = useState(false);
-  const [errorMsg,    setErrorMsg]    = useState('');
+  // 'verifying' | 'ready' | 'success' | 'error'
+  const [stage,    setStage]    = useState<'verifying' | 'ready' | 'success' | 'error'>('verifying');
+  const [password, setPassword] = useState('');
+  const [confirm,  setConfirm]  = useState('');
+  const [showPass, setShowPass] = useState(false);
+  const [loading,  setLoading]  = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
 
-  // Exchange the PKCE code from the URL for a live session
+  // Prevent double-execution in React Strict Mode / re-mounts
+  const verified = useRef(false);
+
   useEffect(() => {
-    const code = searchParams.get('code');
-    if (!code) {
+    if (verified.current) return;
+    verified.current = true;
+
+    // ── DEBUG: log full URL so we can see where params land (query vs hash)
+    console.log('[reset] full href:', window.location.href);
+    console.log('[reset] search (query string):', window.location.search);
+    console.log('[reset] hash fragment:', window.location.hash);
+
+    const token_hash = searchParams.get('token_hash');
+    const type       = searchParams.get('type');
+
+    console.log('[reset] token_hash from searchParams:', token_hash ? token_hash.slice(0, 20) + '…' : null);
+    console.log('[reset] type from searchParams:', type);
+
+    // Also check if params are hiding in the hash fragment (some Supabase configs)
+    const hashParams = new URLSearchParams(window.location.hash.replace('#', ''));
+    console.log('[reset] token_hash from hash fragment:', hashParams.get('token_hash') ? hashParams.get('token_hash')!.slice(0, 20) + '…' : null);
+    console.log('[reset] access_token in hash (implicit flow indicator):', hashParams.get('access_token') ? 'YES' : 'NO');
+
+    if (!token_hash || type !== 'recovery') {
+      console.warn('[reset] missing token_hash or wrong type — showing error. token_hash:', !!token_hash, 'type:', type);
       setErrorMsg('Invalid or expired reset link. Please request a new one.');
       setStage('error');
       return;
     }
-    supabase.auth.exchangeCodeForSession(code).then(({ error }) => {
+
+    console.log('[reset] calling verifyOtp with token_hash and type=recovery…');
+    // verifyOtp with token_hash works cross-device — no PKCE code verifier needed
+    supabase.auth.verifyOtp({ token_hash, type: 'recovery' }).then(({ data, error }) => {
       if (error) {
+        console.error('[reset] verifyOtp error:', error.message, '| status:', (error as any).status, '| full:', error);
         setErrorMsg('This reset link has expired or already been used. Please request a new one.');
         setStage('error');
       } else {
+        console.log('[reset] verifyOtp success — session user:', data?.user?.email ?? 'unknown');
         setStage('ready');
       }
     });
+  // searchParams is stable from useSearchParams; empty deps is intentional
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -58,22 +85,20 @@ function ResetPasswordInner() {
       setErrorMsg(error.message);
     } else {
       setStage('success');
-      // Sign out so the user starts a clean session on the login page
       await supabase.auth.signOut({ scope: 'local' });
       setTimeout(() => router.push('/auth'), 2200);
     }
   };
 
-  // ── Shared shell ──────────────────────────────────────────────
   return (
     <div style={{
-      minHeight:       '100vh',
-      background:      '#E4E2DD',
-      display:         'flex',
-      alignItems:      'center',
-      justifyContent:  'center',
-      padding:         '24px 16px',
-      fontFamily:      'inherit',
+      minHeight:      '100vh',
+      background:     '#E4E2DD',
+      display:        'flex',
+      alignItems:     'center',
+      justifyContent: 'center',
+      padding:        '24px 16px',
+      fontFamily:     'inherit',
     }}>
       <div style={{
         width:        '100%',
@@ -94,16 +119,17 @@ function ResetPasswordInner() {
           </a>
         </div>
 
-        {/* ── Exchanging code ── */}
-        {stage === 'exchanging' && (
+        {/* ── Verifying ── */}
+        {stage === 'verifying' && (
           <div style={{ textAlign: 'center', padding: '16px 0' }}>
             <div style={{
-              width: 28, height: 28,
-              borderRadius: '50%',
-              border: `3px solid rgba(155,93,229,0.2)`,
-              borderTopColor: '#9B5DE5',
-              animation: 'vc-spin 0.7s linear infinite',
-              margin: '0 auto 16px',
+              width:         28,
+              height:        28,
+              borderRadius:  '50%',
+              border:        '3px solid rgba(155,93,229,0.2)',
+              borderTopColor:'#9B5DE5',
+              animation:     'vc-spin 0.7s linear infinite',
+              margin:        '0 auto 16px',
             }} />
             <p style={{ margin: 0, fontSize: 14, color: '#6B6560' }}>Verifying your link…</p>
           </div>
@@ -122,13 +148,13 @@ function ResetPasswordInner() {
             <a
               href="/auth?mode=forgot"
               style={{
-                display:      'inline-block',
-                padding:      '11px 24px',
-                borderRadius: radius.lg,
-                background:   gradients.primary,
-                color:        '#fff',
-                fontSize:     14,
-                fontWeight:   700,
+                display:        'inline-block',
+                padding:        '11px 24px',
+                borderRadius:   radius.lg,
+                background:     gradients.primary,
+                color:          '#fff',
+                fontSize:       14,
+                fontWeight:     700,
                 textDecoration: 'none',
               }}
             >
@@ -160,10 +186,10 @@ function ResetPasswordInner() {
                 autoFocus
                 style={{
                   ...inputField,
-                  width: '100%',
-                  boxSizing: 'border-box',
+                  width:       '100%',
+                  boxSizing:   'border-box',
                   paddingRight: 44,
-                  background: '#F5F3EF',
+                  background:  '#F5F3EF',
                 }}
               />
               <button
@@ -197,21 +223,21 @@ function ResetPasswordInner() {
               required
               style={{
                 ...inputField,
-                width: '100%',
+                width:     '100%',
                 boxSizing: 'border-box',
-                background: '#F5F3EF',
+                background:'#F5F3EF',
               }}
             />
 
             {errorMsg && (
               <p style={{
-                margin: 0,
-                fontSize: 13,
-                color: colors.error,
-                background: `${colors.error}10`,
-                border: `1px solid ${colors.error}30`,
+                margin:       0,
+                fontSize:     13,
+                color:        colors.error,
+                background:   `${colors.error}10`,
+                border:       `1px solid ${colors.error}30`,
                 borderRadius: radius.md,
-                padding: '10px 14px',
+                padding:      '10px 14px',
               }}>
                 {errorMsg}
               </p>
@@ -248,18 +274,19 @@ function ResetPasswordInner() {
               Redirecting you to sign in…
             </p>
             <div style={{
-              width: 24, height: 24,
-              borderRadius: '50%',
-              border: `3px solid rgba(155,93,229,0.2)`,
-              borderTopColor: '#9B5DE5',
-              animation: 'vc-spin 0.7s linear infinite',
-              margin: '0 auto',
+              width:         24,
+              height:        24,
+              borderRadius:  '50%',
+              border:        '3px solid rgba(155,93,229,0.2)',
+              borderTopColor:'#9B5DE5',
+              animation:     'vc-spin 0.7s linear infinite',
+              margin:        '0 auto',
             }} />
           </div>
         )}
 
         {/* Back to sign in */}
-        {(stage === 'ready') && (
+        {stage === 'ready' && (
           <p style={{ margin: '20px 0 0', textAlign: 'center', fontSize: 13, color: '#6B6560' }}>
             <a href="/auth" style={{ color: '#7C3AED', fontWeight: 600, textDecoration: 'none' }}>
               ← Back to sign in
