@@ -18,8 +18,8 @@ export default function DashboardLayout({ children, title, subtitle, actions, bg
             {subtitle && <p style={{ fontSize: '14px', color: subtitleColor ?? colors.onSurfaceVariant, marginTop: '4px' }}>{subtitle}</p>}
           </div>
           <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-            <NotificationBell />
             {actions && actions}
+            <NotificationBell />
           </div>
         </header>
         <div style={{ padding: '24px 32px', paddingBottom: '100px' }}>{children}</div>

@@ -726,9 +726,9 @@ export default function SchedulerPage() {
 
             {/* 4. Date + Time */}
             <label style={{ fontSize: 12, fontWeight: 700, color: colors.onSurfaceVariant, textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: 8 }}>Date &amp; Time</label>
-            <div style={{ display: 'flex', gap: 10, marginBottom: 28 }}>
-              <input type="date" min={today} value={modalDate} onChange={e => setModalDate(e.target.value)} style={{ flex: 1, padding: '10px 12px', borderRadius: radius.md, border: '1px solid rgba(0,0,0,0.12)', background: '#fff', fontSize: 13, color: colors.onSurface, fontFamily: "'Inter',sans-serif" }} />
-              <input type="time" value={modalTime} onChange={e => setModalTime(e.target.value)} style={{ width: 120, padding: '10px 12px', borderRadius: radius.md, border: '1px solid rgba(0,0,0,0.12)', background: '#fff', fontSize: 13, color: colors.onSurface, fontFamily: "'Inter',sans-serif" }} />
+            <div style={{ display: 'flex', gap: 10, marginBottom: 28, flexWrap: 'wrap' }}>
+              <input type="date" min={today} value={modalDate} onChange={e => setModalDate(e.target.value)} style={{ flex: '1 1 140px', minWidth: 0, padding: '10px 12px', borderRadius: radius.md, border: '1px solid rgba(0,0,0,0.12)', background: '#fff', fontSize: 13, color: colors.onSurface, fontFamily: "'Inter',sans-serif", boxSizing: 'border-box' as const }} />
+              <input type="time" value={modalTime} onChange={e => setModalTime(e.target.value)} style={{ flex: '1 1 110px', minWidth: 0, padding: '10px 12px', borderRadius: radius.md, border: '1px solid rgba(0,0,0,0.12)', background: '#fff', fontSize: 13, color: colors.onSurface, fontFamily: "'Inter',sans-serif", boxSizing: 'border-box' as const }} />
             </div>
 
             {/* Actions */}

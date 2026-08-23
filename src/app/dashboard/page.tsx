@@ -260,12 +260,12 @@ export default function DashboardPage() {
       {!loading && profile && (
         <div style={{ background: '#EFECEA', borderRadius: radius.lg, padding: '14px 20px', marginBottom: '24px', border: '1px solid rgba(0,0,0,0.06)', display: 'flex', alignItems: 'center', gap: 16 }}>
           <div style={{ flex: 1 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-              <span style={{ fontSize: 12, fontWeight: 700, color: '#1A1714' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6, flexWrap: 'wrap', gap: '2px 8px' }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: '#1A1714', whiteSpace: 'nowrap' }}>
                 {minutesRemaining} min remaining
-                <span style={{ fontWeight: 400, color: '#6B6560', marginLeft: 8 }}>{planLabel} plan</span>
+                <span style={{ fontWeight: 400, color: '#6B6560', marginLeft: 6 }}>{planLabel}</span>
               </span>
-              <span style={{ fontSize: 11, color: '#6B6560' }}>{minutesUsed} / {planLimit} min used</span>
+              <span style={{ fontSize: 11, color: '#6B6560', whiteSpace: 'nowrap' }}>{minutesUsed} / {planLimit} min</span>
             </div>
             <div style={{ height: 6, background: 'rgba(0,0,0,0.1)', borderRadius: 3, overflow: 'hidden' }}>
               <div style={{ height: '100%', width: `${usagePct}%`, background: isLow ? '#F59E0B' : colors.primary, borderRadius: 3, transition: 'width 0.5s' }} />
