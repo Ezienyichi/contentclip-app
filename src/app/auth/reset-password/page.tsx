@@ -186,10 +186,12 @@ function ResetPasswordInner() {
                 autoFocus
                 style={{
                   ...inputField,
-                  width:       '100%',
-                  boxSizing:   'border-box',
+                  width:        '100%',
+                  boxSizing:    'border-box',
                   paddingRight: 44,
-                  background:  '#F5F3EF',
+                  background:   '#F5F3EF',
+                  color:        '#1A1714',
+                  border:       '1px solid rgba(0,0,0,0.12)',
                 }}
               />
               <button
@@ -223,9 +225,11 @@ function ResetPasswordInner() {
               required
               style={{
                 ...inputField,
-                width:     '100%',
-                boxSizing: 'border-box',
-                background:'#F5F3EF',
+                width:      '100%',
+                boxSizing:  'border-box',
+                background: '#F5F3EF',
+                color:      '#1A1714',
+                border:     '1px solid rgba(0,0,0,0.12)',
               }}
             />
 
