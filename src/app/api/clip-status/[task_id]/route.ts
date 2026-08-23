@@ -54,7 +54,7 @@ export async function GET(
     const data = await serverResponse.json();
 
     // On completion, deduct actual minutes used (idempotent via minutes_charged)
-    if (serverResponse.ok && data.status === 'completed') {
+    if (serverResponse.ok && (data.status === 'SUCCEEDED' || data.status === 'completed')) {
       const admin = getAdmin();
 
       const { data: job } = await admin
