@@ -79,6 +79,19 @@ const FEATURE_IMGS = [
   { src: '/images/feature-editing.png',     label: 'Pro Adjustments',        badge: '20+ tools'       },
 ];
 
+// ─── VIDEO CONFIGS — paste your YouTube video IDs here ───────────────────────
+// A YouTube ID is the part after "?v=" in the URL  (e.g. "dQw4w9WgXcQ")
+// Leave youtubeId / DEMO_VIDEO_ID as '' to show a placeholder card instead.
+
+const DEMO_VIDEO_ID = '';  // How-it-works walkthrough — shown in the "Demo" section below
+
+const CATEGORY_VIDEOS: Array<{ category: string; youtubeId: string; title: string; accent: string }> = [
+  { category: 'Faith',        youtubeId: '', title: 'Sunday sermon → 8 viral clips',     accent: '#7c3aed' },
+  { category: 'Podcast',      youtubeId: '', title: 'Long interview → highlight moments', accent: '#0891b2' },
+  { category: 'Music',        youtubeId: '', title: 'Full performance → reel-ready cuts', accent: '#059669' },
+  { category: 'Film & Media', youtubeId: '', title: 'Raw footage → social-ready edits',   accent: '#d97706' },
+];
+
 // PLANS is now imported from @/lib/pricingData as PLAN_DATA — single source of truth
 
 const FAQS = [
@@ -102,7 +115,8 @@ export default function HomePage() {
   const [annual,     setAnnual]     = useState(false);
   const [openFaq,    setOpenFaq]    = useState<number | null>(null);
   const [tableOpen,  setTableOpen]  = useState(false);
-  const [authUser,   setAuthUser]   = useState<any>(null);
+  const [authUser,      setAuthUser]      = useState<any>(null);
+  const [playingCat,    setPlayingCat]    = useState<string | null>(null);
 
   useEffect(() => {
     createClient().auth.getUser().then(({ data }) => setAuthUser(data.user));
@@ -251,6 +265,10 @@ export default function HomePage() {
           .vc-cta-input { min-width:0; }
           .vc-cta-btn   { padding:14px; }
         }
+
+        /* Category video grid */
+        .vc-cat-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:24px; }
+        @media (max-width:600px) { .vc-cat-grid { grid-template-columns:1fr; gap:16px; } }
 
         @media (prefers-reduced-motion:reduce) { .vc-phone { animation:none !important; } }
 
@@ -484,17 +502,25 @@ export default function HomePage() {
           </div>
           <div style={{ maxWidth:880, margin:'0 auto' }}>
             <div style={{ position:'relative', aspectRatio:'16/9', borderRadius:`calc(${mkt.r} + 4px)`, overflow:'hidden', ...mktCard.base }}>
-              <div style={{ position:'absolute', inset:0, backgroundImage:`repeating-linear-gradient(135deg,${mkt.border} 0 1px,transparent 1px 16px)`, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:16 }}>
-                <div style={{ width:66, height:66, borderRadius:'50%', background:mkt.brandGrad, color:'#fff', display:'flex', alignItems:'center', justifyContent:'center', boxShadow:`inset 1px 1px 0 rgba(255,255,255,.25),${mkt.glow}` }}>
-                  <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M6 4v16l13-8z"/></svg>
+              {DEMO_VIDEO_ID ? (
+                <iframe
+                  src={`https://www.youtube.com/embed/${DEMO_VIDEO_ID}?rel=0&modestbranding=1`}
+                  title="VangelClip demo walkthrough"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  style={{ position:'absolute', inset:0, width:'100%', height:'100%', border:0 }}
+                />
+              ) : (
+                <div style={{ position:'absolute', inset:0, backgroundImage:`repeating-linear-gradient(135deg,${mkt.border} 0 1px,transparent 1px 16px)`, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:16 }}>
+                  <div style={{ width:66, height:66, borderRadius:'50%', background:mkt.brandGrad, color:'#fff', display:'flex', alignItems:'center', justifyContent:'center', boxShadow:`inset 1px 1px 0 rgba(255,255,255,.25),${mkt.glow}` }}>
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M6 4v16l13-8z"/></svg>
+                  </div>
+                  <div style={{ textAlign:'center' }}>
+                    <div style={{ fontFamily:mkt.fontHead, fontWeight:700, fontSize:18, color:mkt.text }}>Add your demo video</div>
+                    <div style={{ fontSize:13.5, color:mkt.muted, marginTop:4 }}>Set <code style={{ fontFamily:'monospace', color:mkt.brand }}>DEMO_VIDEO_ID</code> at the top of page.tsx</div>
+                  </div>
                 </div>
-                <div style={{ textAlign:'center' }}>
-                  <div style={{ fontFamily:mkt.fontHead, fontWeight:700, fontSize:18, color:mkt.text }}>Add your demo video</div>
-                  <div style={{ fontSize:13.5, color:mkt.muted, marginTop:4 }}>Paste a YouTube link in <code style={{ fontFamily:'monospace', color:mkt.brand }}>demoVideo</code> to embed it here</div>
-                </div>
-              </div>
-              {/* Set src="" to a YouTube embed URL when your demo is ready */}
-              <iframe src="" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowFullScreen style={{ position:'absolute', inset:0, width:'100%', height:'100%', border:0, display:'none' }} />
+              )}
             </div>
           </div>
         </section>
@@ -545,6 +571,73 @@ export default function HomePage() {
           </div>
         </section>
       </div>
+
+      {/* ══ CATEGORY VIDEOS ════════════════════════════════════════════════════ */}
+      <section className="vc-sec">
+        <div style={{ textAlign:'center', maxWidth:640, margin:'0 auto 48px' }}>
+          <div style={{ fontSize:13, fontWeight:700, letterSpacing:'.1em', textTransform:'uppercase', color:mkt.brand, marginBottom:14 }}>For every creator</div>
+          <h2 style={{ fontFamily:mkt.fontHead, fontWeight:800, fontSize:'clamp(26px,4vw,38px)', letterSpacing:'-.02em', margin:'0 0 14px' }}>
+            Real results, <span style={{ fontStyle:'italic', color:mkt.brand }}>every category.</span>
+          </h2>
+          <p style={{ fontSize:16, color:mkt.muted, margin:0, maxWidth:480, marginLeft:'auto', marginRight:'auto' }}>
+            See how creators in every niche turn long videos into viral short clips.
+          </p>
+        </div>
+        <div className="vc-cat-grid">
+          {CATEGORY_VIDEOS.map(vid => {
+            const isPlaying = playingCat === vid.category;
+            return (
+              <div key={vid.category} style={{ borderRadius:`calc(${mkt.r} + 4px)`, overflow:'hidden', ...mktCard.base }}>
+                {/* Video area */}
+                <div
+                  style={{ position:'relative', aspectRatio:'16/9', background:'#111', cursor: vid.youtubeId && !isPlaying ? 'pointer' : 'default' }}
+                  onClick={() => vid.youtubeId && !isPlaying && setPlayingCat(vid.category)}
+                >
+                  {isPlaying ? (
+                    <iframe
+                      src={`https://www.youtube.com/embed/${vid.youtubeId}?autoplay=1&rel=0&modestbranding=1`}
+                      title={vid.title}
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                      style={{ position:'absolute', inset:0, width:'100%', height:'100%', border:0 }}
+                    />
+                  ) : vid.youtubeId ? (
+                    <>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={`https://img.youtube.com/vi/${vid.youtubeId}/hqdefault.jpg`}
+                        alt={vid.title}
+                        style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover' }}
+                      />
+                      <div style={{ position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center', background:'rgba(0,0,0,0.28)' }}>
+                        <div style={{ width:58, height:58, borderRadius:'50%', background:vid.accent, display:'flex', alignItems:'center', justifyContent:'center', boxShadow:'0 6px 22px rgba(0,0,0,0.5)', transition:'transform .15s' }}>
+                          <svg width="22" height="22" viewBox="0 0 24 24" fill="#fff"><path d="M6 4v16l13-8z"/></svg>
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <div style={{ position:'absolute', inset:0, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:12, backgroundImage:`repeating-linear-gradient(135deg,${mkt.border} 0 1px,transparent 1px 16px)` }}>
+                      <div style={{ width:52, height:52, borderRadius:'50%', background:`${vid.accent}22`, border:`2px solid ${vid.accent}44`, display:'flex', alignItems:'center', justifyContent:'center' }}>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill={vid.accent}><path d="M6 4v16l13-8z"/></svg>
+                      </div>
+                      <div style={{ fontSize:12, color:mkt.muted, textAlign:'center', padding:'0 16px' }}>
+                        Set <code style={{ color:mkt.brand, fontFamily:'monospace' }}>youtubeId</code> for {vid.category}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                {/* Card footer */}
+                <div style={{ padding:'14px 16px', display:'flex', alignItems:'center', gap:12 }}>
+                  <span style={{ fontSize:11, fontWeight:700, letterSpacing:'.06em', textTransform:'uppercase', color:'#fff', background:vid.accent, padding:'3px 9px', borderRadius:100, flexShrink:0 }}>
+                    {vid.category}
+                  </span>
+                  <span style={{ fontSize:14, fontWeight:600, color:mkt.text, lineHeight:1.3 }}>{vid.title}</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
 
       {/* ══ PRICING ════════════════════════════════════════════════════════════ */}
       <section id="pricing" className="vc-sec">
