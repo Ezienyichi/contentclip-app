@@ -400,6 +400,9 @@ export default function HomePage() {
 
       {/* ══ PHONE CLUSTER ══════════════════════════════════════════════════════ */}
       <div style={{ maxWidth:mkt.maxW, margin:'0 auto', padding:'0 10px 0', overflow:'hidden' }}>
+        <p style={{ textAlign:'center', fontSize:13, fontWeight:600, letterSpacing:'.09em', textTransform:'uppercase', color:mkt.muted, margin:'0 0 18px' }}>
+          Illustrative examples
+        </p>
         <div className="vc-phones">
           {PHONES.map((ph, i) => (
             <div
@@ -428,12 +431,6 @@ export default function HomePage() {
               )}
               {/* Notch */}
               <div style={{ position:'absolute', top:10, left:'50%', transform:'translateX(-50%)', width:46, height:5, borderRadius:3, background:'rgba(0,0,0,0.25)', zIndex:3 }} />
-              {/* "Illustrative example" badge on center phone only */}
-              {ph.cls === 'vph-center' && (
-                <div style={{ position:'absolute', top:22, left:'50%', transform:'translateX(-50%)', background:'rgba(0,0,0,0.55)', backdropFilter:'blur(6px)', WebkitBackdropFilter:'blur(6px)', color:'rgba(255,255,255,0.88)', fontSize:9, fontWeight:600, padding:'3px 9px', borderRadius:20, whiteSpace:'nowrap', zIndex:4, letterSpacing:'.04em' }}>
-                  Illustrative example
-                </div>
-              )}
               {/* Category name + caption overlay */}
               <div style={{ position:'absolute', left:10, bottom:12, right:10, zIndex:3, background:'linear-gradient(transparent,rgba(0,0,0,.55))', padding:'14px 6px 4px', borderRadius:'0 0 8px 8px' }}>
                 <div style={{ display:'inline-block', background:mkt.brand, color:'#fff', fontSize:9, fontWeight:700, fontFamily:mkt.fontBody, padding:'2px 6px', borderRadius:3, marginBottom:6 }}>{ph.name}</div>
