@@ -79,7 +79,7 @@ export default function PricingPage() {
                 </div>
                 {dp > 0 && (
                   <p style={{ fontSize: '11px', color: colors.onSurfaceVariant, margin: '0 0 8px', opacity: 0.8 }}>
-                    {annual ? `Billed annually ($${plan.annual * 12}/yr)` : 'Billed monthly'}
+                    {annual ? `Billed annually ($${plan.annualTotal}/yr)` : 'Billed monthly'}
                   </p>
                 )}
                 <p style={{ fontSize: '12px', fontWeight: 600, color: colors.primary, margin: '0 0 20px' }}>

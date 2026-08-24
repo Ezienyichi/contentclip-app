@@ -42,7 +42,7 @@ type ActivityItem = {
 };
 
 const PLAN_LIMITS: Record<string, number> = {
-  free: 30, solo: 150, starter: 150, professional: 400, pro: 400, agency: 1200,
+  free: 30, solo: 180, starter: 180, professional: 400, pro: 400, agency: 900,
 };
 
 const PLATFORM_LABELS: Record<string, string> = {

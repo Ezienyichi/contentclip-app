@@ -8,7 +8,7 @@ export const maxDuration = 60;
 
 const BACKEND_API_URL = process.env.BACKEND_API_URL!;
 
-const PLAN_MAX: Record<string, number> = { free: 30, starter: 150, pro: 400, agency: 1200 };
+const PLAN_MAX: Record<string, number> = { free: 30, solo: 180, starter: 180, professional: 400, pro: 400, agency: 900 };
 
 function getAdmin() {
   return createClient(

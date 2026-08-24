@@ -660,7 +660,7 @@ export default function HomePage() {
             <button onClick={() => setAnnual(false)} className={annual ? 'vc-pill-inactive' : 'vc-pill-active'}>Monthly</button>
             <button onClick={() => setAnnual(true)}  className={annual ? 'vc-pill-active'   : 'vc-pill-inactive'}>Annual</button>
           </div>
-          <div style={{ fontSize:13, fontWeight:600, color:mkt.brand }}>Save ~20% with annual billing</div>
+          <div style={{ fontSize:13, fontWeight:600, color:mkt.brand }}>2 months free with annual billing</div>
         </div>
 
         {/* Plan cards */}
@@ -684,7 +684,7 @@ export default function HomePage() {
                 {plan.monthly === 0
                   ? 'Free forever'
                   : annual
-                    ? `Billed annually ($${plan.annual * 12}/yr)`
+                    ? `Billed annually ($${plan.annualTotal}/yr)`
                     : 'Billed monthly'}
               </div>
               <button onClick={() => router.push('/auth?mode=signup')} style={planCta(plan.popular)}>{plan.cta}</button>

@@ -4,7 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
 import { insertNotification } from '@/lib/notify';
 
-const PLAN_LIMITS: Record<string, number> = { free: 30, starter: 150, pro: 400, agency: 1200 };
+const PLAN_LIMITS: Record<string, number> = { free: 30, solo: 180, starter: 180, professional: 400, pro: 400, agency: 900 };
 
 export const dynamic = 'force-dynamic';
 
