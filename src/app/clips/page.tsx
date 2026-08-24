@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import DashboardLayout from '@/components/DashboardLayout';
 import Icon from '@/components/Icon';
 import { useRouter } from 'next/navigation';
@@ -24,6 +24,7 @@ type Clip = {
   clip_url?: string; video_url?: string; download_url?: string;
   thumbnail_url?: string; duration: number; status?: string;
   expires_at?: string | null; source_video_name?: string;
+  source?: string; delete_after?: string | null; file_size_bytes?: number | null;
 };
 
 function ExpiryBadge({ expiresAt }: { expiresAt?: string | null }) {
@@ -41,6 +42,13 @@ function ExpiryBadge({ expiresAt }: { expiresAt?: string | null }) {
 const SORTS = ['Most Viral','Newest','Longest','Shortest'];
 const PLATS = ['All','TikTok','Reels','Shorts'];
 
+const UPLOAD_ALLOWED_PLANS = new Set(['pro', 'professional', 'agency']);
+
+function fmt_bytes(b: number) {
+  if (b < 1024 * 1024) return `${(b / 1024).toFixed(0)} KB`;
+  return `${(b / 1024 / 1024).toFixed(1)} MB`;
+}
+
 export default function ClipsPage() {
   const router = useRouter();
   const [clips, setClips] = useState<Clip[]>([]);
@@ -50,6 +58,26 @@ export default function ClipsPage() {
   const [playingUrl, setPlayingUrl] = useState<string|null>(null);
   const [downloadingIdx, setDownloadingIdx] = useState<number|null>(null);
   const [, setDbLoaded] = useState(false);
+  const [uploadPlan, setUploadPlan] = useState<string>('free');
+  const [uploadUsage, setUploadUsage] = useState<{ count: number; limits: { daily_cap: number; max_bytes: number } | null }>({ count: 0, limits: null });
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  function loadClips() {
+    return fetch('/api/clips/list')
+      .then(async r => {
+        const text = await r.text();
+        if (!r.ok) return null;
+        try { return JSON.parse(text); } catch { return null; }
+      })
+      .then((data: any) => {
+        if (data?.clips?.length > 0) setClips(data.clips);
+      })
+      .catch((err) => console.error('[clips/list] fetch error:', err))
+      .finally(() => setDbLoaded(true));
+  }
 
   useEffect(() => {
     // Seed immediately from sessionStorage — no flash of empty state while DB loads
@@ -61,21 +89,86 @@ export default function ClipsPage() {
       }
     } catch {}
 
-    // Load from DB — replaces sessionStorage clips once resolved
-    fetch('/api/clips/list')
-      .then(async r => {
-        const text = await r.text();
-        console.log('[clips/list] status:', r.status, 'body:', text);
-        if (!r.ok) return null;
-        try { return JSON.parse(text); } catch { return null; }
+    loadClips();
+
+    // Fetch upload plan + daily usage
+    fetch('/api/upload/usage-today')
+      .then(r => r.ok ? r.json() : null)
+      .then((d: any) => {
+        if (!d) return;
+        setUploadPlan(d.plan ?? 'free');
+        setUploadUsage({ count: d.count ?? 0, limits: d.limits });
       })
-      .then((data: any) => {
-        console.log('[clips/list] clips returned:', data?.clips?.length ?? 0);
-        if (data?.clips?.length > 0) setClips(data.clips);
-      })
-      .catch((err) => console.error('[clips/list] fetch error:', err))
-      .finally(() => setDbLoaded(true));
+      .catch(() => {});
   }, []);
+
+  async function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!fileInputRef.current) return;
+    fileInputRef.current.value = '';
+    if (!file) return;
+
+    setUploadError(null);
+    setUploading(true);
+    setUploadProgress(0);
+
+    try {
+      // 1. Get presigned URL
+      const presignRes = await fetch('/api/upload/presign', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ file_name: file.name, file_size: file.size, mime_type: file.type }),
+      });
+      const presignData = await presignRes.json();
+      if (!presignRes.ok) throw new Error(presignData.error || 'Failed to get upload URL.');
+
+      const { upload_url, key } = presignData;
+
+      // 2. PUT to R2 with progress (XHR for progress events)
+      await new Promise<void>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('PUT', upload_url);
+        xhr.setRequestHeader('Content-Type', file.type);
+        xhr.upload.onprogress = (ev) => {
+          if (ev.lengthComputable) setUploadProgress(Math.round((ev.loaded / ev.total) * 90));
+        };
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) resolve();
+          else reject(new Error(`Upload failed (${xhr.status})`));
+        };
+        xhr.onerror = () => reject(new Error('Network error during upload.'));
+        xhr.send(file);
+      });
+
+      setUploadProgress(95);
+
+      // 3. Register in DB
+      const nameNoExt = file.name.replace(/\.[^.]+$/, '');
+      const completeRes = await fetch('/api/upload/complete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key, file_name: file.name, file_size: file.size, title: nameNoExt }),
+      });
+      const completeData = await completeRes.json();
+      if (!completeRes.ok) throw new Error(completeData.error || 'Failed to register clip.');
+
+      setUploadProgress(100);
+
+      // Refresh clip list + usage
+      await loadClips();
+      const usageRes = await fetch('/api/upload/usage-today');
+      if (usageRes.ok) {
+        const ud = await usageRes.json();
+        setUploadPlan(ud.plan ?? 'free');
+        setUploadUsage({ count: ud.count ?? 0, limits: ud.limits });
+      }
+    } catch (err: any) {
+      setUploadError(err.message ?? 'Upload failed.');
+    } finally {
+      setUploading(false);
+      setTimeout(() => setUploadProgress(0), 1200);
+    }
+  }
 
   const formatDuration = (s: number) => `${Math.floor(s/60)}:${(s%60).toString().padStart(2,'0')}`;
   const sc = (s: number) => s >= 85 ? '#4ade80' : s >= 70 ? '#C0C1FF' : '#fbbf24';
@@ -120,15 +213,58 @@ export default function ClipsPage() {
 
   return (
     <DashboardLayout title="Generated Clips" subtitle={clips.length + ' clips ready'} bg="#E4E2DD" titleColor="#1A1714" subtitleColor="#6B6560">
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="video/*"
+        style={{ display: 'none' }}
+        onChange={handleFileSelect}
+      />
+
       {/* Filters */}
-      <div className="clips-filters" style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'24px', flexWrap:'wrap', gap:'12px' }}>
+      <div className="clips-filters" style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'16px', flexWrap:'wrap', gap:'12px' }}>
         <div style={{ display:'flex', gap:'8px' }}>
           {SORTS.map(o => <button key={o} onClick={() => setSort(o)} style={{ padding:'8px 16px', borderRadius:radius.full, background:sort===o?colors.primary:'#EFECEA', color:sort===o?'#fff':colors.onSurfaceVariant, border:sort===o?'none':'1px solid rgba(0,0,0,0.08)', fontWeight:600, fontSize:'12px', cursor:'pointer', fontFamily:"'Inter',sans-serif" }}>{o}</button>)}
         </div>
-        <div style={{ display:'flex', gap:'8px' }}>
+        <div style={{ display:'flex', gap:'8px', alignItems:'center' }}>
           {PLATS.map(p => <button key={p} onClick={() => setPlat(p)} style={{ padding:'8px 14px', borderRadius:radius.full, background:plat===p?colors.surfaceContainerHighest:'transparent', color:plat===p?colors.onSurface:colors.onSurfaceVariant, border:plat===p?'1px solid '+colors.outlineVariant:'1px solid transparent', fontWeight:500, fontSize:'12px', cursor:'pointer', fontFamily:"'Inter',sans-serif" }}>{p}</button>)}
+          {/* Upload button */}
+          {UPLOAD_ALLOWED_PLANS.has(uploadPlan) ? (
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+              title={uploadUsage.limits ? `${uploadUsage.count}/${uploadUsage.limits.daily_cap} uploads today · max ${fmt_bytes(uploadUsage.limits.max_bytes)}/file` : ''}
+              style={{ display:'flex', alignItems:'center', gap:'6px', padding:'8px 16px', borderRadius:radius.full, background:gradients.primary, color:'#fff', border:'none', fontWeight:600, fontSize:'12px', cursor:uploading ? 'not-allowed' : 'pointer', opacity:uploading ? 0.7 : 1, fontFamily:"'Inter',sans-serif", whiteSpace:'nowrap' }}>
+              <Icon name={uploading ? 'hourglass_empty' : 'upload'} size={14}/>
+              {uploading ? `Uploading ${uploadProgress}%` : 'Upload Clip'}
+            </button>
+          ) : (
+            <button
+              onClick={() => router.push('/pricing')}
+              title="Available on Pro and Agency plans"
+              style={{ display:'flex', alignItems:'center', gap:'6px', padding:'8px 16px', borderRadius:radius.full, background:'rgba(155,93,229,0.08)', color:colors.primary, border:'1px solid rgba(155,93,229,0.25)', fontWeight:600, fontSize:'12px', cursor:'pointer', fontFamily:"'Inter',sans-serif", whiteSpace:'nowrap' }}>
+              <Icon name="lock" size={14}/>
+              Upload Clip
+            </button>
+          )}
         </div>
       </div>
+
+      {/* Upload progress bar */}
+      {uploading && uploadProgress > 0 && (
+        <div style={{ height:3, background:'rgba(155,93,229,0.15)', borderRadius:99, marginBottom:16, overflow:'hidden' }}>
+          <div style={{ height:'100%', width:`${uploadProgress}%`, background:gradients.primary, borderRadius:99, transition:'width 0.2s ease' }}/>
+        </div>
+      )}
+
+      {/* Upload error */}
+      {uploadError && (
+        <div style={{ padding:'10px 16px', borderRadius:radius.md, background:'rgba(220,38,38,0.08)', border:'1px solid rgba(220,38,38,0.2)', color:'#DC2626', fontSize:'13px', fontWeight:500, marginBottom:16, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+          <span>{uploadError}</span>
+          <button onClick={() => setUploadError(null)} style={{ background:'none', border:'none', color:'#DC2626', cursor:'pointer', fontSize:18, lineHeight:1, padding:0 }}>×</button>
+        </div>
+      )}
 
       {/* Clips grid */}
       <div className="clips-grid" style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:'16px' }}>
@@ -163,7 +299,14 @@ export default function ClipsPage() {
                 <Icon name="smart_display" size={12} style={{ verticalAlign:'middle', marginRight:4 }}/>{platMap(clip.platform)}
               </p>
               <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:10, flexWrap:'wrap' }}>
-                <ExpiryBadge expiresAt={clip.expires_at} />
+                {clip.source === 'upload' ? (
+                  <span style={{ fontSize:10, fontWeight:600, color:'#7c3aed', background:'rgba(124,58,237,0.1)', padding:'2px 7px', borderRadius:99 }}>Uploaded</span>
+                ) : (
+                  <ExpiryBadge expiresAt={clip.expires_at} />
+                )}
+                {clip.source === 'upload' && clip.delete_after && (
+                  <ExpiryBadge expiresAt={clip.delete_after} />
+                )}
                 {clip.source_video_name && (
                   <span style={{ fontSize:10, color:colors.onSurfaceVariant, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', maxWidth:120 }}>{clip.source_video_name}</span>
                 )}

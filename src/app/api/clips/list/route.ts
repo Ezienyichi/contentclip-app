@@ -24,7 +24,7 @@ export async function GET(_req: NextRequest) {
 
   const { data, error } = await supabase
     .from('clips')
-    .select('id, title, hook_text, start_time, end_time, duration, virality_score, suggested_caption, hashtags, status, video_url, download_url, thumbnail_url, expires_at, source_video_name, created_at')
+    .select('id, title, hook_text, start_time, end_time, duration, virality_score, suggested_caption, hashtags, status, video_url, download_url, thumbnail_url, expires_at, source_video_name, created_at, source, delete_after, file_size_bytes')
     .eq('user_id', user.id)   // explicit filter; RLS is the safety net
     .neq('status', 'error')
     .order('created_at', { ascending: false })
@@ -52,6 +52,9 @@ export async function GET(_req: NextRequest) {
     status:            c.status,
     expires_at:        c.expires_at ?? null,
     source_video_name: c.source_video_name ?? '',
+    source:            c.source ?? 'generated',
+    delete_after:      c.delete_after ?? null,
+    file_size_bytes:   c.file_size_bytes ?? null,
   }));
 
   return NextResponse.json({ clips });
