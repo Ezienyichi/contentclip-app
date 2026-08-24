@@ -58,11 +58,11 @@ const NAV_LINKS = [
 ];
 
 const PHONES = [
-  { name: 'MUSIC',       cap: 'One song, eight reels',       cls: 'vph-outer-l', videoUrl: 'https://pub-4f4329e5ca884bbab0a04b1777cd7363.r2.dev/l.mp4' },
-  { name: 'CONFERENCES', cap: 'Stage moments that move',     cls: 'vph-mid-l',   videoUrl: 'https://pub-4f4329e5ca884bbab0a04b1777cd7363.r2.dev/....mp4' },
+  { name: 'CONFERENCES', cap: 'Stage moments that move',     cls: 'vph-outer-l', videoUrl: 'https://pub-4f4329e5ca884bbab0a04b1777cd7363.r2.dev/....mp4' },
+  { name: 'MUSIC',       cap: 'One song, eight reels',       cls: 'vph-mid-l',   videoUrl: 'https://pub-4f4329e5ca884bbab0a04b1777cd7363.r2.dev/l.mp4' },
   { name: 'PODCAST',     cap: 'Why your why matters',        cls: 'vph-center',  videoUrl: 'https://pub-4f4329e5ca884bbab0a04b1777cd7363.r2.dev/%2C.mp4' },
-  { name: 'EDUCATION',   cap: 'A masterclass in 15 shorts',  cls: 'vph-mid-r',   videoUrl: 'https://pub-4f4329e5ca884bbab0a04b1777cd7363.r2.dev/.%2C.mp4' },
-  { name: 'SERMON',      cap: 'Faith over fear. Sunday',     cls: 'vph-outer-r', videoUrl: 'https://pub-4f4329e5ca884bbab0a04b1777cd7363.r2.dev/-.mp4' },
+  { name: 'SERMON',      cap: 'Faith over fear. Sunday',     cls: 'vph-mid-r',   videoUrl: 'https://pub-4f4329e5ca884bbab0a04b1777cd7363.r2.dev/-.mp4' },
+  { name: 'EDUCATION',   cap: 'A masterclass in 15 shorts',  cls: 'vph-outer-r', videoUrl: 'https://pub-4f4329e5ca884bbab0a04b1777cd7363.r2.dev/.%2C.mp4' },
 ];
 
 const STATS = [
@@ -521,6 +521,22 @@ export default function HomePage() {
                 <path d="M17.5 3.5h-2.5C13.1 3.5 12 4.6 12 6.5V8.5H10v3h2v9h3.5v-9H17l.5-3h-2V6.8c0-.4.2-.8.8-.8H17.5V3.5z" fill="white"/>
               </svg>
               <span style={{ fontSize:13, fontWeight:700, color:mkt.muted, opacity:.7, letterSpacing:'.02em' }}>Facebook</span>
+            </div>
+            {/* X (Twitter) */}
+            <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:10 }}>
+              <svg width="40" height="40" viewBox="0 0 27 27" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect width="27" height="27" rx="6" fill="#000000"/>
+                <path d="M15.1 12.2L20.8 5.5H19.3L14.4 11.3L10.5 5.5H5.5L11.6 14L5.5 21H7L12.2 14.9L16.3 21H21.3L15.1 12.2ZM13 14.1L12.3 13.1L7.6 6.6H9.9L13.6 12L14.3 13L19.6 20.2H17.3L13 14.1Z" fill="white"/>
+              </svg>
+              <span style={{ fontSize:13, fontWeight:700, color:mkt.muted, opacity:.7, letterSpacing:'.02em' }}>X</span>
+            </div>
+            {/* Pinterest */}
+            <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:10 }}>
+              <svg width="40" height="40" viewBox="0 0 27 27" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="13.5" cy="13.5" r="13.5" fill="#E60019"/>
+                <path d="M13.5 3.5C8 3.5 3.5 8 3.5 13.5c0 4.3 2.7 8 6.5 9.6 0-.7-.1-1.8.1-2.5l1.2-4.9s-.3-.6-.3-1.5c0-1.4.8-2.4 1.9-2.4.9 0 1.3.7 1.3 1.5 0 .9-.6 2.3-.9 3.6-.3 1.1.5 2 1.6 2 1.9 0 3.2-2 3.2-4.9 0-2.6-1.8-4.4-4.4-4.4-3 0-4.8 2.2-4.8 4.6 0 .9.4 1.9.8 2.4.1.1.1.2.1.3l-.3 1.2c0 .2-.1.2-.3.1-1.4-.6-2.2-2.6-2.2-4.2 0-3.4 2.5-6.5 7.1-6.5 3.7 0 6.6 2.6 6.6 6.2 0 3.7-2.3 6.7-5.6 6.7-1.1 0-2.1-.6-2.5-1.2l-.7 2.5c-.2.9-.8 2-1.2 2.7.9.3 1.9.4 2.8.4 5.5 0 10-4.5 10-10S19 3.5 13.5 3.5z" fill="white"/>
+              </svg>
+              <span style={{ fontSize:13, fontWeight:700, color:mkt.muted, opacity:.7, letterSpacing:'.02em' }}>Pinterest</span>
             </div>
           </div>
         </div>
