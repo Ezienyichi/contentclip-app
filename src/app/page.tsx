@@ -58,11 +58,11 @@ const NAV_LINKS = [
 ];
 
 const PHONES = [
-  { name: 'MUSIC',       cap: 'One song, eight reels',       cls: 'vph-outer-l', youtubeId: '' },
-  { name: 'CONFERENCES', cap: 'Stage moments that move',     cls: 'vph-mid-l',   youtubeId: '' },
-  { name: 'PODCAST',     cap: 'Why your why matters',        cls: 'vph-center',  youtubeId: '' },
-  { name: 'EDUCATION',   cap: 'A masterclass in 15 shorts',  cls: 'vph-mid-r',   youtubeId: '' },
-  { name: 'SERMON',      cap: 'Faith over fear. Sunday',     cls: 'vph-outer-r', youtubeId: '' },
+  { name: 'MUSIC',       cap: 'One song, eight reels',       cls: 'vph-outer-l', youtubeId: '6KPw9xBX_rM' },
+  { name: 'CONFERENCES', cap: 'Stage moments that move',     cls: 'vph-mid-l',   youtubeId: 'lwFiZbebFU8' },
+  { name: 'PODCAST',     cap: 'Why your why matters',        cls: 'vph-center',  youtubeId: '76ejZLVJKPY' },
+  { name: 'EDUCATION',   cap: 'A masterclass in 15 shorts',  cls: 'vph-mid-r',   youtubeId: 'uTpEtCwJFTI' },
+  { name: 'SERMON',      cap: 'Faith over fear. Sunday',     cls: 'vph-outer-r', youtubeId: '6T1AwCGOpZ8' },
 ];
 
 const STATS = [
