@@ -154,13 +154,13 @@ export default function HomePage() {
       {/* ── All CSS ── */}
       <style>{`
         /* Phone cluster */
-        .vc-phones   { display:flex; flex-direction:row-reverse; gap:20px; justify-content:center; align-items:flex-end; height:500px; position:relative; overflow:visible; }
+        .vc-phones   { display:flex; flex-direction:row-reverse; gap:20px; justify-content:center; align-items:flex-end; height:575px; position:relative; overflow:visible; }
         .vc-phone    { border-radius:22px; border:1px solid ${mkt.border}; overflow:hidden; background:${mkt.surface}; flex:none; position:relative; box-shadow:${mkt.cardShadow}; }
-        .vph-outer-l { width:160px; height:336px; animation:vcFloat  5.2s ease-in-out infinite; }
-        .vph-mid-l   { width:186px; height:390px; animation:vcFloat2 4.4s ease-in-out infinite; }
-        .vph-center  { width:232px; height:486px; animation:vcFloat  4.0s ease-in-out infinite; z-index:2; }
-        .vph-mid-r   { width:186px; height:390px; animation:vcFloat2 4.8s ease-in-out infinite; }
-        .vph-outer-r { width:160px; height:336px; animation:vcFloat  5.6s ease-in-out infinite; }
+        .vph-outer-l { width:180px; height:378px; animation:vcFloat  5.2s ease-in-out infinite; }
+        .vph-mid-l   { width:210px; height:442px; animation:vcFloat2 4.4s ease-in-out infinite; }
+        .vph-center  { width:264px; height:554px; animation:vcFloat  4.0s ease-in-out infinite; z-index:2; }
+        .vph-mid-r   { width:210px; height:442px; animation:vcFloat2 4.8s ease-in-out infinite; }
+        .vph-outer-r { width:180px; height:378px; animation:vcFloat  5.6s ease-in-out infinite; }
         @keyframes vcFloat  { 0%,100%{transform:translateY(0)}    50%{transform:translateY(-14px)} }
         @keyframes vcFloat2 { 0%,100%{transform:translateY(-8px)} 50%{transform:translateY(6px)}  }
 
@@ -172,8 +172,8 @@ export default function HomePage() {
 
         /* Hero input row */
         .vc-hero-row   { display:flex; gap:10px; justify-content:center; align-items:stretch; flex-wrap:wrap; max-width:620px; margin:0 auto; }
-        .vc-hero-input { display:flex; align-items:center; gap:8px; flex:1; min-width:260px; background:rgba(0,0,0,0.06); border:1px solid rgba(0,0,0,0.15); border-radius:${mkt.r}; padding:6px 6px 6px 14px; box-shadow:inset 1px 1px 0 rgba(0,0,0,0.04); }
-        .vc-hero-cta   { flex:none; border:none; background:${mkt.brandGrad}; color:#fff; font-weight:700; font-family:'Figtree',sans-serif; font-size:15px; padding:0 22px; min-height:50px; border-radius:${mkt.r}; cursor:pointer; box-shadow:inset 1px 1px 0 rgba(255,255,255,.25),${mkt.glow}; white-space:nowrap; }
+        .vc-hero-input { display:flex; align-items:center; gap:8px; flex:1; min-width:260px; background:rgba(155,93,229,0.05); border:2px solid #9B5DE5; border-radius:${mkt.r}; padding:5px 5px 5px 13px; box-shadow:0 0 0 4px rgba(155,93,229,0.12); }
+        .vc-hero-cta   { flex:none; border:none; background:${mkt.brandGrad}; color:#fff; font-weight:800; font-family:'Figtree',sans-serif; font-size:16px; padding:0 30px; min-height:54px; border-radius:${mkt.r}; cursor:pointer; box-shadow:inset 1px 1px 0 rgba(255,255,255,.30),0 8px 28px rgba(155,93,229,0.45); white-space:nowrap; }
         .vc-cta-input  { display:flex; align-items:center; gap:8px; flex:1; min-width:280px; background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.3); border-radius:${mkt.r}; padding:6px 6px 6px 14px; }
         .vc-cta-btn    { flex:none; border:none; background:#fff; color:${mkt.brand}; font-weight:700; font-family:'Figtree',sans-serif; font-size:15.5px; padding:14px 24px; border-radius:${mkt.r}; cursor:pointer; box-shadow:0 6px 18px rgba(0,0,0,.18); white-space:nowrap; }
 
@@ -225,21 +225,21 @@ export default function HomePage() {
 
         /* ── Phone cluster 900px: hold current sizes so 641–900px range stays clean ── */
         @media (max-width:900px) {
-          .vc-phones   { height:360px; gap:18px; }
-          .vph-outer-l { width:118px; height:248px; }
-          .vph-mid-l   { width:138px; height:288px; }
-          .vph-center  { width:172px; height:340px; }
-          .vph-mid-r   { width:138px; height:288px; }
-          .vph-outer-r { width:118px; height:248px; }
+          .vc-phones   { height:408px; gap:18px; }
+          .vph-outer-l { width:134px; height:280px; }
+          .vph-mid-l   { width:156px; height:326px; }
+          .vph-center  { width:194px; height:384px; }
+          .vph-mid-r   { width:156px; height:326px; }
+          .vph-outer-r { width:134px; height:280px; }
         }
 
         /* ── Phone cluster 640px: 3-card mobile layout ── */
         @media (max-width:640px) {
           .vph-outer-l, .vph-outer-r { display:none; }
-          .vc-phones  { height:270px; gap:10px; }
-          .vph-mid-l  { width:98px;  height:206px; }
-          .vph-center { width:122px; height:256px; }
-          .vph-mid-r  { width:98px;  height:206px; }
+          .vc-phones  { height:306px; gap:10px; }
+          .vph-mid-l  { width:110px; height:232px; }
+          .vph-center { width:138px; height:290px; }
+          .vph-mid-r  { width:110px; height:232px; }
         }
 
         /* ── Mobile 600px ── */
@@ -315,7 +315,7 @@ export default function HomePage() {
       </div>
 
       {/* ══ HERO ═══════════════════════════════════════════════════════════════ */}
-      <section style={{ maxWidth:mkt.maxW, margin:'0 auto', padding:'78px 28px 30px', textAlign:'center', minHeight:600, position:'relative' }}>
+      <section style={{ maxWidth:mkt.maxW, margin:'0 auto', padding:'78px 28px 8px', textAlign:'center', minHeight:600, position:'relative' }}>
 
         {/* Music note — upper left */}
         <span className="vc-hero-icon" style={{ top:85, left:38, transform:'rotate(-15deg)' }}>
@@ -375,7 +375,7 @@ export default function HomePage() {
           Spread your Content.<br />
           <span style={{ fontStyle:'italic', fontWeight:700, color:mkt.brand }}>One Video, Seen Everywhere.</span>
         </h1>
-        <p style={{ fontSize:'clamp(15px,2.2vw,18px)', lineHeight:1.6, color:mkt.muted, maxWidth:560, margin:'0 auto 30px' }}>
+        <p style={{ fontSize:'clamp(15px,2.2vw,18px)', lineHeight:1.6, color:'#000', fontWeight:600, maxWidth:560, margin:'0 auto 30px' }}>
           VangelClip turns your long videos into dozens of short, captioned clips so your best moments reach more people, on every platform, in minutes.
         </p>
         <div className="vc-hero-row">
@@ -399,7 +399,7 @@ export default function HomePage() {
       </section>
 
       {/* ══ PHONE CLUSTER ══════════════════════════════════════════════════════ */}
-      <div style={{ maxWidth:mkt.maxW, margin:'0 auto', padding:'0 28px 0', overflow:'hidden' }}>
+      <div style={{ maxWidth:mkt.maxW, margin:'0 auto', padding:'0 10px 0', overflow:'hidden' }}>
         <div className="vc-phones">
           {PHONES.map((ph, i) => (
             <div

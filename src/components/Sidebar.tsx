@@ -95,7 +95,7 @@ export default function Sidebar() {
           <Icon name="admin_panel_settings" size={large ? 22 : 20} style={{ color: '#a78bfa' }} /><span>Admin Panel</span>
         </button>
       )}
-      <button onClick={() => go('#')} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: large ? '14px 12px' : '10px 12px', borderRadius: '6px', background: 'transparent', color: colors.onSurfaceVariant, fontWeight: 500, fontSize: large ? '14px' : '13px', border: 'none', cursor: 'pointer', width: '100%', textAlign: 'left', fontFamily: "'Inter', sans-serif" }}>
+      <button onClick={() => go('/about#contact')} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: large ? '14px 12px' : '10px 12px', borderRadius: '6px', background: 'transparent', color: colors.onSurfaceVariant, fontWeight: 500, fontSize: large ? '14px' : '13px', border: 'none', cursor: 'pointer', width: '100%', textAlign: 'left', fontFamily: "'Inter', sans-serif" }}>
         <Icon name="contact_support" size={large ? 22 : 20} /><span>Support</span>
       </button>
       <button onClick={() => go('#signout')} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: large ? '14px 12px' : '10px 12px', borderRadius: '6px', background: 'transparent', color: '#DC2626', fontWeight: 600, fontSize: large ? '14px' : '13px', border: 'none', cursor: 'pointer', width: '100%', textAlign: 'left', fontFamily: "'Inter', sans-serif" }}>

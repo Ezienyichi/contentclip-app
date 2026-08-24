@@ -322,7 +322,7 @@ export default function AboutPage() {
       </section>
 
       {/* SUPPORT */}
-      <section style={{ maxWidth: 700, margin: '0 auto', padding: '60px 24px', borderTop: '1px solid rgba(70,69,85,0.1)' }}>
+      <section id="contact" style={{ maxWidth: 700, margin: '0 auto', padding: '60px 24px', borderTop: '1px solid rgba(70,69,85,0.1)' }}>
         <h2 style={{ fontSize: 32, fontWeight: 800, marginBottom: 8, textAlign: 'center' }}>Support</h2>
         <p style={{ fontSize: 15, color: colors.onSurfaceVariant, marginBottom: 40, textAlign: 'center' }}>Have a question or need help? Send us a message and we&apos;ll get back to you within 2 business days.</p>
         {supportSent ? (
