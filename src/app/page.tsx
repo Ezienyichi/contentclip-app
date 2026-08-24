@@ -408,11 +408,32 @@ export default function HomePage() {
               style={{ animationDelay:`${i*0.35}s`, cursor: ph.youtubeId ? 'pointer' : 'default' }}
               onClick={() => ph.youtubeId && setPhoneModal(ph.youtubeId)}
             >
-              <div style={{ position:'absolute', inset:0, backgroundImage:`repeating-linear-gradient(135deg,${mkt.border} 0 1px,transparent 1px 11px)` }} />
+              {/* Preview: muted autoplay loop when youtubeId is set, else static placeholder */}
+              {ph.youtubeId ? (
+                <iframe
+                  src={`https://www.youtube.com/embed/${ph.youtubeId}?autoplay=1&mute=1&loop=1&playlist=${ph.youtubeId}&controls=0&playsinline=1&rel=0&modestbranding=1`}
+                  title={ph.name}
+                  allow="autoplay; encrypted-media"
+                  loading="lazy"
+                  style={{ position:'absolute', inset:0, width:'100%', height:'100%', border:0, pointerEvents:'none' }}
+                />
+              ) : (
+                <>
+                  <div style={{ position:'absolute', inset:0, backgroundImage:`repeating-linear-gradient(135deg,${mkt.border} 0 1px,transparent 1px 11px)` }} />
+                  <div style={{ position:'absolute', top:'44%', left:'50%', transform:'translate(-50%,-50%)', width:30, height:30, borderRadius:'50%', background:mkt.brand, color:'#fff', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M6 4v16l13-8z"/></svg>
+                  </div>
+                </>
+              )}
+              {/* Notch */}
               <div style={{ position:'absolute', top:10, left:'50%', transform:'translateX(-50%)', width:46, height:5, borderRadius:3, background:'rgba(0,0,0,0.25)', zIndex:3 }} />
-              <div style={{ position:'absolute', top:'44%', left:'50%', transform:'translate(-50%,-50%)', width:30, height:30, borderRadius:'50%', background:mkt.brand, color:'#fff', display:'flex', alignItems:'center', justifyContent:'center' }}>
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M6 4v16l13-8z"/></svg>
-              </div>
+              {/* "Illustrative example" badge on center phone only */}
+              {ph.cls === 'vph-center' && (
+                <div style={{ position:'absolute', top:22, left:'50%', transform:'translateX(-50%)', background:'rgba(0,0,0,0.55)', backdropFilter:'blur(6px)', WebkitBackdropFilter:'blur(6px)', color:'rgba(255,255,255,0.88)', fontSize:9, fontWeight:600, padding:'3px 9px', borderRadius:20, whiteSpace:'nowrap', zIndex:4, letterSpacing:'.04em' }}>
+                  Illustrative example
+                </div>
+              )}
+              {/* Category name + caption overlay */}
               <div style={{ position:'absolute', left:10, bottom:12, right:10, zIndex:3, background:'linear-gradient(transparent,rgba(0,0,0,.55))', padding:'14px 6px 4px', borderRadius:'0 0 8px 8px' }}>
                 <div style={{ display:'inline-block', background:mkt.brand, color:'#fff', fontSize:9, fontWeight:700, fontFamily:mkt.fontBody, padding:'2px 6px', borderRadius:3, marginBottom:6 }}>{ph.name}</div>
                 <div style={{ fontFamily:mkt.fontHead, fontWeight:700, fontSize:13, color:'#fff', lineHeight:1.15 }}>{ph.cap}</div>
@@ -431,7 +452,7 @@ export default function HomePage() {
         >
           <div onClick={e => e.stopPropagation()} style={{ width:'100%', maxWidth:540, aspectRatio:'9/16', borderRadius:16, overflow:'hidden', position:'relative', boxShadow:'0 24px 64px rgba(0,0,0,0.6)' }}>
             <iframe
-              src={`https://www.youtube.com/embed/${phoneModal}?autoplay=1&rel=0&modestbranding=1`}
+              src={`https://www.youtube.com/embed/${phoneModal}?autoplay=1&mute=1&rel=0&modestbranding=1`}
               title="Category sample"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen

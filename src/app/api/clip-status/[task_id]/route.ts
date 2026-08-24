@@ -54,40 +54,54 @@ export async function GET(
     const data = await serverResponse.json();
 
     // On completion, deduct actual minutes used (idempotent via minutes_charged)
+    console.log('[clip-status] status from backend:', data.status, '| ok:', serverResponse.ok);
     if (serverResponse.ok && (data.status === 'SUCCEEDED' || data.status === 'completed')) {
+      console.log('[clip-status] DEDUCTION BLOCK ENTERED for task_id:', task_id, 'user:', user.id);
       const admin = getAdmin();
 
-      const { data: job } = await admin
+      const { data: job, error: jobErr } = await admin
         .from('clip_jobs')
         .select('id, minutes_charged')
         .eq('task_id', task_id)
         .eq('user_id', user.id)
         .single();
 
+      console.log('[clip-status] job lookup — found:', !!job, '| minutes_charged:', job?.minutes_charged, '| error:', jobErr?.message ?? null);
+
       // Only deduct once — skip if already charged
       if (job && job.minutes_charged == null) {
         // cost_usage is WayinVideo API credits (~1.9 per input minute), not minutes.
         // Divide by 2 to approximate actual video minutes consumed.
-        const minutesUsed = Math.round((data.cost_usage ?? 0) / 2);
+        const rawCostUsage = data.cost_usage;
+        const minutesUsed = Math.round((rawCostUsage ?? 0) / 2);
+        console.log('[clip-status] cost_usage from backend:', rawCostUsage, '| minutesUsed (after /2):', minutesUsed);
 
         // Fetch profile before deduction so we can compute remaining minutes
-        const { data: currentProfile } = await admin
+        const { data: currentProfile, error: profileErr } = await admin
           .from('profiles')
           .select('minutes_used, plan')
           .eq('id', user.id)
           .single();
 
+        console.log('[clip-status] profile fetch — minutes_used now:', currentProfile?.minutes_used, '| plan:', currentProfile?.plan, '| error:', profileErr?.message ?? null);
+
         if (minutesUsed > 0) {
-          await admin
+          const newTotal = (currentProfile?.minutes_used ?? 0) + minutesUsed;
+          console.log('[clip-status] writing minutes_used:', newTotal, 'to profiles for user:', user.id);
+          const { error: updateErr } = await admin
             .from('profiles')
-            .update({ minutes_used: (currentProfile?.minutes_used ?? 0) + minutesUsed })
+            .update({ minutes_used: newTotal })
             .eq('id', user.id);
+          console.log('[clip-status] profile UPDATE result — error:', updateErr?.message ?? 'none (success)');
+        } else {
+          console.warn('[clip-status] minutesUsed is 0 — skipping profile UPDATE (cost_usage was:', rawCostUsage, ')');
         }
 
-        await admin
+        const { error: jobUpdateErr } = await admin
           .from('clip_jobs')
           .update({ minutes_charged: minutesUsed, status: 'completed' })
           .eq('id', job.id);
+        console.log('[clip-status] clip_jobs UPDATE result — error:', jobUpdateErr?.message ?? 'none (success)');
 
         // Clip-ready notification (fire and forget)
         void insertNotification({
