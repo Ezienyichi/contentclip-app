@@ -58,11 +58,11 @@ const NAV_LINKS = [
 ];
 
 const PHONES = [
-  { name: 'MUSIC',       cap: 'One song, eight reels',       cls: 'vph-outer-l', youtubeId: '6KPw9xBX_rM' },
-  { name: 'CONFERENCES', cap: 'Stage moments that move',     cls: 'vph-mid-l',   youtubeId: 'lwFiZbebFU8' },
-  { name: 'PODCAST',     cap: 'Why your why matters',        cls: 'vph-center',  youtubeId: '76ejZLVJKPY' },
-  { name: 'EDUCATION',   cap: 'A masterclass in 15 shorts',  cls: 'vph-mid-r',   youtubeId: 'uTpEtCwJFTI' },
-  { name: 'SERMON',      cap: 'Faith over fear. Sunday',     cls: 'vph-outer-r', youtubeId: '6T1AwCGOpZ8' },
+  { name: 'MUSIC',       cap: 'One song, eight reels',       cls: 'vph-outer-l', videoUrl: 'https://pub-4f4329e5ca884bbab0a04b1777cd7363.r2.dev/l.mp4' },
+  { name: 'CONFERENCES', cap: 'Stage moments that move',     cls: 'vph-mid-l',   videoUrl: 'https://pub-4f4329e5ca884bbab0a04b1777cd7363.r2.dev/....mp4' },
+  { name: 'PODCAST',     cap: 'Why your why matters',        cls: 'vph-center',  videoUrl: 'https://pub-4f4329e5ca884bbab0a04b1777cd7363.r2.dev/%2C.mp4' },
+  { name: 'EDUCATION',   cap: 'A masterclass in 15 shorts',  cls: 'vph-mid-r',   videoUrl: 'https://pub-4f4329e5ca884bbab0a04b1777cd7363.r2.dev/.%2C.mp4' },
+  { name: 'SERMON',      cap: 'Faith over fear. Sunday',     cls: 'vph-outer-r', videoUrl: 'https://pub-4f4329e5ca884bbab0a04b1777cd7363.r2.dev/-.mp4' },
 ];
 
 const STATS = [
@@ -405,17 +405,18 @@ export default function HomePage() {
             <div
               key={ph.name}
               className={`vc-phone ${ph.cls}`}
-              style={{ animationDelay:`${i*0.35}s`, cursor: ph.youtubeId ? 'pointer' : 'default' }}
-              onClick={() => ph.youtubeId && setPhoneModal(ph.youtubeId)}
+              style={{ animationDelay:`${i*0.35}s`, cursor: ph.videoUrl ? 'pointer' : 'default' }}
+              onClick={() => ph.videoUrl && setPhoneModal(ph.videoUrl)}
             >
-              {/* Preview: muted autoplay loop when youtubeId is set, else static placeholder */}
-              {ph.youtubeId ? (
-                <iframe
-                  src={`https://www.youtube.com/embed/${ph.youtubeId}?autoplay=1&mute=1&loop=1&playlist=${ph.youtubeId}&controls=0&playsinline=1&rel=0&modestbranding=1`}
-                  title={ph.name}
-                  allow="autoplay; encrypted-media"
-                  loading="lazy"
-                  style={{ position:'absolute', inset:0, width:'100%', height:'100%', border:0, pointerEvents:'none' }}
+              {/* Preview: muted autoplay loop when videoUrl is set, else static placeholder */}
+              {ph.videoUrl ? (
+                <video
+                  src={ph.videoUrl}
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', pointerEvents:'none' }}
                 />
               ) : (
                 <>
@@ -450,13 +451,14 @@ export default function HomePage() {
           onClick={() => setPhoneModal(null)}
           style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.88)', zIndex:1000, display:'flex', alignItems:'center', justifyContent:'center', padding:20 }}
         >
-          <div onClick={e => e.stopPropagation()} style={{ width:'100%', maxWidth:540, aspectRatio:'9/16', borderRadius:16, overflow:'hidden', position:'relative', boxShadow:'0 24px 64px rgba(0,0,0,0.6)' }}>
-            <iframe
-              src={`https://www.youtube.com/embed/${phoneModal}?autoplay=1&mute=1&rel=0&modestbranding=1`}
-              title="Category sample"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-              style={{ position:'absolute', inset:0, width:'100%', height:'100%', border:0 }}
+          <div onClick={e => e.stopPropagation()} style={{ width:'100%', maxWidth:360, aspectRatio:'9/16', borderRadius:16, overflow:'hidden', position:'relative', boxShadow:'0 24px 64px rgba(0,0,0,0.6)', background:'#000' }}>
+            <video
+              key={phoneModal}
+              src={phoneModal ?? undefined}
+              autoPlay
+              controls
+              playsInline
+              style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'contain' }}
             />
           </div>
           <button onClick={() => setPhoneModal(null)} style={{ position:'fixed', top:20, right:20, background:'rgba(255,255,255,0.12)', border:'1px solid rgba(255,255,255,0.2)', borderRadius:'50%', width:40, height:40, color:'#fff', fontSize:20, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>×</button>
