@@ -30,7 +30,6 @@ export default function PricingPage() {
   }, []);
 
   async function handleUpgrade(planName: string) {
-    if (!authUser) { router.push('/auth'); return; }
     const planKey = planName.toLowerCase();
     if (planKey === 'free') return;
     setCheckingOut(planKey);
@@ -42,6 +41,8 @@ export default function PricingPage() {
         body:    JSON.stringify({ plan: planKey, period: annual ? 'annual' : 'monthly' }),
       });
       const data = await res.json();
+      // Let the server be the auth authority — if genuinely not logged in, redirect then.
+      if (res.status === 401) { router.push('/auth'); return; }
       if (!res.ok) throw new Error(data.error ?? 'Checkout failed.');
       window.location.href = data.payment_link;
     } catch (err: any) {
