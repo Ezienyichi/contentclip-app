@@ -2,62 +2,44 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { ADMIN_EMAILS } from '@/lib/adminEmails';
 
-const publicRoutes = [
-  '/',
-  '/auth',
-  '/about',
-  '/pricing',
-  '/legal',
-  '/api/auth',
-  '/api/auth/callback',
-];
-
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  const isPublic = publicRoutes.some(
-    (route) => pathname === route || pathname.startsWith(route + '/')
+  // Always run the Supabase session refresh so that API route handlers receive
+  // a valid (possibly just-refreshed) access token in their cookies, regardless
+  // of which page the request originates from (including public pages like /pricing).
+  let response = NextResponse.next({ request });
+
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() { return request.cookies.getAll(); },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
+          response = NextResponse.next({ request });
+          cookiesToSet.forEach(({ name, value, options }) =>
+            response.cookies.set(name, value, options)
+          );
+        },
+      },
+    }
   );
 
-  if (isPublic) {
-    return NextResponse.next();
-  }
+  // Refresh session — writes updated cookies if the token was rotated.
+  const { data: { user } } = await supabase.auth.getUser();
 
-  const isAdminRoute = pathname.startsWith('/admin');
-
-  if (isAdminRoute) {
-    const response = NextResponse.next();
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() { return request.cookies.getAll(); },
-          setAll(cookiesToSet) {
-            cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-            cookiesToSet.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
-          },
-        },
-      }
-    );
-
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        return NextResponse.redirect(new URL('/auth?next=/admin', request.url));
-      }
-      if (!ADMIN_EMAILS.includes((user.email ?? '').toLowerCase())) {
-        return NextResponse.redirect(new URL('/dashboard', request.url));
-      }
-    } catch {
+  if (pathname.startsWith('/admin')) {
+    if (!user) {
       return NextResponse.redirect(new URL('/auth?next=/admin', request.url));
     }
-
-    return response;
+    if (!ADMIN_EMAILS.includes((user.email ?? '').toLowerCase())) {
+      return NextResponse.redirect(new URL('/dashboard', request.url));
+    }
   }
 
-  // Protected routes — pass through (session is validated server-side via Supabase)
-  return NextResponse.next();
+  return response;
 }
 
 export const config = {

@@ -24,6 +24,7 @@ export async function POST(req: NextRequest) {
   );
 
   const { data: { user }, error: authError } = await supabase.auth.getUser();
+  console.log('[billing/checkout] getUser →', user?.id ?? null, '| error:', authError?.message ?? null);
   if (authError || !user) return NextResponse.json({ error: 'Not authenticated.' }, { status: 401 });
   if (!user.email)        return NextResponse.json({ error: 'Account has no email.' }, { status: 400 });
 
