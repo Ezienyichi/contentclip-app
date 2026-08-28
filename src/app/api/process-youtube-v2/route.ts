@@ -64,11 +64,21 @@ export async function POST(req: NextRequest) {
     const admin = getAdmin();
     const { data: profile } = await admin
       .from('profiles')
-      .select('plan, minutes_used, minutes_reset_at')
+      .select('plan, minutes_used, minutes_reset_at, subscription_status, next_renewal_at')
       .eq('id', user.id)
       .single();
 
     if (profile) {
+      // Belt-and-suspenders lapse check: if subscription was cancelled and renewal date passed,
+      // treat them as free regardless of the plan column (cron may not have run yet).
+      if (
+        profile.subscription_status === 'cancelled' &&
+        profile.next_renewal_at &&
+        new Date(profile.next_renewal_at) < new Date()
+      ) {
+        profile.plan = 'free';
+      }
+
       // Lazy monthly reset
       const resetAt = profile.minutes_reset_at ? new Date(profile.minutes_reset_at) : new Date(0);
       const daysSinceReset = (Date.now() - resetAt.getTime()) / 86_400_000;

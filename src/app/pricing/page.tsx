@@ -22,10 +22,33 @@ export default function PricingPage() {
   const router = useRouter();
   const [annual, setAnnual] = useState(false);
   const [authUser, setAuthUser] = useState<any>(null);
+  const [checkingOut, setCheckingOut] = useState<string | null>(null);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
 
   useEffect(() => {
     createClient().auth.getUser().then(({ data }) => setAuthUser(data.user));
   }, []);
+
+  async function handleUpgrade(planName: string) {
+    if (!authUser) { router.push('/auth'); return; }
+    const planKey = planName.toLowerCase();
+    if (planKey === 'free') return;
+    setCheckingOut(planKey);
+    setCheckoutError(null);
+    try {
+      const res = await fetch('/api/billing/checkout', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ plan: planKey, period: annual ? 'annual' : 'monthly' }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'Checkout failed.');
+      window.location.href = data.payment_link;
+    } catch (err: any) {
+      setCheckoutError(err.message ?? 'Something went wrong. Please try again.');
+      setCheckingOut(null);
+    }
+  }
 
   return (
     <div className="mkt-page" style={{ background: colors.background, color: colors.onSurface, fontFamily: "'Inter',sans-serif", minHeight: '100vh' }}>
@@ -53,6 +76,13 @@ export default function PricingPage() {
             <button onClick={() => setAnnual(true)}  style={{ padding: '8px 20px', borderRadius: radius.full, border: 'none', cursor: 'pointer', background: annual ? colors.primary : 'transparent', color: annual ? '#fff' : colors.onSurfaceVariant, fontWeight: 600, fontSize: '13px', fontFamily: "'Inter',sans-serif" }}>Annual <span style={{ color: annual ? '#fff' : '#059669', fontSize: '11px' }}>–20%</span></button>
           </div>
         </div>
+
+        {checkoutError && (
+          <div style={{ maxWidth: 500, margin: '0 auto 20px', padding: '12px 16px', borderRadius: radius.md, background: 'rgba(220,38,38,0.08)', border: '1px solid rgba(220,38,38,0.2)', color: '#DC2626', fontSize: '13px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span>{checkoutError}</span>
+            <button onClick={() => setCheckoutError(null)} style={{ background: 'none', border: 'none', color: '#DC2626', cursor: 'pointer', fontSize: 18, lineHeight: 1, padding: 0 }}>×</button>
+          </div>
+        )}
 
         {/* Minutes explainer */}
         <div style={{ maxWidth: 600, margin: '0 auto 32px', padding: '14px 20px', borderRadius: radius.lg, background: colors.surfaceContainerHigh, border: '1px solid rgba(0,0,0,0.08)', fontSize: '13px', color: colors.onSurfaceVariant, lineHeight: 1.6 }}>
@@ -85,8 +115,11 @@ export default function PricingPage() {
                 <p style={{ fontSize: '12px', fontWeight: 600, color: colors.primary, margin: '0 0 20px' }}>
                   {plan.min.toLocaleString()} minutes/month
                 </p>
-                <button onClick={() => router.push('/auth')} style={{ width: '100%', background: hi ? gradients.primary : 'rgba(0,0,0,0.04)', color: hi ? '#FAF7FF' : '#1A1714', border: hi ? 'none' : '1px solid rgba(0,0,0,0.10)', padding: '12px', borderRadius: radius.md, fontWeight: 700, fontSize: '13px', cursor: 'pointer', fontFamily: "'Inter',sans-serif" }}>
-                  {dp === 0 ? 'Get Started' : 'Start Trial'}
+                <button
+                  onClick={() => dp === 0 ? router.push('/auth') : handleUpgrade(plan.name)}
+                  disabled={checkingOut === plan.name.toLowerCase()}
+                  style={{ width: '100%', background: hi ? gradients.primary : 'rgba(0,0,0,0.04)', color: hi ? '#FAF7FF' : '#1A1714', border: hi ? 'none' : '1px solid rgba(0,0,0,0.10)', padding: '12px', borderRadius: radius.md, fontWeight: 700, fontSize: '13px', cursor: 'pointer', fontFamily: "'Inter',sans-serif", opacity: checkingOut === plan.name.toLowerCase() ? 0.6 : 1 }}>
+                  {checkingOut === plan.name.toLowerCase() ? 'Redirecting…' : dp === 0 ? 'Get Started' : authUser ? 'Upgrade' : 'Get Started'}
                 </button>
               </div>
             );

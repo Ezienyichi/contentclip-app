@@ -64,11 +64,21 @@ export async function POST(req: NextRequest) {
   );
   const { data: profile } = await admin
     .from('profiles')
-    .select('plan')
+    .select('plan, subscription_status, next_renewal_at')
     .eq('id', user.id)
     .single();
 
-  const plan = (profile?.plan ?? 'free').toLowerCase();
+  // Inline lapse check: treat cancelled + expired subscriptions as free.
+  let effectivePlan = (profile?.plan ?? 'free').toLowerCase();
+  if (
+    profile?.subscription_status === 'cancelled' &&
+    profile?.next_renewal_at &&
+    new Date(profile.next_renewal_at) < new Date()
+  ) {
+    effectivePlan = 'free';
+  }
+
+  const plan = effectivePlan;
   const limits = PLAN_LIMITS[plan];
   if (!limits) {
     return NextResponse.json({ error: 'Video upload is available on Pro and Agency plans.' }, { status: 403 });

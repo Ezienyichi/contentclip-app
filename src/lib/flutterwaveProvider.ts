@@ -1,0 +1,100 @@
+// All Flutterwave-specific logic is isolated here.
+// To swap payment providers, rewrite only this file.
+
+const BASE = 'https://api.flutterwave.com/v3';
+
+function secretKey() {
+  const k = process.env.FLUTTERWAVE_SECRET_KEY;
+  if (!k) throw new Error('FLUTTERWAVE_SECRET_KEY is not set');
+  return k;
+}
+
+async function fwGet(path: string) {
+  const res = await fetch(`${BASE}${path}`, {
+    headers: { Authorization: `Bearer ${secretKey()}` },
+  });
+  const json = await res.json();
+  if (json.status !== 'success') throw new Error(json.message ?? `FW error: ${path}`);
+  return json.data;
+}
+
+async function fwPost(path: string, body: Record<string, unknown>) {
+  const res = await fetch(`${BASE}${path}`, {
+    method:  'POST',
+    headers: { Authorization: `Bearer ${secretKey()}`, 'Content-Type': 'application/json' },
+    body:    JSON.stringify(body),
+  });
+  const json = await res.json();
+  if (json.status !== 'success') throw new Error(json.message ?? `FW error: ${path}`);
+  return json.data;
+}
+
+// ── Webhook ──────────────────────────────────────────────────────────────────
+
+// Flutterwave uses a static shared secret header — not HMAC.
+// The secret is configured once in the FW dashboard and matched here.
+export function verifyWebhookHash(incomingHash: string | null): boolean {
+  const expected = process.env.FLUTTERWAVE_WEBHOOK_SECRET_HASH;
+  if (!expected || !incomingHash) return false;
+  return incomingHash === expected;
+}
+
+export interface VerifiedTx {
+  status:   string;
+  amount:   number;
+  currency: string;
+  tx_ref:   string;
+  meta:     Record<string, unknown> | null;
+  customer: { email: string };
+}
+
+export async function verifyTransaction(transactionId: number): Promise<VerifiedTx> {
+  const data = await fwGet(`/transactions/${transactionId}/verify`);
+  return {
+    status:   data.status,
+    amount:   data.amount,
+    currency: data.currency,
+    tx_ref:   data.tx_ref,
+    meta:     data.meta ?? null,
+    customer: { email: data.customer?.email ?? '' },
+  };
+}
+
+// ── Checkout ─────────────────────────────────────────────────────────────────
+
+export interface InitParams {
+  email:          string;
+  name:           string;
+  amountUSD:      number;
+  txRef:          string;
+  redirectUrl:    string;
+  meta:           Record<string, unknown>;
+  paymentPlanId?: number;
+}
+
+export async function initializePayment(p: InitParams): Promise<{ payment_link: string }> {
+  const body: Record<string, unknown> = {
+    tx_ref:       p.txRef,
+    amount:       p.amountUSD,
+    currency:     'USD',
+    redirect_url: p.redirectUrl,
+    customer:     { email: p.email, name: p.name },
+    meta:         p.meta,
+  };
+  if (p.paymentPlanId) body.payment_plan = p.paymentPlanId;
+  const data = await fwPost('/payments', body);
+  return { payment_link: data.link };
+}
+
+export async function ensurePaymentPlan(p: {
+  name: string; amountUSD: number; interval: 'monthly' | 'yearly';
+}): Promise<number> {
+  const data = await fwPost('/payment-plans', {
+    amount:   p.amountUSD,
+    name:     p.name,
+    interval: p.interval,
+    currency: 'USD',
+    duration: 0,   // unlimited until cancelled
+  });
+  return data.id as number;
+}
