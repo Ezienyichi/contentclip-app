@@ -1,8 +1,8 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase-browser';
-import Link from 'next/link';
 import DashboardLayout from '@/components/DashboardLayout';
+import UpgradeModal from '@/components/UpgradeModal';
 import ComingSoonModal from '@/components/ComingSoonModal';
 import { colors, radius } from '@/lib/tokens';
 import Icon from '@/components/Icon';
@@ -65,6 +65,7 @@ const PLATFORMS = [
 ];
 
 export default function SocialConnectionsPage() {
+  const [showUpgrade, setShowUpgrade] = useState(false);
   const [connections, setConnections] = useState<Record<string, any>>({});
   const [userPlan, setUserPlan] = useState('free');
   const [loading, setLoading] = useState(true);
@@ -205,9 +206,9 @@ export default function SocialConnectionsPage() {
                       </div>
                     </div>
                     {!isAvailable ? (
-                      <Link href="/pricing" style={{ padding: '7px 14px', borderRadius: '8px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.4)', fontSize: '12px', fontWeight: 600, textDecoration: 'none' }}>
+                      <button onClick={() => setShowUpgrade(true)} style={{ padding: '7px 14px', borderRadius: '8px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.4)', fontSize: '12px', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
                         🔒 {platform.plans[0] === 'agency' ? 'Agency' : platform.plans[0] === 'pro' ? 'Pro+' : 'Starter+'}
-                      </Link>
+                      </button>
                     ) : isConnected ? (
                       <div style={{ display: 'flex', gap: '8px' }}>
                         <span style={{ padding: '7px 14px', borderRadius: '8px', background: 'rgba(16,185,129,0.15)', color: '#6ee7b7', fontSize: '12px', fontWeight: 600 }}>Connected</span>
@@ -249,6 +250,7 @@ export default function SocialConnectionsPage() {
         </div>
       </div>
       <ComingSoonModal isOpen={showCsm} onClose={() => setShowCsm(false)} />
+      {showUpgrade && <UpgradeModal onClose={() => setShowUpgrade(false)} />}
     </DashboardLayout>
   );
 }

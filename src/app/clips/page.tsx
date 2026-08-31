@@ -4,6 +4,7 @@ import DashboardLayout from '@/components/DashboardLayout';
 import Icon from '@/components/Icon';
 import { useRouter } from 'next/navigation';
 import { colors as _colors, gradients, radius } from '@/lib/tokens';
+import UpgradeModal from '@/components/UpgradeModal';
 
 const colors = {
   ..._colors,
@@ -51,6 +52,7 @@ function fmt_bytes(b: number) {
 
 export default function ClipsPage() {
   const router = useRouter();
+  const [showUpgrade, setShowUpgrade] = useState(false);
   const [clips, setClips] = useState<Clip[]>([]);
   const [sort, setSort] = useState('Most Viral');
   const [plat, setPlat] = useState('All');
@@ -212,6 +214,8 @@ export default function ClipsPage() {
   }
 
   return (
+    <>
+    {showUpgrade && <UpgradeModal onClose={() => setShowUpgrade(false)} />}
     <DashboardLayout title="Generated Clips" subtitle={clips.length + ' clips ready'} bg="#E4E2DD" titleColor="#1A1714" subtitleColor="#6B6560">
       {/* Hidden file input */}
       <input
@@ -241,7 +245,7 @@ export default function ClipsPage() {
             </button>
           ) : (
             <button
-              onClick={() => router.push('/pricing')}
+              onClick={() => setShowUpgrade(true)}
               title="Available on Pro and Agency plans"
               style={{ display:'flex', alignItems:'center', gap:'6px', padding:'8px 16px', borderRadius:radius.full, background:'rgba(155,93,229,0.08)', color:colors.primary, border:'1px solid rgba(155,93,229,0.25)', fontWeight:600, fontSize:'12px', cursor:'pointer', fontFamily:"'Inter',sans-serif", whiteSpace:'nowrap' }}>
               <Icon name="lock" size={14}/>
@@ -372,5 +376,6 @@ export default function ClipsPage() {
         @media(max-width:640px){.clips-filters > div{flex-wrap:wrap}}
       `}</style>
     </DashboardLayout>
+    </>
   );
 }

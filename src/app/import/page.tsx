@@ -10,6 +10,7 @@ import { useTour } from '@/lib/useTour';
 import Tour from '@/components/tour/Tour';
 import TourInfoIcon from '@/components/tour/TourInfoIcon';
 import { IMPORT_STEPS } from '@/components/tour/tourSteps';
+import UpgradeModal from '@/components/UpgradeModal';
 
 const colors = {
   ..._colors,
@@ -488,6 +489,7 @@ function ClipCard({
 function LazyVideo({ url, label }: { url: string; label?: string }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const [showUpgrade, setShowUpgrade] = useState(false);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
@@ -1000,6 +1002,8 @@ export default function ImportPage() {
   };
 
   return (
+    <>
+    {showUpgrade && <UpgradeModal onClose={() => setShowUpgrade(false)} />}
     <DashboardLayout
       title="Import Video"
       subtitle="Paste a YouTube URL and AI will extract your best moments."
@@ -1556,7 +1560,7 @@ export default function ImportPage() {
                     </p>
                     <p style={{ margin: "6px 0 0", fontSize: 11, color: notEnough ? colors.error : colors.onSurfaceVariant }}>
                       {notEnough
-                        ? <><span>Not enough minutes. </span><a href="/pricing" style={{ color: colors.primary, fontWeight: 700 }}>Upgrade to continue</a></>
+                        ? <><span>Not enough minutes. </span><button onClick={() => setShowUpgrade(true)} style={{ color: colors.primary, fontWeight: 700, background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: 'inherit', fontFamily: 'inherit' }}>Upgrade to continue</button></>
                         : `You have ${minutesRemaining} min remaining`}
                     </p>
                   </div>
@@ -1965,5 +1969,6 @@ export default function ImportPage() {
         />
       )}
     </DashboardLayout>
+    </>
   );
 }

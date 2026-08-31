@@ -9,6 +9,7 @@ import { useTour } from '@/lib/useTour';
 import Tour from '@/components/tour/Tour';
 import TourInfoIcon from '@/components/tour/TourInfoIcon';
 import { DASHBOARD_STEPS } from '@/components/tour/tourSteps';
+import UpgradeModal from '@/components/UpgradeModal';
 
 type Profile = {
   plan: string;
@@ -70,6 +71,7 @@ export default function DashboardPage() {
   const router = useRouter();
   const tour = useTour('dashboard', DASHBOARD_STEPS.length);
 
+  const [showUpgrade,    setShowUpgrade]    = useState(false);
   const [loading,        setLoading]        = useState(true);
   const [profile,        setProfile]        = useState<Profile | null>(null);
   const [clipCount,      setClipCount]      = useState(0);
@@ -223,6 +225,8 @@ export default function DashboardPage() {
   // ── Render ────────────────────────────────────────────────────────────────
 
   return (
+    <>
+    {showUpgrade && <UpgradeModal onClose={() => setShowUpgrade(false)} />}
     <DashboardLayout
       title={`Welcome back${userName ? `, ${userName.split(' ')[0]}` : ''}`}
       subtitle={userEmail ?? "Here's your account at a glance."}
@@ -273,7 +277,7 @@ export default function DashboardPage() {
           </div>
           {isLow && (
             <button
-              onClick={() => router.push('/settings')}
+              onClick={() => setShowUpgrade(true)}
               style={{ fontSize: 11, fontWeight: 700, color: '#fff', background: '#F59E0B', border: 'none', padding: '6px 14px', borderRadius: radius.full, cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: "'Inter',sans-serif", flexShrink: 0 }}
             >
               Upgrade →
@@ -346,5 +350,6 @@ export default function DashboardPage() {
       <Tour steps={DASHBOARD_STEPS} isOpen={tour.isOpen} step={tour.step} onNext={tour.next} onBack={tour.back} onSkip={tour.skip} />
 
     </DashboardLayout>
+    </>
   );
 }

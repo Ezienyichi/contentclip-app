@@ -10,6 +10,7 @@ import { useTour } from '@/lib/useTour';
 import Tour from '@/components/tour/Tour';
 import TourInfoIcon from '@/components/tour/TourInfoIcon';
 import { SETTINGS_STEPS } from '@/components/tour/tourSteps';
+import UpgradeModal from '@/components/UpgradeModal';
 
 const colors = {
   ..._colors,
@@ -46,6 +47,7 @@ function fmtDate(iso: string) {
 export default function SettingsPage() {
   const router = useRouter();
   const tour = useTour('settings', SETTINGS_STEPS.length);
+  const [showUpgrade, setShowUpgrade] = useState(false);
   const [tab, setTab] = useState('profile');
 
   // Profile state
@@ -197,6 +199,7 @@ export default function SettingsPage() {
 
   return (
     <>
+      {showUpgrade && <UpgradeModal onClose={() => setShowUpgrade(false)} />}
       <DashboardLayout title="Settings" subtitle="Manage your account, plan, and preferences." bg="#E4E2DD" titleColor="#1A1714" subtitleColor="#6B6560" actions={<TourInfoIcon onClick={tour.restart} />}>
 
         {/* Toast */}
@@ -390,7 +393,7 @@ export default function SettingsPage() {
               {/* Upgrade CTA */}
               {isUpgradeable && (
                 <button
-                  onClick={() => router.push('/pricing')}
+                  onClick={() => setShowUpgrade(true)}
                   style={{ background: gradients.primary, color: '#FAF7FF', fontWeight: 700, padding: '11px 24px', borderRadius: radius.md, border: 'none', cursor: 'pointer', fontSize: '13px', fontFamily: "'Inter',sans-serif", display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                 >
                   <Icon name="upgrade" size={16} /> Upgrade Plan
