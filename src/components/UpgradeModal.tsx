@@ -5,11 +5,11 @@ import Icon from './Icon';
 import { colors, gradients, radius, shadows } from '@/lib/tokens';
 
 // Display-only prices — actual charge is enforced server-side in BILLING_PLANS
-const PLANS = [
+const PLANS: Array<{ key: string; name: string; monthly: number; annual: number; annualMo: number; minutes: number; badge?: string }> = [
   { key: 'starter', name: 'Starter', monthly: 29,  annual: 290,  annualMo: 24, minutes: 180 },
   { key: 'pro',     name: 'Pro',     monthly: 59,  annual: 590,  annualMo: 49, minutes: 400, badge: 'Most Popular' },
   { key: 'agency',  name: 'Agency',  monthly: 119, annual: 1190, annualMo: 99, minutes: 900 },
-] as const;
+];
 
 export default function UpgradeModal({ onClose }: { onClose: () => void }) {
   const router   = useRouter();
@@ -161,7 +161,7 @@ export default function UpgradeModal({ onClose }: { onClose: () => void }) {
                       minWidth:    '90px',
                     }}
                   >
-                    {isLoading ? 'Opening…' : `Get ${p.name}`}
+                    {isLoading ? 'Redirecting…' : `Choose ${p.name}`}
                   </button>
                 </div>
               );

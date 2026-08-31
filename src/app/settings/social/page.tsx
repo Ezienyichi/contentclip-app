@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase-browser';
+import Link from 'next/link';
 import DashboardLayout from '@/components/DashboardLayout';
 import UpgradeModal from '@/components/UpgradeModal';
 import ComingSoonModal from '@/components/ComingSoonModal';

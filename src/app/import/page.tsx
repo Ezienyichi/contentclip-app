@@ -489,7 +489,6 @@ function ClipCard({
 function LazyVideo({ url, label }: { url: string; label?: string }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [showUpgrade, setShowUpgrade] = useState(false);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
@@ -538,6 +537,7 @@ function LazyVideo({ url, label }: { url: string; label?: string }) {
 export default function ImportPage() {
   const router = useRouter();
 
+  const [showUpgrade, setShowUpgrade] = useState(false);
   const [videoUrl, setVideoUrl] = useState("");
   const [prompt, setPrompt] = useState(
     "Find the most engaging, hook-worthy moments with high energy and emotional impact."

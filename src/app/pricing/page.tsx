@@ -120,7 +120,7 @@ export default function PricingPage() {
                   onClick={() => dp === 0 ? router.push('/auth') : handleUpgrade(plan.name)}
                   disabled={checkingOut === plan.name.toLowerCase()}
                   style={{ width: '100%', background: hi ? gradients.primary : 'rgba(0,0,0,0.04)', color: hi ? '#FAF7FF' : '#1A1714', border: hi ? 'none' : '1px solid rgba(0,0,0,0.10)', padding: '12px', borderRadius: radius.md, fontWeight: 700, fontSize: '13px', cursor: 'pointer', fontFamily: "'Inter',sans-serif", opacity: checkingOut === plan.name.toLowerCase() ? 0.6 : 1 }}>
-                  {checkingOut === plan.name.toLowerCase() ? 'Redirecting…' : dp === 0 ? 'Get Started' : authUser ? 'Upgrade' : 'Get Started'}
+                  {checkingOut === plan.name.toLowerCase() ? 'Redirecting…' : plan.cta}
                 </button>
               </div>
             );
