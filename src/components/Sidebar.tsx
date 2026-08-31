@@ -6,6 +6,7 @@ import Icon from './Icon';
 import { colors, gradients, radius } from '@/lib/tokens';
 import { createClient } from '@/lib/supabase-browser';
 import { clearClipStorage } from '@/lib/clearClipStorage';
+import UpgradeModal from './UpgradeModal';
 
 const ADMIN_EMAIL = 'adminvangelclip@gmail.com';
 const NAV = [
@@ -21,10 +22,11 @@ const PLAN_MAX: Record<string, number> = { free: 30, solo: 180, starter: 180, pr
 export default function Sidebar() {
   const pathname  = usePathname();
   const router    = useRouter();
-  const [isAdmin,  setIsAdmin]  = useState(false);
-  const [credits,  setCredits]  = useState(0);
-  const [plan,     setPlan]     = useState<string>('free');
-  const [showMore, setShowMore] = useState(false);
+  const [isAdmin,      setIsAdmin]      = useState(false);
+  const [credits,      setCredits]      = useState(0);
+  const [plan,         setPlan]         = useState<string>('free');
+  const [showMore,     setShowMore]     = useState(false);
+  const [showUpgrade,  setShowUpgrade]  = useState(false);
 
   const isActive = (href: string) =>
     href === '/dashboard' ? pathname === '/dashboard' : pathname.startsWith(href);
@@ -78,7 +80,7 @@ export default function Sidebar() {
           <div style={{ width: `${pct}%`, height: '100%', background: gradients.cta, borderRadius: radius.full }} />
         </div>
         {plan !== 'agency' && (
-          <button onClick={() => { setShowMore(false); router.push('/pricing'); }} style={{ marginTop: '10px', fontSize: '11px', color: '#cc97ff', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: "'Inter', sans-serif" }}>
+          <button onClick={() => { setShowMore(false); setShowUpgrade(true); }} style={{ marginTop: '10px', fontSize: '11px', color: '#cc97ff', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: "'Inter', sans-serif" }}>
             Upgrade plan →
           </button>
         )}
@@ -181,9 +183,42 @@ export default function Sidebar() {
       {/* More sheet rendered at root so it covers the bottom nav */}
       {moreSheet}
 
+      {/* Floating upgrade pill — mobile only, hidden on desktop, hidden for agency */}
+      {plan !== 'agency' && (
+        <button
+          className="upgrade-fab"
+          onClick={() => setShowUpgrade(true)}
+          style={{
+            position:    'fixed',
+            bottom:      '68px',
+            right:       '14px',
+            background:  gradients.primary,
+            color:       '#fff',
+            border:      'none',
+            borderRadius:radius.full,
+            padding:     '10px 18px',
+            fontWeight:  700,
+            fontSize:    '13px',
+            cursor:      'pointer',
+            zIndex:      38,
+            display:     'none',
+            alignItems:  'center',
+            gap:         '6px',
+            boxShadow:   '0 4px 20px rgba(155,93,229,0.5)',
+            fontFamily:  "'Inter', sans-serif",
+          }}
+        >
+          <Icon name="arrow_upward" size={15} style={{ color: '#fff' }} />
+          Upgrade
+        </button>
+      )}
+
+      {/* Upgrade modal — rendered at root level so it covers everything */}
+      {showUpgrade && <UpgradeModal onClose={() => setShowUpgrade(false)} />}
+
       <style>{`
-        @media (min-width: 769px) { .sidebar-desktop { display: flex !important; } .sidebar-mobile { display: none !important; } }
-        @media (max-width: 768px) { .sidebar-desktop { display: none !important; } .sidebar-mobile { display: flex !important; } }
+        @media (min-width: 769px) { .sidebar-desktop { display: flex !important; } .sidebar-mobile { display: none !important; } .upgrade-fab { display: none !important; } }
+        @media (max-width: 768px) { .sidebar-desktop { display: none !important; } .sidebar-mobile { display: flex !important; } .upgrade-fab { display: flex !important; } }
       `}</style>
     </>
   );

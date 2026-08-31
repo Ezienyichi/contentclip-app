@@ -19,12 +19,14 @@ async function fwGet(path: string) {
 }
 
 async function fwPost(path: string, body: Record<string, unknown>) {
+  console.log(`[FW] POST ${path} payload:`, JSON.stringify(body));
   const res = await fetch(`${BASE}${path}`, {
     method:  'POST',
     headers: { Authorization: `Bearer ${secretKey()}`, 'Content-Type': 'application/json' },
     body:    JSON.stringify(body),
   });
   const json = await res.json();
+  console.log(`[FW] POST ${path} http=${res.status} response:`, JSON.stringify(json));
   if (json.status !== 'success') throw new Error(json.message ?? `FW error: ${path}`);
   return json.data;
 }
