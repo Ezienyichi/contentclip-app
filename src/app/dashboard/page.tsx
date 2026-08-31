@@ -278,7 +278,7 @@ export default function DashboardPage() {
           </div>
           {isUpgradeable && (
             <button
-              onClick={() => setShowUpgrade(true)}
+              onClick={() => { console.log('>>> DASHBOARD UPGRADE CLICKED, showUpgrade will be true'); setShowUpgrade(true); }}
               style={{ fontSize: 11, fontWeight: 700, color: isLow ? '#fff' : colors.primary, background: isLow ? '#F59E0B' : 'rgba(155,93,229,0.1)', border: isLow ? 'none' : '1px solid rgba(155,93,229,0.3)', padding: '6px 14px', borderRadius: radius.full, cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: "'Inter',sans-serif", flexShrink: 0 }}
             >
               {isLow ? 'Upgrade →' : 'Upgrade Plan'}

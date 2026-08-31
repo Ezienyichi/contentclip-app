@@ -86,10 +86,9 @@ export default function Tour({ steps, isOpen, step, onNext, onBack, onSkip }: Pr
 
   return (
     <>
-      {/* Backdrop — clicking it skips the tour */}
+      {/* Backdrop — visual dim only, pointer-events:none so it never intercepts clicks */}
       <div
-        onClick={onSkip}
-        style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.50)', zIndex: 9000 }}
+        style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.40)', zIndex: 9000, pointerEvents: 'none' }}
       />
 
       {/* Purple highlight ring around target element */}
