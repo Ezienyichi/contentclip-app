@@ -155,12 +155,13 @@ export default function DashboardPage() {
 
   // ── Derived: usage bar ────────────────────────────────────────────────────
 
-  const planLimit       = PLAN_LIMITS[profile?.plan ?? 'free'] ?? 30;
-  const minutesUsed     = profile?.minutes_used ?? 0;
+  const planLimit        = PLAN_LIMITS[profile?.plan ?? 'free'] ?? 30;
+  const minutesUsed      = profile?.minutes_used ?? 0;
   const minutesRemaining = Math.max(0, planLimit - minutesUsed);
-  const usagePct        = Math.min(100, planLimit > 0 ? (minutesUsed / planLimit) * 100 : 0);
-  const isLow           = usagePct >= 80;
-  const planLabel       = profile ? (profile.plan.charAt(0).toUpperCase() + profile.plan.slice(1)) : 'Free';
+  const usagePct         = Math.min(100, planLimit > 0 ? (minutesUsed / planLimit) * 100 : 0);
+  const isLow            = usagePct >= 80;
+  const planLabel        = profile ? (profile.plan.charAt(0).toUpperCase() + profile.plan.slice(1)) : 'Free';
+  const isUpgradeable    = !['agency'].includes(profile?.plan ?? 'free');
 
   // ── Derived: activity feed ────────────────────────────────────────────────
 
@@ -275,12 +276,12 @@ export default function DashboardPage() {
               <div style={{ height: '100%', width: `${usagePct}%`, background: isLow ? '#F59E0B' : colors.primary, borderRadius: 3, transition: 'width 0.5s' }} />
             </div>
           </div>
-          {isLow && (
+          {isUpgradeable && (
             <button
               onClick={() => setShowUpgrade(true)}
-              style={{ fontSize: 11, fontWeight: 700, color: '#fff', background: '#F59E0B', border: 'none', padding: '6px 14px', borderRadius: radius.full, cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: "'Inter',sans-serif", flexShrink: 0 }}
+              style={{ fontSize: 11, fontWeight: 700, color: isLow ? '#fff' : colors.primary, background: isLow ? '#F59E0B' : 'rgba(155,93,229,0.1)', border: isLow ? 'none' : '1px solid rgba(155,93,229,0.3)', padding: '6px 14px', borderRadius: radius.full, cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: "'Inter',sans-serif", flexShrink: 0 }}
             >
-              Upgrade →
+              {isLow ? 'Upgrade →' : 'Upgrade Plan'}
             </button>
           )}
         </div>

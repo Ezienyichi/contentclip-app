@@ -61,9 +61,11 @@ export default function Sidebar() {
     router.push(href);
   };
 
-  // ── Usage widget (reused in desktop sidebar + mobile More sheet) ──────────
+  // ── Usage widget — called as a function, NOT as <UsageWidget /> ──────────
+  // Using it as a JSX component would create a new function reference each render,
+  // causing React to unmount/remount it and swallow the setShowUpgrade state update.
 
-  const UsageWidget = ({ compact }: { compact?: boolean }) => {
+  function renderUsageWidget(compact?: boolean) {
     const maxCr = PLAN_MAX[plan.toLowerCase()] ?? 30;
     const pct   = Math.min(100, maxCr > 0 ? Math.round((credits / maxCr) * 100) : 0);
     return (
@@ -86,7 +88,7 @@ export default function Sidebar() {
         )}
       </div>
     );
-  };
+  }
 
   // ── Bottom-item buttons (Support, Sign Out) ───────────────────────────────
 
@@ -133,7 +135,7 @@ export default function Sidebar() {
         })}
       </nav>
 
-      <UsageWidget />
+      {renderUsageWidget()}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
         <BottomActions />
       </div>
@@ -147,7 +149,7 @@ export default function Sidebar() {
       <div onClick={() => setShowMore(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 49 }} />
       <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: colors.surfaceContainerLowest, borderRadius: '20px 20px 0 0', padding: '0 16px 32px', zIndex: 51, border: '1px solid rgba(255,255,255,0.06)', borderBottom: 'none' }}>
         <div style={{ width: 36, height: 4, background: 'rgba(255,255,255,0.18)', borderRadius: 2, margin: '12px auto 20px' }} />
-        <UsageWidget compact />
+        {renderUsageWidget(true)}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
           <BottomActions large />
         </div>
