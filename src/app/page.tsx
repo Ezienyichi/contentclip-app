@@ -321,7 +321,7 @@ export default function HomePage() {
       </div>
 
       {/* ══ HERO ═══════════════════════════════════════════════════════════════ */}
-      <section style={{ maxWidth:mkt.maxW, margin:'0 auto', padding:'78px 28px 8px', textAlign:'center', minHeight:600, position:'relative' }}>
+      <section style={{ maxWidth:mkt.maxW, margin:'0 auto', padding:'78px 28px 8px', textAlign:'center', minHeight:600, position:'relative', backgroundImage:['repeating-linear-gradient(0deg,transparent 0,transparent 39px,rgba(0,0,0,0.07) 39px,rgba(0,0,0,0.07) 40px)','repeating-linear-gradient(90deg,transparent 0,transparent 39px,rgba(0,0,0,0.07) 39px,rgba(0,0,0,0.07) 40px)'].join(',') }}>
 
         <h1 style={{ fontFamily:mkt.fontHead, fontWeight:800, fontSize:'clamp(32px,6vw,62px)', lineHeight:1.04, letterSpacing:'-.03em', margin:'0 auto 20px', maxWidth:820 }}>
           Spread your Content.<br />
