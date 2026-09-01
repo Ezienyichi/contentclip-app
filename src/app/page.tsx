@@ -85,7 +85,14 @@ const FEATURE_IMGS = [
 const DEMO_VIDEO_ID = '';   // How-it-works walkthrough — shown in the "Demo" section below
 const WHY_IMAGE_SRC  = '';  // Image for the right column of "Why VangelClip?" — e.g. '/images/why-vangelclip.jpg'
 
-// PLANS is now imported from @/lib/pricingData as PLAN_DATA — single source of truth
+// NGN prices — kept in sync with UpgradeModal.tsx and pricing/page.tsx
+const NGN: Record<string, { monthly: number; annual: number; annualMo: number }> = {
+  Free:    { monthly: 0,       annual: 0,        annualMo: 0       },
+  Starter: { monthly: 39000,   annual: 390000,   annualMo: 32500   },
+  Pro:     { monthly: 79000,   annual: 790000,   annualMo: 65833   },
+  Agency:  { monthly: 159000,  annual: 1590000,  annualMo: 132500  },
+};
+function fmtNGN(n: number) { return n === 0 ? '0' : n.toLocaleString(); }
 
 const FAQS = [
   { q: 'What does "minutes" mean?',      a: 'Minutes are the total length of video you process each month. A 40-minute sermon uses 40 minutes, no matter how many clips you generate from it.' },
@@ -106,6 +113,7 @@ export default function HomePage() {
   const [menuOpen,   setMenuOpen]   = useState(false);
   const [heroUrl,    setHeroUrl]    = useState('');
   const [annual,     setAnnual]     = useState(false);
+  const [currency,   setCurrency]   = useState<'NGN'|'USD'>('NGN');
   const [openFaq,    setOpenFaq]    = useState<number | null>(null);
   const [tableOpen,  setTableOpen]  = useState(false);
   const [authUser,      setAuthUser]      = useState<any>(null);
@@ -273,8 +281,6 @@ export default function HomePage() {
         .vc-hero-cta:focus-visible, .vc-hamburger:focus-visible,
         .vc-pill-active:focus-visible, .vc-pill-inactive:focus-visible { outline:2px solid ${mkt.brand}; outline-offset:2px; border-radius:${mkt.r}; }
         a:focus-visible { outline:2px solid ${mkt.brand}; outline-offset:2px; border-radius:3px; }
-        .vc-hero-icon { position:absolute; pointer-events:none; user-select:none; }
-        @media (max-width:900px) { .vc-hero-icon { display:none; } }
       `}</style>
 
       {/* ══ NAV ════════════════════════════════════════════════════════════════ */}
@@ -316,60 +322,6 @@ export default function HomePage() {
 
       {/* ══ HERO ═══════════════════════════════════════════════════════════════ */}
       <section style={{ maxWidth:mkt.maxW, margin:'0 auto', padding:'78px 28px 8px', textAlign:'center', minHeight:600, position:'relative' }}>
-
-        {/* Music note — upper left */}
-        <span className="vc-hero-icon" style={{ top:85, left:38, transform:'rotate(-15deg)' }}>
-          <svg width="34" height="42" viewBox="0 0 34 42" fill="none">
-            <line x1="21" y1="4" x2="21" y2="33" stroke={mkt.brand} strokeWidth="2.5" strokeLinecap="round"/>
-            <path d="M21 4 C29 8 30 17 25 23" stroke={mkt.brand} strokeWidth="2.5" strokeLinecap="round" fill="none"/>
-            <ellipse cx="13" cy="35" rx="10" ry="6.5" transform="rotate(-15 13 35)" fill={mkt.brand}/>
-          </svg>
-        </span>
-
-        {/* Microphone — upper right */}
-        <span className="vc-hero-icon" style={{ top:52, right:38, transform:'rotate(10deg)' }}>
-          <svg width="28" height="46" viewBox="0 0 28 46" fill="none">
-            <rect x="7" y="1" width="14" height="22" rx="7" fill={mkt.brand} opacity="0.18"/>
-            <rect x="7" y="1" width="14" height="22" rx="7" stroke={mkt.brand} strokeWidth="2.5"/>
-            <line x1="10" y1="9"  x2="18" y2="9"  stroke={mkt.brand} strokeWidth="1.5" strokeLinecap="round" opacity="0.5"/>
-            <line x1="10" y1="14" x2="18" y2="14" stroke={mkt.brand} strokeWidth="1.5" strokeLinecap="round" opacity="0.5"/>
-            <path d="M2 20 C2 35 26 35 26 20" stroke={mkt.brand} strokeWidth="2.5" strokeLinecap="round" fill="none"/>
-            <line x1="14" y1="35" x2="14" y2="42" stroke={mkt.brand} strokeWidth="2.5" strokeLinecap="round"/>
-            <line x1="6"  y1="42" x2="22" y2="42" stroke={mkt.brand} strokeWidth="2.5" strokeLinecap="round"/>
-          </svg>
-        </span>
-
-        {/* Chat bubble — left middle */}
-        <span className="vc-hero-icon" style={{ top:218, left:14, transform:'rotate(-8deg)' }}>
-          <svg width="44" height="40" viewBox="0 0 44 40" fill="none">
-            <rect x="2" y="2" width="40" height="28" rx="9" fill={mkt.brand} opacity="0.12"/>
-            <rect x="2" y="2" width="40" height="28" rx="9" stroke={mkt.brand} strokeWidth="2.5"/>
-            <line x1="11" y1="12" x2="33" y2="12" stroke={mkt.brand} strokeWidth="2" strokeLinecap="round"/>
-            <line x1="11" y1="20" x2="25" y2="20" stroke={mkt.brand} strokeWidth="2" strokeLinecap="round"/>
-            <path d="M10 30 L6 39 L20 30" fill={mkt.brand} opacity="0.12"/>
-            <path d="M10 30 L6 39 L20 30" stroke={mkt.brand} strokeWidth="2" strokeLinejoin="round" fill="none"/>
-          </svg>
-        </span>
-
-        {/* Heart — right middle */}
-        <span className="vc-hero-icon" style={{ top:198, right:18, transform:'rotate(8deg)' }}>
-          <svg width="38" height="34" viewBox="0 0 38 34" fill="none">
-            <path d="M19 31C17 29 2 20 2 10C2 5.8 5.4 3 9.5 3C13 3 16 5 19 8.5C22 5 25 3 28.5 3C32.6 3 36 5.8 36 10C36 20 21 29 19 31Z" fill={mkt.brand}/>
-          </svg>
-        </span>
-
-        {/* Hands holding phone — lower right */}
-        <span className="vc-hero-icon" style={{ bottom:68, right:42, transform:'rotate(5deg)' }}>
-          <svg width="46" height="52" viewBox="0 0 46 52" fill="none">
-            <rect x="12" y="1"  width="22" height="37" rx="5" fill={mkt.brand} opacity="0.15"/>
-            <rect x="12" y="1"  width="22" height="37" rx="5" stroke={mkt.brand} strokeWidth="2.5"/>
-            <rect x="15" y="5"  width="16" height="24" rx="2" fill={mkt.brand} opacity="0.2"/>
-            <line x1="18" y1="33" x2="28" y2="33" stroke={mkt.brand} strokeWidth="2" strokeLinecap="round"/>
-            <path d="M4 44 C4 40 12 38 12 38"        stroke={mkt.brand} strokeWidth="2.5" strokeLinecap="round" fill="none"/>
-            <path d="M42 44 C42 40 34 38 34 38"      stroke={mkt.brand} strokeWidth="2.5" strokeLinecap="round" fill="none"/>
-            <path d="M4 44 Q4 50 23 50 Q42 50 42 44" stroke={mkt.brand} strokeWidth="2.5" strokeLinecap="round" fill="none"/>
-          </svg>
-        </span>
 
         <h1 style={{ fontFamily:mkt.fontHead, fontWeight:800, fontSize:'clamp(32px,6vw,62px)', lineHeight:1.04, letterSpacing:'-.03em', margin:'0 auto 20px', maxWidth:820 }}>
           Spread your Content.<br />
@@ -654,8 +606,15 @@ export default function HomePage() {
           <p style={{ fontSize:16, color:mkt.muted, margin:0 }}>Start free. Upgrade when you&apos;re ready.</p>
         </div>
 
-        {/* Toggle */}
-        <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:9, marginBottom:42 }}>
+        {/* Toggles */}
+        <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:10, marginBottom:42 }}>
+          {/* Currency toggle */}
+          <div style={{ display:'inline-flex', background:mkt.surface, border:`1px solid ${mkt.border}`, borderRadius:100, padding:4, boxShadow:`inset 1px 1px 0 ${mkt.edge}` }}>
+            <button onClick={() => setCurrency('NGN')} className={currency === 'NGN' ? 'vc-pill-active' : 'vc-pill-inactive'}>₦ Naira</button>
+            <button onClick={() => setCurrency('USD')} className={currency === 'USD' ? 'vc-pill-active' : 'vc-pill-inactive'}>$ USD</button>
+          </div>
+          <p style={{ fontSize:12, color:mkt.muted, margin:0 }}>Pay in Naira with local cards/transfer, or USD with international cards.</p>
+          {/* Monthly / Annual toggle */}
           <div style={{ display:'inline-flex', background:mkt.surface, border:`1px solid ${mkt.border}`, borderRadius:100, padding:4, boxShadow:`inset 1px 1px 0 ${mkt.edge}` }}>
             <button onClick={() => setAnnual(false)} className={annual ? 'vc-pill-inactive' : 'vc-pill-active'}>Monthly</button>
             <button onClick={() => setAnnual(true)}  className={annual ? 'vc-pill-active'   : 'vc-pill-inactive'}>Annual</button>
@@ -675,8 +634,10 @@ export default function HomePage() {
               <h3 style={{ fontFamily:mkt.fontHead, fontWeight:800, fontSize:18, letterSpacing:'.02em', margin:'0 0 4px' }}>{plan.name.toUpperCase()}</h3>
               <p style={{ fontSize:13.5, color:mkt.muted, margin:'0 0 18px', minHeight:20 }}>{plan.tagline}</p>
               <div style={{ display:'flex', alignItems:'baseline', gap:4 }}>
-                <span style={{ fontFamily:mkt.fontHead, fontWeight:800, fontSize:42, letterSpacing:'-.03em' }}>
-                  ${annual ? plan.annual : plan.monthly}
+                <span style={{ fontFamily:mkt.fontHead, fontWeight:800, fontSize: currency === 'NGN' && plan.monthly > 0 ? 32 : 42, letterSpacing:'-.03em' }}>
+                  {currency === 'NGN'
+                    ? `₦${fmtNGN(annual ? NGN[plan.name].annualMo : NGN[plan.name].monthly)}`
+                    : `$${annual ? plan.annual : plan.monthly}`}
                 </span>
                 <span style={{ fontSize:15, color:mkt.muted, fontWeight:500 }}>/mo</span>
               </div>
@@ -684,7 +645,7 @@ export default function HomePage() {
                 {plan.monthly === 0
                   ? 'Free forever'
                   : annual
-                    ? `Billed annually ($${plan.annualTotal}/yr)`
+                    ? `Billed annually (${currency === 'NGN' ? `₦${fmtNGN(NGN[plan.name].annual)}` : `$${plan.annualTotal}`}/yr)`
                     : 'Billed monthly'}
               </div>
               <button onClick={() => router.push('/auth?mode=signup')} style={planCta(plan.popular)}>{plan.cta}</button>
