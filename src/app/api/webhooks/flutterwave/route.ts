@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { verifyWebhookHash, verifyTransaction } from '@/lib/flutterwaveProvider';
-import { BILLING_PLANS, isPlanKey, isPeriod, renewalDays } from '@/lib/billingConfig';
+import {
+  BILLING_PLANS, isPlanKey, isPeriod, isCurrency, renewalDays,
+  type Currency,
+} from '@/lib/billingConfig';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,9 +33,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true });
   }
 
-  // ② Call Flutterwave's verify API — hits FW's own servers, separate from the webhook.
-  //    This is the authoritative confirmation: status, amount, and currency come
-  //    from FW directly, not from the (potentially tampered) webhook payload.
+  // ② Call Flutterwave's verify API — authoritative confirmation separate from webhook payload.
   let verified: Awaited<ReturnType<typeof verifyTransaction>>;
   try {
     verified = await verifyTransaction(transactionId);
@@ -45,15 +46,18 @@ export async function POST(req: NextRequest) {
   const plan   = meta.plan   as string;
   const period = meta.period as string;
 
-  // ② a — status must be 'successful' per FW verify response (not the webhook payload)
+  // ② a — status must be 'successful' per FW verify response
   if (verified.status !== 'successful') {
     console.warn('[fw-webhook] not successful:', verified.status, '| tx_ref:', verified.tx_ref);
     return NextResponse.json({ ok: true });
   }
 
-  // ② b — currency must be USD
-  if (verified.currency !== 'USD') {
-    console.warn('[fw-webhook] unexpected currency:', verified.currency, '| tx_ref:', verified.tx_ref);
+  // ② b — currency must be USD or NGN; must match what was declared at checkout in meta
+  const metaCurrency = meta.currency as string | undefined;
+  const currency: Currency = isCurrency(metaCurrency) ? metaCurrency : (isCurrency(verified.currency) ? verified.currency as Currency : 'USD');
+
+  if (!isCurrency(verified.currency) || verified.currency !== currency) {
+    console.warn('[fw-webhook] currency mismatch — meta:', currency, '| verified:', verified.currency, '| tx_ref:', verified.tx_ref);
     return NextResponse.json({ ok: true });
   }
 
@@ -63,11 +67,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true });
   }
 
-  // ② d — verified amount must meet or exceed server-side expected amount.
+  // ② d — verified amount must meet or exceed server-side expected amount for this currency.
   //    Uses the server-side BILLING_PLANS config — never the webhook payload amount.
-  const expectedAmount = BILLING_PLANS[plan][period];
+  const expectedAmount = BILLING_PLANS[plan][currency][period];
   if (verified.amount < expectedAmount) {
-    console.error('[fw-webhook] amount too low — expected:', expectedAmount,
+    console.error('[fw-webhook] amount too low — expected:', expectedAmount, currency,
       '| got:', verified.amount, '| tx_ref:', verified.tx_ref);
     return NextResponse.json({ ok: true });
   }
@@ -96,8 +100,6 @@ export async function POST(req: NextRequest) {
   }
 
   // ⑤ Idempotency — if this tx_ref is already in transactions, skip all updates.
-  //    tx_ref has a UNIQUE constraint so the insert would fail anyway, but checking
-  //    first avoids the unnecessary profile update attempt on duplicates.
   const { data: existing } = await admin
     .from('transactions')
     .select('id')
@@ -110,11 +112,11 @@ export async function POST(req: NextRequest) {
   }
 
   // Insert transaction first — this is the idempotency anchor.
-  // If the profile update below fails and FW retries, the check above catches it.
   const { error: txErr } = await admin.from('transactions').insert({
     user_id:   userId,
     reference: verified.tx_ref,
     amount:    verified.amount,
+    currency,
     plan,
     period,
     status:    'completed',
@@ -131,13 +133,13 @@ export async function POST(req: NextRequest) {
   const nextRenewal = new Date(now.getTime() + renewalDays(period) * 86_400_000);
 
   const { error: profileErr } = await admin.from('profiles').update({
-    plan,                                         // ③ the column all gates read
+    plan,
     billing_period:      period,
     subscription_status: 'active',
     subscription_start:  now.toISOString(),
     next_renewal_at:     nextRenewal.toISOString(),
     payment_customer_id: verified.customer.email ?? null,
-    minutes_used:        0,                       // reset quota on plan change
+    minutes_used:        0,
   }).eq('id', userId);
 
   if (profileErr) {
@@ -145,6 +147,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'DB error.' }, { status: 500 });
   }
 
-  console.log('[fw-webhook] applied — user:', userId, 'plan:', plan, 'period:', period);
+  console.log('[fw-webhook] applied — user:', userId, 'plan:', plan, 'period:', period, 'currency:', currency);
   return NextResponse.json({ ok: true });
 }

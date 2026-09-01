@@ -3,8 +3,8 @@ import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { randomUUID } from 'crypto';
 import {
-  BILLING_PLANS, isPlanKey, isPeriod,
-  type PlanKey, type Period,
+  BILLING_PLANS, isPlanKey, isPeriod, isCurrency,
+  type PlanKey, type Period, type Currency,
 } from '@/lib/billingConfig';
 import { initializePayment, ensurePaymentPlan } from '@/lib/flutterwaveProvider';
 
@@ -28,25 +28,27 @@ export async function POST(req: NextRequest) {
   if (authError || !user) return NextResponse.json({ error: 'Not authenticated.' }, { status: 401 });
   if (!user.email)        return NextResponse.json({ error: 'Account has no email.' }, { status: 400 });
 
-  let plan: PlanKey, period: Period;
+  let plan: PlanKey, period: Period, currency: Currency;
   try {
     const body = await req.json();
-    plan   = body.plan;
-    period = body.period;
+    plan     = body.plan;
+    period   = body.period;
+    currency = body.currency ?? 'NGN';
   } catch {
     return NextResponse.json({ error: 'Invalid request body.' }, { status: 400 });
   }
 
-  console.log('[checkout] (b) plan:', plan, '| period:', period);
-  if (!isPlanKey(plan))  return NextResponse.json({ error: 'Invalid plan.'   }, { status: 400 });
-  if (!isPeriod(period)) return NextResponse.json({ error: 'Invalid period.' }, { status: 400 });
+  console.log('[checkout] (b) plan:', plan, '| period:', period, '| currency:', currency);
+  if (!isPlanKey(plan))      return NextResponse.json({ error: 'Invalid plan.'     }, { status: 400 });
+  if (!isPeriod(period))     return NextResponse.json({ error: 'Invalid period.'   }, { status: 400 });
+  if (!isCurrency(currency)) return NextResponse.json({ error: 'Invalid currency.' }, { status: 400 });
 
-  const amountUSD = BILLING_PLANS[plan][period];
-  const txRef     = randomUUID();
-  const origin    = req.headers.get('origin') ?? process.env.NEXT_PUBLIC_APP_URL ?? '';
+  const amount     = BILLING_PLANS[plan][currency][period];
+  const txRef      = randomUUID();
+  const origin     = req.headers.get('origin') ?? process.env.NEXT_PUBLIC_APP_URL ?? '';
   const redirectUrl = `${origin}/billing/success?plan=${plan}&period=${period}`;
 
-  console.log('[checkout] amountUSD:', amountUSD, '| redirectUrl:', redirectUrl);
+  console.log('[checkout] amount:', amount, currency, '| redirectUrl:', redirectUrl);
   console.log('[checkout] FW key set:', !!process.env.FLUTTERWAVE_SECRET_KEY);
 
   // Attach a Flutterwave payment plan for auto-renewal. Non-fatal if it fails.
@@ -54,7 +56,7 @@ export async function POST(req: NextRequest) {
   try {
     const interval = period === 'annual' ? 'yearly' : 'monthly';
     const planName = `VangelClip ${plan[0].toUpperCase() + plan.slice(1)} (${interval})`;
-    paymentPlanId = await ensurePaymentPlan({ name: planName, amountUSD, interval });
+    paymentPlanId = await ensurePaymentPlan({ name: planName, amount, currency, interval });
     console.log('[checkout] payment plan id:', paymentPlanId);
   } catch (err) {
     console.warn('[checkout] Could not attach FW payment plan (non-fatal):', String(err));
@@ -66,7 +68,8 @@ export async function POST(req: NextRequest) {
     const result = await initializePayment({
       email:   user.email,
       name:    (user.user_metadata?.full_name as string | undefined) ?? user.email,
-      amountUSD,
+      amount,
+      currency,
       txRef,
       redirectUrl,
       paymentPlanId,
@@ -74,6 +77,7 @@ export async function POST(req: NextRequest) {
         user_id: user.id,
         plan,
         period,
+        currency,
       },
     });
     payment_link = result.payment_link;

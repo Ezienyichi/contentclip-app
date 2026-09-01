@@ -116,18 +116,18 @@ export default function DashboardPage() {
       setUserId(user.id);
       Promise.all([
         supabase.from('profiles').select('plan, credits, full_name, minutes_used').eq('id', user.id).single(),
-        supabase.from('clip_jobs').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
+        supabase.from('clips').select('source_video_name').eq('user_id', user.id).not('source_video_name', 'is', null),
         supabase.from('clips').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
         supabase.from('scheduled_posts').select('id', { count: 'exact', head: true }).eq('user_id', user.id).eq('status', 'scheduled'),
         supabase.from('scheduled_posts').select('id', { count: 'exact', head: true }).eq('user_id', user.id).eq('status', 'published'),
         supabase.from('clips').select('id, source_video_name, created_at').eq('user_id', user.id).order('created_at', { ascending: false }).limit(50),
         supabase.from('scheduled_posts').select('id, platform, status, scheduled_at, published_url, created_at').eq('user_id', user.id).order('created_at', { ascending: false }).limit(10),
-      ]).then(([profileRes, jobCountRes, clipsRes, scheduledRes, publishedRes, recentClipsRes, recentPostsRes]) => {
+      ]).then(([profileRes, projectNamesRes, clipsRes, scheduledRes, publishedRes, recentClipsRes, recentPostsRes]) => {
         if (profileRes.data) {
           setProfile(profileRes.data as Profile);
           setUserName((profileRes.data as any).full_name ?? null);
         }
-        setJobTotal(jobCountRes.count ?? 0);
+        setJobTotal(new Set(projectNamesRes.data?.map(r => r.source_video_name)).size);
         setClipCount(clipsRes.count ?? 0);
         setScheduledCount(scheduledRes.count ?? 0);
         setPublishedCount(publishedRes.count ?? 0);

@@ -34,7 +34,6 @@ async function fwPost(path: string, body: Record<string, unknown>) {
 // ── Webhook ──────────────────────────────────────────────────────────────────
 
 // Flutterwave uses a static shared secret header — not HMAC.
-// The secret is configured once in the FW dashboard and matched here.
 export function verifyWebhookHash(incomingHash: string | null): boolean {
   const expected = process.env.FLUTTERWAVE_WEBHOOK_SECRET_HASH;
   if (!expected || !incomingHash) return false;
@@ -67,7 +66,8 @@ export async function verifyTransaction(transactionId: number): Promise<Verified
 export interface InitParams {
   email:          string;
   name:           string;
-  amountUSD:      number;
+  amount:         number;
+  currency:       'USD' | 'NGN';
   txRef:          string;
   redirectUrl:    string;
   meta:           Record<string, unknown>;
@@ -75,13 +75,22 @@ export interface InitParams {
 }
 
 export async function initializePayment(p: InitParams): Promise<{ payment_link: string }> {
+  const planLabel = typeof p.meta.plan === 'string'
+    ? p.meta.plan.charAt(0).toUpperCase() + p.meta.plan.slice(1)
+    : 'Subscription';
+
   const body: Record<string, unknown> = {
     tx_ref:       p.txRef,
-    amount:       p.amountUSD,
-    currency:     'USD',
+    amount:       p.amount,
+    currency:     p.currency,
     redirect_url: p.redirectUrl,
     customer:     { email: p.email, name: p.name },
     meta:         p.meta,
+    customizations: {
+      title:       'VangelClip',
+      description: `VangelClip subscription – ${planLabel}`,
+      logo:        process.env.NEXT_PUBLIC_LOGO_URL ?? '',
+    },
   };
   if (p.paymentPlanId) body.payment_plan = p.paymentPlanId;
   const data = await fwPost('/payments', body);
@@ -89,14 +98,14 @@ export async function initializePayment(p: InitParams): Promise<{ payment_link: 
 }
 
 export async function ensurePaymentPlan(p: {
-  name: string; amountUSD: number; interval: 'monthly' | 'yearly';
+  name: string; amount: number; currency: 'USD' | 'NGN'; interval: 'monthly' | 'yearly';
 }): Promise<number> {
   const data = await fwPost('/payment-plans', {
-    amount:   p.amountUSD,
+    amount:   p.amount,
     name:     p.name,
     interval: p.interval,
-    currency: 'USD',
-    duration: 0,   // unlimited until cancelled
+    currency: p.currency,
+    duration: 0,
   });
   return data.id as number;
 }

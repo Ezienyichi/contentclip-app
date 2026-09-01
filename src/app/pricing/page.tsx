@@ -6,6 +6,8 @@ import { colors as _colors, gradients, radius, shadows } from '@/lib/tokens';
 import { PLAN_DATA, COMPARISON_KEYS } from '@/lib/pricingData';
 import { createClient } from '@/lib/supabase-browser';
 
+type Currency = 'NGN' | 'USD';
+
 const colors = {
   ..._colors,
   background:              '#E4E2DD',
@@ -18,11 +20,22 @@ const colors = {
   outlineVariant:          'rgba(0,0,0,0.10)',
 };
 
+// NGN prices keyed by plan name — amounts enforced server-side in BILLING_PLANS
+const NGN: Record<string, { monthly: number; annual: number; annualMo: number }> = {
+  Free:    { monthly: 0,       annual: 0,        annualMo: 0       },
+  Starter: { monthly: 39000,   annual: 390000,   annualMo: 32500   },
+  Pro:     { monthly: 79000,   annual: 790000,   annualMo: 65833   },
+  Agency:  { monthly: 159000,  annual: 1590000,  annualMo: 132500  },
+};
+
+function fmtNGN(n: number) { return n === 0 ? '0' : n.toLocaleString(); }
+
 export default function PricingPage() {
   const router = useRouter();
-  const [annual, setAnnual] = useState(false);
-  const [authUser, setAuthUser] = useState<any>(null);
-  const [checkingOut, setCheckingOut] = useState<string | null>(null);
+  const [annual,        setAnnual]        = useState(false);
+  const [currency,      setCurrency]      = useState<Currency>('NGN');
+  const [authUser,      setAuthUser]      = useState<any>(null);
+  const [checkingOut,   setCheckingOut]   = useState<string | null>(null);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -38,10 +51,9 @@ export default function PricingPage() {
       const res = await fetch('/api/billing/checkout', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ plan: planKey, period: annual ? 'annual' : 'monthly' }),
+        body:    JSON.stringify({ plan: planKey, period: annual ? 'annual' : 'monthly', currency }),
       });
       const data = await res.json();
-      // Let the server be the auth authority — if genuinely not logged in, redirect then.
       if (res.status === 401) { router.push('/auth'); return; }
       if (!res.ok) throw new Error(data.error ?? 'Checkout failed.');
       window.location.href = data.payment_link;
@@ -69,12 +81,35 @@ export default function PricingPage() {
       </nav>
 
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '48px 24px 96px' }}>
-        <div style={{ textAlign: 'center', marginBottom: '48px' }}>
+        <div style={{ textAlign: 'center', marginBottom: '40px' }}>
           <h1 style={{ fontSize: '40px', fontWeight: 800, marginBottom: '12px', color: '#1A1714' }}>Choose Your Plan</h1>
           <p style={{ color: colors.onSurfaceVariant, fontSize: '16px', marginBottom: '28px' }}>Start free. Upgrade when you&apos;re ready.</p>
+
+          {/* Currency toggle */}
+          <div style={{ marginBottom: '16px' }}>
+            <div style={{ display: 'inline-flex', background: colors.surfaceContainerHigh, borderRadius: radius.full, padding: '4px', border: '1px solid rgba(0,0,0,0.08)', marginBottom: '8px' }}>
+              <button
+                onClick={() => setCurrency('NGN')}
+                style={{ padding: '8px 20px', borderRadius: radius.full, border: 'none', cursor: 'pointer', background: currency === 'NGN' ? colors.primary : 'transparent', color: currency === 'NGN' ? '#fff' : colors.onSurfaceVariant, fontWeight: 700, fontSize: '13px', fontFamily: "'Inter',sans-serif", transition: 'background 0.15s' }}
+              >
+                ₦ Naira
+              </button>
+              <button
+                onClick={() => setCurrency('USD')}
+                style={{ padding: '8px 20px', borderRadius: radius.full, border: 'none', cursor: 'pointer', background: currency === 'USD' ? colors.primary : 'transparent', color: currency === 'USD' ? '#fff' : colors.onSurfaceVariant, fontWeight: 700, fontSize: '13px', fontFamily: "'Inter',sans-serif", transition: 'background 0.15s' }}
+              >
+                $ USD
+              </button>
+            </div>
+            <p style={{ fontSize: '12px', color: colors.onSurfaceVariant, margin: 0 }}>
+              Pay in Naira with local cards/bank transfer, or USD with international cards.
+            </p>
+          </div>
+
+          {/* Monthly / Annual toggle */}
           <div style={{ display: 'inline-flex', background: colors.surfaceContainerHigh, borderRadius: radius.full, padding: '4px', border: '1px solid rgba(0,0,0,0.08)' }}>
             <button onClick={() => setAnnual(false)} style={{ padding: '8px 20px', borderRadius: radius.full, border: 'none', cursor: 'pointer', background: !annual ? colors.primary : 'transparent', color: !annual ? '#fff' : colors.onSurfaceVariant, fontWeight: 600, fontSize: '13px', fontFamily: "'Inter',sans-serif" }}>Monthly</button>
-            <button onClick={() => setAnnual(true)}  style={{ padding: '8px 20px', borderRadius: radius.full, border: 'none', cursor: 'pointer', background: annual ? colors.primary : 'transparent', color: annual ? '#fff' : colors.onSurfaceVariant, fontWeight: 600, fontSize: '13px', fontFamily: "'Inter',sans-serif" }}>Annual <span style={{ color: annual ? '#fff' : '#059669', fontSize: '11px' }}>–20%</span></button>
+            <button onClick={() => setAnnual(true)}  style={{ padding: '8px 20px', borderRadius: radius.full, border: 'none', cursor: 'pointer', background: annual ? colors.primary : 'transparent', color: annual ? '#fff' : colors.onSurfaceVariant, fontWeight: 600, fontSize: '13px', fontFamily: "'Inter',sans-serif" }}>Annual <span style={{ color: annual ? '#fff' : '#059669', fontSize: '11px' }}>–17%</span></button>
           </div>
         </div>
 
@@ -93,8 +128,15 @@ export default function PricingPage() {
         {/* Plan cards */}
         <div className="pricing-cards" style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '16px', marginBottom: '64px' }}>
           {PLAN_DATA.map(plan => {
-            const dp  = annual ? plan.annual : plan.monthly;
-            const hi  = plan.badge !== null;
+            const isNGN = currency === 'NGN';
+            const ngn   = NGN[plan.name];
+            const dp    = isNGN
+              ? (annual ? ngn.annualMo  : ngn.monthly)
+              : (annual ? plan.annual   : plan.monthly);
+            const sym   = isNGN ? '₦' : '$';
+            const annualTotal = isNGN ? ngn.annual : plan.annualTotal;
+            const hi    = plan.badge !== null;
+
             return (
               <div key={plan.name} style={{ background: hi ? colors.surfaceContainerHigh : colors.surfaceContainerLow, borderRadius: radius.xl, padding: '32px', border: hi ? `1px solid ${colors.primary}40` : '1px solid rgba(0,0,0,0.07)', position: 'relative', boxShadow: hi ? shadows.glow : '0 1px 3px rgba(0,0,0,0.06)' }}>
                 {plan.badge && (
@@ -103,14 +145,18 @@ export default function PricingPage() {
                   </div>
                 )}
                 <h3 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '4px', color: '#1A1714' }}>{plan.name}</h3>
-                <p style={{ fontSize: '12px', color: colors.onSurfaceVariant, marginBottom: dp > 0 ? '12px' : '20px' }}>{plan.tagline || ' '}</p>
+                <p style={{ fontSize: '12px', color: colors.onSurfaceVariant, marginBottom: dp > 0 ? '12px' : '20px' }}>{plan.tagline || ' '}</p>
                 <div style={{ marginBottom: dp > 0 ? '4px' : '16px' }}>
-                  <span style={{ fontSize: '40px', fontWeight: 800, color: '#1A1714' }}>${dp}</span>
+                  <span style={{ fontSize: dp > 99999 ? '30px' : '40px', fontWeight: 800, color: '#1A1714' }}>
+                    {sym}{isNGN ? fmtNGN(dp) : dp}
+                  </span>
                   <span style={{ fontSize: '14px', color: colors.onSurfaceVariant }}>/mo</span>
                 </div>
                 {dp > 0 && (
                   <p style={{ fontSize: '11px', color: colors.onSurfaceVariant, margin: '0 0 8px', opacity: 0.8 }}>
-                    {annual ? `Billed annually ($${plan.annualTotal}/yr)` : 'Billed monthly'}
+                    {annual
+                      ? `Billed annually (${sym}${isNGN ? fmtNGN(annualTotal) : annualTotal}/yr)`
+                      : 'Billed monthly'}
                   </p>
                 )}
                 <p style={{ fontSize: '12px', fontWeight: 600, color: colors.primary, margin: '0 0 20px' }}>
