@@ -84,7 +84,7 @@ const FEATURE_IMGS = [
 
 const DEMO_VIDEO_ID  = '';   // How-it-works walkthrough — shown in the "Demo" section below
 const WHY_IMAGE_SRC  = '';   // Image for the right column of "Why VangelClip?" — e.g. '/images/why-vangelclip.jpg'
-const HERO_IMAGE_SRC = '';   // Hero right-column image — e.g. '/images/hero.jpg'. Leave '' to show placeholder.
+const HERO_IMAGE_SRC = '/hero.png';   // Hero right-column image — e.g. '/images/hero.jpg'. Leave '' to show placeholder.
 
 // NGN prices — kept in sync with UpgradeModal.tsx and pricing/page.tsx
 const NGN: Record<string, { monthly: number; annual: number; annualMo: number }> = {
