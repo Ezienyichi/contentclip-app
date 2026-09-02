@@ -82,8 +82,9 @@ const FEATURE_IMGS = [
 // ─── VIDEO / IMAGE CONFIGS — paste your IDs and paths here ──────────────────
 // Leave as '' to show a placeholder instead.
 
-const DEMO_VIDEO_ID = '';   // How-it-works walkthrough — shown in the "Demo" section below
-const WHY_IMAGE_SRC  = '';  // Image for the right column of "Why VangelClip?" — e.g. '/images/why-vangelclip.jpg'
+const DEMO_VIDEO_ID  = '';   // How-it-works walkthrough — shown in the "Demo" section below
+const WHY_IMAGE_SRC  = '';   // Image for the right column of "Why VangelClip?" — e.g. '/images/why-vangelclip.jpg'
+const HERO_IMAGE_SRC = '';   // Hero right-column image — e.g. '/images/hero.jpg'. Leave '' to show placeholder.
 
 // NGN prices — kept in sync with UpgradeModal.tsx and pricing/page.tsx
 const NGN: Record<string, { monthly: number; annual: number; annualMo: number }> = {
@@ -179,7 +180,10 @@ export default function HomePage() {
         .vc-footer-g  { display:grid; grid-template-columns:1.6fr 1fr 1fr 1fr; gap:32px; }
 
         /* Hero input row */
-        .vc-hero-row   { display:flex; gap:10px; justify-content:center; align-items:stretch; flex-wrap:wrap; max-width:620px; margin:0 auto; }
+        .vc-hero-row   { display:flex; gap:10px; justify-content:flex-start; align-items:stretch; flex-wrap:wrap; max-width:560px; margin:0; }
+        .vc-hero-cols  { display:flex; gap:64px; align-items:center; width:100%; }
+        .vc-hero-left  { flex:1; min-width:0; }
+        .vc-hero-right { flex:0 0 44%; max-width:500px; }
         .vc-hero-input { display:flex; align-items:center; gap:8px; flex:1; min-width:260px; background:rgba(155,93,229,0.05); border:2px solid #9B5DE5; border-radius:${mkt.r}; padding:5px 5px 5px 13px; box-shadow:0 0 0 4px rgba(155,93,229,0.12); }
         .vc-hero-cta   { flex:none; border:none; background:${mkt.brandGrad}; color:#fff; font-weight:800; font-family:'Figtree',sans-serif; font-size:16px; padding:0 30px; min-height:54px; border-radius:${mkt.r}; cursor:pointer; box-shadow:inset 1px 1px 0 rgba(255,255,255,.30),0 8px 28px rgba(155,93,229,0.45); white-space:nowrap; }
         .vc-cta-input  { display:flex; align-items:center; gap:8px; flex:1; min-width:280px; background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.3); border-radius:${mkt.r}; padding:6px 6px 6px 14px; }
@@ -224,6 +228,12 @@ export default function HomePage() {
           .vc-plan-grid { grid-template-columns:1fr; }
         }
 
+        /* ── Hero two-col collapse 768px ── */
+        @media (max-width:768px) {
+          .vc-hero-cols  { flex-direction:column; gap:36px; }
+          .vc-hero-right { width:100%; max-width:100%; flex:unset; }
+        }
+
         /* ── Nav collapse 768px ── */
         @media (max-width:768px) {
           .vc-nav-links  { display:none; }
@@ -258,13 +268,14 @@ export default function HomePage() {
           .vc-footer-g  { grid-template-columns:1fr; gap:20px; }
         }
 
-        /* ── Hero input stacks 480px ── */
+        /* ── Hero input stacks + right col hides 480px ── */
         @media (max-width:480px) {
-          .vc-hero-row  { flex-direction:column; gap:8px; }
-          .vc-hero-cta  { padding:14px; }
-          .vc-cta-row   { flex-direction:column; }
-          .vc-cta-input { min-width:0; }
-          .vc-cta-btn   { padding:14px; }
+          .vc-hero-row   { flex-direction:column; gap:8px; }
+          .vc-hero-cta   { padding:14px; }
+          .vc-hero-right { display:none; }
+          .vc-cta-row    { flex-direction:column; }
+          .vc-cta-input  { min-width:0; }
+          .vc-cta-btn    { padding:14px; }
         }
 
         /* Why VangelClip 2-col layout */
@@ -321,33 +332,62 @@ export default function HomePage() {
       </div>
 
       {/* ══ HERO ═══════════════════════════════════════════════════════════════ */}
-      <section style={{ maxWidth:mkt.maxW, margin:'0 auto', padding:'78px 28px 8px', textAlign:'center', minHeight:600, position:'relative', backgroundImage:['repeating-linear-gradient(0deg,transparent 0,transparent 39px,rgba(0,0,0,0.07) 39px,rgba(0,0,0,0.07) 40px)','repeating-linear-gradient(90deg,transparent 0,transparent 39px,rgba(0,0,0,0.07) 39px,rgba(0,0,0,0.07) 40px)'].join(',') }}>
+      <section style={{ maxWidth:mkt.maxW, margin:'0 auto', padding:'72px 28px 64px', position:'relative', backgroundImage:['repeating-linear-gradient(0deg,transparent 0,transparent 39px,rgba(0,0,0,0.07) 39px,rgba(0,0,0,0.07) 40px)','repeating-linear-gradient(90deg,transparent 0,transparent 39px,rgba(0,0,0,0.07) 39px,rgba(0,0,0,0.07) 40px)'].join(',') }}>
+        <div className="vc-hero-cols">
 
-        <h1 style={{ fontFamily:mkt.fontHead, fontWeight:800, fontSize:'clamp(32px,6vw,62px)', lineHeight:1.04, letterSpacing:'-.03em', margin:'0 auto 20px', maxWidth:820 }}>
-          Spread your Content.<br />
-          <span style={{ fontStyle:'italic', fontWeight:700, color:mkt.brand }}>One Video, Seen Everywhere.</span>
-        </h1>
-        <p style={{ fontSize:'clamp(15px,2.2vw,18px)', lineHeight:1.6, color:'#000', fontWeight:600, maxWidth:560, margin:'0 auto 30px' }}>
-          VangelClip turns your long videos into dozens of short, captioned clips so your best moments reach more people, on every platform, in minutes.
-        </p>
-        <div className="vc-hero-row">
-          <div className="vc-hero-input">
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke={mkt.muted} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink:0 }}>
-              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
-              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
-            </svg>
-            <input
-              type="url"
-              value={heroUrl}
-              onChange={e => setHeroUrl(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && startClipping()}
-              placeholder="Paste a YouTube link to try free…"
-              style={{ flex:1, minWidth:0, border:'none', outline:'none', background:'transparent', color:mkt.text, fontFamily:mkt.fontBody, fontSize:14.5, padding:'8px 0' }}
-            />
+          {/* LEFT — text content */}
+          <div className="vc-hero-left">
+            <h1 style={{ fontFamily:mkt.fontHead, fontWeight:800, fontSize:'clamp(32px,5vw,58px)', lineHeight:1.06, letterSpacing:'-.03em', margin:'0 0 20px' }}>
+              Spread your Content.<br />
+              <span style={{ fontStyle:'italic', fontWeight:700, color:mkt.brand }}>One Video, Seen Everywhere.</span>
+            </h1>
+            <p style={{ fontSize:'clamp(15px,2vw,17px)', lineHeight:1.65, color:'#000', fontWeight:600, margin:'0 0 30px', maxWidth:480 }}>
+              VangelClip turns your long videos into dozens of short, captioned clips so your best moments reach more people, on every platform, in minutes.
+            </p>
+            <div className="vc-hero-row">
+              <div className="vc-hero-input">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke={mkt.muted} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink:0 }}>
+                  <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                  <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+                </svg>
+                <input
+                  type="url"
+                  value={heroUrl}
+                  onChange={e => setHeroUrl(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && startClipping()}
+                  placeholder="Paste a YouTube link to try free…"
+                  style={{ flex:1, minWidth:0, border:'none', outline:'none', background:'transparent', color:mkt.text, fontFamily:mkt.fontBody, fontSize:14.5, padding:'8px 0' }}
+                />
+              </div>
+              <button onClick={startClipping} className="vc-hero-cta">Start Clipping Free →</button>
+            </div>
+            <p style={{ fontSize:13, color:mkt.muted, marginTop:14 }}>No card needed · First clip is on us. Try any link above.</p>
           </div>
-          <button onClick={startClipping} className="vc-hero-cta">Start Clipping Free →</button>
+
+          {/* RIGHT — hero image. Set HERO_IMAGE_SRC (top of file) to replace the placeholder. */}
+          <div className="vc-hero-right">
+            {HERO_IMAGE_SRC ? (
+              <Image
+                src={HERO_IMAGE_SRC}
+                alt="VangelClip in action"
+                width={560}
+                height={460}
+                style={{ width:'100%', height:'auto', borderRadius:16, objectFit:'cover', display:'block' }}
+                priority
+              />
+            ) : (
+              <div style={{ width:'100%', aspectRatio:'6/5', borderRadius:16, background:'rgba(155,93,229,0.06)', border:'2px dashed rgba(155,93,229,0.22)', display:'flex', alignItems:'center', justifyContent:'center', flexDirection:'column', gap:10, color:mkt.muted, fontSize:13 }}>
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="2" y="5" width="20" height="14" rx="3"/>
+                  <circle cx="12" cy="12" r="3.5"/>
+                  <path d="M7 5V3h3v2"/>
+                </svg>
+                <span>Hero image</span>
+              </div>
+            )}
+          </div>
+
         </div>
-        <p style={{ fontSize:13, color:mkt.muted, marginTop:14 }}>No card needed · First clip is on us. Try any link above.</p>
       </section>
 
       {/* ══ PHONE CLUSTER ══════════════════════════════════════════════════════ */}
