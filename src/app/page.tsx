@@ -65,11 +65,11 @@ const PHONES = [
   { name: 'EDUCATION',   cap: 'A masterclass in 15 shorts',  cls: 'vph-outer-r', videoUrl: 'https://pub-4f4329e5ca884bbab0a04b1777cd7363.r2.dev/.%2C.mp4' },
 ];
 
-const STATS = [
-  { num: '700M+', label: 'Internet users in Africa' },
-  { num: '33M+',  label: 'YouTube users in Nigeria alone' },
-  { num: '10M+',  label: 'African TikTok creators' },
-  { num: 'First', label: 'African-built AI clip platform' },
+const AUDIENCE = [
+  { name: 'Podcasters',                    desc: 'Turn long episodes into shareable clips that pull in new listeners.' },
+  { name: 'Music Artists',                 desc: 'Cut performances and moments into reels that grow your fanbase.' },
+  { name: 'Freelance YouTubers/TikTokers', desc: 'Produce a week of content in minutes and post everywhere.' },
+  { name: 'Video Editors',                 desc: 'Skip the tedious first pass — let AI handle the rough cuts and captions.' },
 ];
 
 const FEATURE_IMGS = [
@@ -645,17 +645,17 @@ export default function HomePage() {
       <section className="vc-sec">
         <div style={{ textAlign:'center', maxWidth:680, margin:'0 auto 44px' }}>
           <h2 style={{ fontFamily:mkt.fontHead, fontWeight:800, fontSize:'clamp(26px,4vw,38px)', letterSpacing:'-.02em', margin:'0 0 16px' }}>
-            Filling the <span style={{ fontStyle:'italic', color:mkt.brand }}>African Gap</span>
+            Best Fit For <span style={{ fontStyle:'italic', color:mkt.brand }}>African Creators</span>
           </h2>
-          <p style={{ fontSize:16.5, lineHeight:1.6, color:mkt.muted, margin:0 }}>
+          <p style={{ fontSize:16.5, lineHeight:1.6, color:'#3A3530', fontWeight:600, margin:0 }}>
             Over 700 million internet users. African creators alone produce some of the most-watched gospel, creative, and educational content on earth. Yet no AI clipping platform was ever built thinking of them first. Until now.
           </p>
         </div>
         <div className="vc-stats">
-          {STATS.map(s => (
-            <div key={s.num} style={{ ...mktCard.base, padding:'26px 22px' }}>
-              <div style={{ fontFamily:mkt.fontHead, fontWeight:800, fontSize:'clamp(26px,3.5vw,40px)', letterSpacing:'-.03em', color:mkt.brand, lineHeight:1 }}>{s.num}</div>
-              <div style={{ fontSize:13.5, color:mkt.muted, marginTop:10, lineHeight:1.4 }}>{s.label}</div>
+          {AUDIENCE.map(a => (
+            <div key={a.name} style={{ ...mktCard.base, padding:'26px 22px' }}>
+              <div style={{ fontFamily:mkt.fontHead, fontWeight:800, fontSize:'clamp(16px,2vw,20px)', color:'#1A1714', lineHeight:1.2, marginBottom:10 }}>{a.name}</div>
+              <div style={{ fontSize:13.5, color:'#4A4540', lineHeight:1.5 }}>{a.desc}</div>
             </div>
           ))}
         </div>
