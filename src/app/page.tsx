@@ -568,8 +568,7 @@ export default function HomePage() {
 
       {/* ══ DEMO VIDEO ═════════════════════════════════════════════════════════ */}
       <div style={{ background:mkt.surface2 }}>
-        {/* Heading + pills — stays in container */}
-        <section id="workflow" className="vc-sec" style={{ paddingBottom:32 }}>
+        <section id="workflow" className="vc-sec">
           <div style={{ textAlign:'center', maxWidth:640, margin:'0 auto 36px' }}>
             <h2 style={{ fontFamily:mkt.fontHead, fontWeight:800, fontSize:'clamp(26px,4vw,38px)', letterSpacing:'-.02em', margin:'0 0 12px' }}>
               How&nbsp;<span style={{ fontStyle:'italic', color:mkt.brand }}>VangelClip Workflow Automation Works</span>
@@ -591,55 +590,55 @@ export default function HomePage() {
               ))}
             </div>
           </div>
-        </section>
-        {/* Video — full-bleed, no maxWidth */}
-        <div style={{ width:'100%', aspectRatio:'4/3', position:'relative', overflow:'hidden' }}>
-          {DEMO_VIDEO_SRC ? (
-            <>
-              <video
-                ref={videoRef}
-                src={DEMO_VIDEO_SRC}
-                muted
-                controls
-                playsInline
-                style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover' }}
-              />
-              <button
-                onClick={() => {
-                  if (!videoRef.current) return;
-                  videoRef.current.muted = !videoRef.current.muted;
-                  setDemoMuted(v => !v);
-                }}
-                aria-label={demoMuted ? 'Unmute' : 'Mute'}
-                style={{ position:'absolute', bottom:14, right:14, zIndex:10, background:'rgba(0,0,0,0.55)', border:'1px solid rgba(255,255,255,0.2)', borderRadius:8, padding:'8px 10px', cursor:'pointer', color:'#fff', display:'flex', alignItems:'center', justifyContent:'center', backdropFilter:'blur(4px)', WebkitBackdropFilter:'blur(4px)' }}
-              >
-                {demoMuted ? (
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
-                    <line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/>
-                  </svg>
-                ) : (
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
-                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
-                    <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
-                  </svg>
-                )}
-              </button>
-            </>
-          ) : (
-            <div style={{ position:'absolute', inset:0, backgroundImage:`repeating-linear-gradient(135deg,${mkt.border} 0 1px,transparent 1px 16px)`, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:16 }}>
-              <div style={{ width:66, height:66, borderRadius:'50%', background:mkt.brandGrad, color:'#fff', display:'flex', alignItems:'center', justifyContent:'center', boxShadow:`inset 1px 1px 0 rgba(255,255,255,.25),${mkt.glow}` }}>
-                <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M6 4v16l13-8z"/></svg>
-              </div>
-              <div style={{ textAlign:'center' }}>
-                <div style={{ fontFamily:mkt.fontHead, fontWeight:700, fontSize:18, color:mkt.text }}>Add your demo video</div>
-                <div style={{ fontSize:13.5, color:mkt.muted, marginTop:4 }}>Set <code style={{ fontFamily:'monospace', color:mkt.brand }}>DEMO_VIDEO_SRC</code> at the top of page.tsx</div>
-              </div>
+          <div style={{ maxWidth:960, margin:'0 auto' }}>
+            <div style={{ position:'relative', aspectRatio:'4/3', borderRadius:12, overflow:'hidden', border:`1px solid ${mkt.border}`, boxShadow:mkt.shadow }}>
+              {DEMO_VIDEO_SRC ? (
+                <>
+                  <video
+                    ref={videoRef}
+                    src={DEMO_VIDEO_SRC}
+                    muted
+                    controls
+                    playsInline
+                    style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover' }}
+                  />
+                  <button
+                    onClick={() => {
+                      if (!videoRef.current) return;
+                      videoRef.current.muted = !videoRef.current.muted;
+                      setDemoMuted(v => !v);
+                    }}
+                    aria-label={demoMuted ? 'Unmute' : 'Mute'}
+                    style={{ position:'absolute', bottom:14, right:14, zIndex:10, background:'rgba(0,0,0,0.55)', border:'1px solid rgba(255,255,255,0.2)', borderRadius:8, padding:'8px 10px', cursor:'pointer', color:'#fff', display:'flex', alignItems:'center', justifyContent:'center', backdropFilter:'blur(4px)', WebkitBackdropFilter:'blur(4px)' }}
+                  >
+                    {demoMuted ? (
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                        <line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/>
+                      </svg>
+                    ) : (
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                        <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+                        <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+                      </svg>
+                    )}
+                  </button>
+                </>
+              ) : (
+                <div style={{ position:'absolute', inset:0, backgroundImage:`repeating-linear-gradient(135deg,${mkt.border} 0 1px,transparent 1px 16px)`, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:16 }}>
+                  <div style={{ width:66, height:66, borderRadius:'50%', background:mkt.brandGrad, color:'#fff', display:'flex', alignItems:'center', justifyContent:'center', boxShadow:`inset 1px 1px 0 rgba(255,255,255,.25),${mkt.glow}` }}>
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M6 4v16l13-8z"/></svg>
+                  </div>
+                  <div style={{ textAlign:'center' }}>
+                    <div style={{ fontFamily:mkt.fontHead, fontWeight:700, fontSize:18, color:mkt.text }}>Add your demo video</div>
+                    <div style={{ fontSize:13.5, color:mkt.muted, marginTop:4 }}>Set <code style={{ fontFamily:'monospace', color:mkt.brand }}>DEMO_VIDEO_SRC</code> at the top of page.tsx</div>
+                  </div>
+                </div>
+              )}
             </div>
-          )}
-        </div>
-        <div style={{ height:64 }} />
+          </div>
+        </section>
       </div>
 
       {/* ══ AFRICAN GAP STATS ══════════════════════════════════════════════════ */}
