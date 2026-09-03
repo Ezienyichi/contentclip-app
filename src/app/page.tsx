@@ -82,7 +82,7 @@ const FEATURE_IMGS = [
 // ─── VIDEO / IMAGE CONFIGS — paste your IDs and paths here ──────────────────
 // Leave as '' to show a placeholder instead.
 
-const DEMO_VIDEO_ID  = '';   // How-it-works walkthrough — shown in the "Demo" section below
+const DEMO_VIDEO_SRC = 'https://pub-4f4329e5ca884bbab0a04b1777cd7363.r2.dev/VangelClip.mp4';  // Demo walkthrough
 const WHY_IMAGE_SRC  = '';   // Image for the right column of "Why VangelClip?" — e.g. '/images/why-vangelclip.jpg'
 const HERO_IMAGE_SRC = '/hero.png';   // Hero right-column image — e.g. '/images/hero.jpg'. Leave '' to show placeholder.
 
@@ -561,18 +561,17 @@ export default function HomePage() {
               How&nbsp;<span style={{ fontStyle:'italic', color:mkt.brand }}>VangelClip Workflow Automation Works</span>
             </h2>
             <p style={{ fontSize:16, color:mkt.muted, margin:0, maxWidth:520, marginLeft:'auto', marginRight:'auto' }}>
-              Watch a 90-second walkthrough: paste a link, let the AI clip, and publish everywhere.
+              A Simple Walkthrough:
             </p>
           </div>
           <div style={{ maxWidth:880, margin:'0 auto' }}>
             <div style={{ position:'relative', aspectRatio:'16/9', borderRadius:`calc(${mkt.r} + 4px)`, overflow:'hidden', ...mktCard.base }}>
-              {DEMO_VIDEO_ID ? (
-                <iframe
-                  src={`https://www.youtube.com/embed/${DEMO_VIDEO_ID}?rel=0&modestbranding=1`}
-                  title="VangelClip demo walkthrough"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                  style={{ position:'absolute', inset:0, width:'100%', height:'100%', border:0 }}
+              {DEMO_VIDEO_SRC ? (
+                <video
+                  src={DEMO_VIDEO_SRC}
+                  controls
+                  playsInline
+                  style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover' }}
                 />
               ) : (
                 <div style={{ position:'absolute', inset:0, backgroundImage:`repeating-linear-gradient(135deg,${mkt.border} 0 1px,transparent 1px 16px)`, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:16 }}>
@@ -581,7 +580,7 @@ export default function HomePage() {
                   </div>
                   <div style={{ textAlign:'center' }}>
                     <div style={{ fontFamily:mkt.fontHead, fontWeight:700, fontSize:18, color:mkt.text }}>Add your demo video</div>
-                    <div style={{ fontSize:13.5, color:mkt.muted, marginTop:4 }}>Set <code style={{ fontFamily:'monospace', color:mkt.brand }}>DEMO_VIDEO_ID</code> at the top of page.tsx</div>
+                    <div style={{ fontSize:13.5, color:mkt.muted, marginTop:4 }}>Set <code style={{ fontFamily:'monospace', color:mkt.brand }}>DEMO_VIDEO_SRC</code> at the top of page.tsx</div>
                   </div>
                 </div>
               )}
