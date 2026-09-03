@@ -591,7 +591,7 @@ export default function HomePage() {
             </div>
           </div>
           <div style={{ maxWidth:960, margin:'0 auto' }}>
-            <div style={{ position:'relative', aspectRatio:'4/3', borderRadius:12, overflow:'hidden', border:`1px solid ${mkt.border}`, boxShadow:mkt.shadow }}>
+            <div style={{ position:'relative', borderRadius:12, overflow:'hidden', border:`1px solid ${mkt.border}`, boxShadow:mkt.shadow, lineHeight:0 }}>
               {DEMO_VIDEO_SRC ? (
                 <>
                   <video
@@ -600,7 +600,7 @@ export default function HomePage() {
                     muted
                     controls
                     playsInline
-                    style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover' }}
+                    style={{ width:'100%', height:'auto', display:'block' }}
                   />
                   <button
                     onClick={() => {
