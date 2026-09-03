@@ -181,9 +181,9 @@ export default function HomePage() {
 
         /* Hero input row */
         .vc-hero-row   { display:flex; gap:10px; justify-content:flex-start; align-items:stretch; flex-wrap:wrap; max-width:560px; margin:0; }
-        .vc-hero-cols  { display:flex; gap:44px; align-items:center; width:100%; }
+        .vc-hero-cols  { display:flex; gap:32px; align-items:center; width:100%; }
         .vc-hero-left  { flex:1; min-width:0; }
-        .vc-hero-right { flex:0 0 50%; max-width:640px; }
+        .vc-hero-right { flex:0 0 55%; max-width:760px; }
         .vc-hero-input { display:flex; align-items:center; gap:8px; flex:1; min-width:260px; background:rgba(155,93,229,0.05); border:2px solid #9B5DE5; border-radius:${mkt.r}; padding:5px 5px 5px 13px; box-shadow:0 0 0 4px rgba(155,93,229,0.12); }
         .vc-hero-cta   { flex:none; border:none; background:${mkt.brandGrad}; color:#fff; font-weight:800; font-family:'Figtree',sans-serif; font-size:16px; padding:0 30px; min-height:54px; border-radius:${mkt.r}; cursor:pointer; box-shadow:inset 1px 1px 0 rgba(255,255,255,.30),0 8px 28px rgba(155,93,229,0.45); white-space:nowrap; }
         .vc-cta-input  { display:flex; align-items:center; gap:8px; flex:1; min-width:280px; background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.3); border-radius:${mkt.r}; padding:6px 6px 6px 14px; }
