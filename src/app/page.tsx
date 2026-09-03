@@ -82,7 +82,7 @@ const FEATURE_IMGS = [
 // ─── VIDEO / IMAGE CONFIGS — paste your IDs and paths here ──────────────────
 // Leave as '' to show a placeholder instead.
 
-const DEMO_VIDEO_SRC = 'https://pub-4f4329e5ca884bbab0a04b1777cd7363.r2.dev/VangelClip.mp4';  // Demo walkthrough
+const DEMO_VIDEO_SRC = 'https://pub-4f4329e5ca884bbab0a04b1777cd7363.r2.dev/VangelClip%20(1).mp4';  // Demo walkthrough
 const WHY_IMAGE_SRC  = '';   // Image for the right column of "Why VangelClip?" — e.g. '/images/why-vangelclip.jpg'
 const HERO_IMAGE_SRC = '/hero.png';   // Hero right-column image — e.g. '/images/hero.jpg'. Leave '' to show placeholder.
 
@@ -560,9 +560,22 @@ export default function HomePage() {
             <h2 style={{ fontFamily:mkt.fontHead, fontWeight:800, fontSize:'clamp(26px,4vw,38px)', letterSpacing:'-.02em', margin:'0 0 12px' }}>
               How&nbsp;<span style={{ fontStyle:'italic', color:mkt.brand }}>VangelClip Workflow Automation Works</span>
             </h2>
-            <p style={{ fontSize:16, color:mkt.muted, margin:0, maxWidth:520, marginLeft:'auto', marginRight:'auto' }}>
+            <p style={{ fontSize:16, color:mkt.muted, margin:'0 0 20px', maxWidth:520, marginLeft:'auto', marginRight:'auto' }}>
               A Simple Walkthrough:
             </p>
+            <div style={{ display:'flex', flexWrap:'wrap', justifyContent:'center', gap:10 }}>
+              {[
+                'Our AI model clips your video on YouTube or cloud',
+                'Auto Frames & Auto Edit',
+                'Auto Hashtags',
+                'Auto Publish',
+              ].map(feat => (
+                <span key={feat} style={{ display:'inline-flex', alignItems:'center', gap:7, background:mkt.surface, border:`1px solid ${mkt.border}`, borderRadius:100, padding:'8px 16px', fontSize:13.5, fontWeight:600, color:mkt.text, boxShadow:`inset 1px 1px 0 ${mkt.edge}` }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={mkt.brand} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  {feat}
+                </span>
+              ))}
+            </div>
           </div>
           <div style={{ maxWidth:880, margin:'0 auto' }}>
             <div style={{ position:'relative', aspectRatio:'16/9', borderRadius:`calc(${mkt.r} + 4px)`, overflow:'hidden', ...mktCard.base }}>
