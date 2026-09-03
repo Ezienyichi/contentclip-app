@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { CSSProperties } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -119,9 +119,22 @@ export default function HomePage() {
   const [tableOpen,  setTableOpen]  = useState(false);
   const [authUser,      setAuthUser]      = useState<any>(null);
   const [phoneModal,    setPhoneModal]    = useState<string | null>(null); // youtubeId of phone being played
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [demoMuted, setDemoMuted] = useState(true);
 
   useEffect(() => {
     createClient().auth.getUser().then(({ data }) => setAuthUser(data.user));
+  }, []);
+
+  useEffect(() => {
+    const vid = videoRef.current;
+    if (!vid) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => { entry.isIntersecting ? vid.play().catch(() => {}) : vid.pause(); },
+      { threshold: 0.3 }
+    );
+    obs.observe(vid);
+    return () => obs.disconnect();
   }, []);
 
   function startClipping() {
@@ -577,15 +590,41 @@ export default function HomePage() {
               ))}
             </div>
           </div>
-          <div style={{ maxWidth:880, margin:'0 auto' }}>
-            <div style={{ position:'relative', aspectRatio:'16/9', borderRadius:`calc(${mkt.r} + 4px)`, overflow:'hidden', ...mktCard.base }}>
+          <div style={{ maxWidth:1024, margin:'0 auto' }}>
+            <div style={{ position:'relative', aspectRatio:'4/3', borderRadius:`calc(${mkt.r} + 4px)`, overflow:'hidden', ...mktCard.base }}>
               {DEMO_VIDEO_SRC ? (
-                <video
-                  src={DEMO_VIDEO_SRC}
-                  controls
-                  playsInline
-                  style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover' }}
-                />
+                <>
+                  <video
+                    ref={videoRef}
+                    src={DEMO_VIDEO_SRC}
+                    muted
+                    controls
+                    playsInline
+                    style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover' }}
+                  />
+                  <button
+                    onClick={() => {
+                      if (!videoRef.current) return;
+                      videoRef.current.muted = !videoRef.current.muted;
+                      setDemoMuted(v => !v);
+                    }}
+                    aria-label={demoMuted ? 'Unmute' : 'Mute'}
+                    style={{ position:'absolute', bottom:14, right:14, zIndex:10, background:'rgba(0,0,0,0.55)', border:'1px solid rgba(255,255,255,0.2)', borderRadius:8, padding:'8px 10px', cursor:'pointer', color:'#fff', display:'flex', alignItems:'center', justifyContent:'center', backdropFilter:'blur(4px)', WebkitBackdropFilter:'blur(4px)' }}
+                  >
+                    {demoMuted ? (
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                        <line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/>
+                      </svg>
+                    ) : (
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                        <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+                        <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+                      </svg>
+                    )}
+                  </button>
+                </>
               ) : (
                 <div style={{ position:'absolute', inset:0, backgroundImage:`repeating-linear-gradient(135deg,${mkt.border} 0 1px,transparent 1px 16px)`, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:16 }}>
                   <div style={{ width:66, height:66, borderRadius:'50%', background:mkt.brandGrad, color:'#fff', display:'flex', alignItems:'center', justifyContent:'center', boxShadow:`inset 1px 1px 0 rgba(255,255,255,.25),${mkt.glow}` }}>
