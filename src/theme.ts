@@ -38,7 +38,7 @@ export const mkt = {
   fontBody: "'Figtree',-apple-system,sans-serif",
 
   // Layout
-  maxW: '1160px',
+  maxW: '1320px',
   padX: '28px',
 } as const;
 
