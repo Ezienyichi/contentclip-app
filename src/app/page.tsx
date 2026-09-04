@@ -84,7 +84,6 @@ const FEATURE_IMGS = [
 // Leave as '' to show a placeholder instead.
 
 const DEMO_VIDEO_SRC = 'https://pub-4f4329e5ca884bbab0a04b1777cd7363.r2.dev/VangelClip%20(1).mp4';  // Demo walkthrough
-const WHY_IMAGE_SRC  = '';   // Image for the right column of "Why VangelClip?" — e.g. '/images/why-vangelclip.jpg'
 const HERO_IMAGE_SRC = '/hero.png';   // Hero right-column image — e.g. '/images/hero.jpg'. Leave '' to show placeholder.
 
 // NGN prices — kept in sync with UpgradeModal.tsx and pricing/page.tsx
@@ -294,14 +293,6 @@ export default function HomePage() {
           .vc-cta-btn    { padding:14px; }
         }
 
-        /* Why VangelClip 2-col layout */
-        .vc-why-row  { display:flex; gap:64px; align-items:center; max-width:${mkt.maxW}; }
-        .vc-why-text { flex:1 1 400px; }
-        .vc-why-img  { flex:1 1 380px; position:relative; }
-        @media (max-width:860px) {
-          .vc-why-row  { flex-direction:column; gap:36px; }
-          .vc-why-img  { width:100%; }
-        }
 
         @media (prefers-reduced-motion:reduce) { .vc-phone { animation:none !important; } }
 
@@ -548,24 +539,12 @@ export default function HomePage() {
       </div>
 
       {/* ══ WHY VANGELCLIP ═════════════════════════════════════════════════════ */}
-      <section className="vc-sec vc-why-row">
-        {/* Left: text */}
-        <div className="vc-why-text">
+      <section className="vc-sec">
+        <div style={{ maxWidth:720, margin:'0 auto', textAlign:'center' }}>
           <div style={{ fontSize:13, fontWeight:700, letterSpacing:'.1em', textTransform:'uppercase', color:mkt.brand, marginBottom:18 }}>Why VangelClip?</div>
           <p style={{ fontFamily:mkt.fontHead, fontWeight:500, fontSize:'clamp(17px,2.5vw,25px)', lineHeight:1.45, letterSpacing:'-.01em', margin:0 }}>
             Rooted in <em style={{ color:mkt.brand }}>Evangel</em>, Greek for gospel, good news, the proclamation of truth. Joined with <em style={{ color:mkt.brand }}>Clip</em>, it names our purpose: take the world&apos;s most important messages, content or information and make them clip-ready for a generation that consumes content in seconds.
           </p>
-        </div>
-        {/* Right: image — set WHY_IMAGE_SRC at the top of this file */}
-        <div className="vc-why-img" style={{ borderRadius:`calc(${mkt.r} + 4px)`, overflow:'hidden', border:`1px solid ${mkt.border}`, boxShadow:`inset 1px 1px 0 ${mkt.edge},${mkt.shadow}` }}>
-          {WHY_IMAGE_SRC ? (
-            <Image src={WHY_IMAGE_SRC} alt="Why VangelClip" fill style={{ objectFit:'cover' }} />
-          ) : (
-            <div style={{ aspectRatio:'4/3', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:10, backgroundImage:`repeating-linear-gradient(135deg,${mkt.border} 0 1px,transparent 1px 14px)` }}>
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke={mkt.muted} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-              <span style={{ fontSize:12, color:mkt.muted, textAlign:'center', padding:'0 20px' }}>Set <code style={{ fontFamily:'monospace', color:mkt.brand }}>WHY_IMAGE_SRC</code> at the top of page.tsx</span>
-            </div>
-          )}
         </div>
       </section>
 
