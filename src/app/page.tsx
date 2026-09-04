@@ -70,6 +70,7 @@ const AUDIENCE = [
   { name: 'Music Artists',                 desc: 'Cut performances and moments into reels that grow your fanbase.' },
   { name: 'Freelance YouTubers/TikTokers', desc: 'Produce a week of content in minutes and post everywhere.' },
   { name: 'Video Editors',                 desc: 'Skip the tedious first pass — let AI handle the rough cuts and captions.' },
+  { name: 'Gospel Ministers',              desc: 'Turn sermons and services into clips that reach your congregation everywhere they scroll.' },
 ];
 
 const FEATURE_IMGS = [
@@ -187,7 +188,7 @@ export default function HomePage() {
         @keyframes vcFloat2 { 0%,100%{transform:translateY(-8px)} 50%{transform:translateY(6px)}  }
 
         /* Grids */
-        .vc-stats     { display:grid; grid-template-columns:repeat(4,1fr);  gap:18px; }
+        .vc-stats     { display:grid; grid-template-columns:repeat(5,1fr);  gap:18px; }
         .vc-feat-grid { display:grid; grid-template-columns:repeat(2,1fr);  gap:20px; margin-bottom:30px; }
         .vc-plan-grid { display:grid; grid-template-columns:repeat(4,1fr);  gap:22px; align-items:start; }
         .vc-footer-g  { display:grid; grid-template-columns:1.6fr 1fr 1fr 1fr; gap:32px; }
@@ -231,8 +232,10 @@ export default function HomePage() {
         .vc-cta-row { display:flex; gap:10px; justify-content:center; align-items:stretch; flex-wrap:wrap; max-width:580px; margin:0 auto; }
 
         /* ── Tablet 860px ── */
+        @media (max-width:1000px) { .vc-stats { grid-template-columns:repeat(3,1fr); } }
+        @media (max-width:600px)  { .vc-stats { grid-template-columns:repeat(2,1fr); } }
+        @media (max-width:400px)  { .vc-stats { grid-template-columns:1fr; } }
         @media (max-width:860px) {
-          .vc-stats     { grid-template-columns:repeat(2,1fr); }
           .vc-feat-grid { grid-template-columns:1fr; }
           .vc-plan-grid { grid-template-columns:repeat(2,1fr); }
           .vc-footer-g  { grid-template-columns:1fr 1fr; gap:24px; }
