@@ -26,6 +26,7 @@ type Clip = {
   thumbnail_url?: string; duration: number; status?: string;
   expires_at?: string | null; source_video_name?: string;
   source?: string; delete_after?: string | null; file_size_bytes?: number | null;
+  created_at?: string | null;
 };
 
 function ExpiryBadge({ expiresAt }: { expiresAt?: string | null }) {
@@ -41,6 +42,20 @@ function ExpiryBadge({ expiresAt }: { expiresAt?: string | null }) {
 }
 
 const SORTS = ['Most Viral','Newest','Longest','Shortest'];
+
+function getDateKey(clip: Clip) {
+  return clip.created_at ? clip.created_at.slice(0, 10) : '__unknown__';
+}
+
+function dateLabel(key: string) {
+  if (key === '__unknown__') return 'Unknown date';
+  const today     = new Date().toISOString().slice(0, 10);
+  const yesterday = new Date(Date.now() - 86_400_000).toISOString().slice(0, 10);
+  if (key === today)     return 'Today';
+  if (key === yesterday) return 'Yesterday';
+  return new Date(key + 'T12:00:00').toLocaleDateString('en-US',
+    { month: 'long', day: 'numeric', year: 'numeric' });
+}
 const PLATS = ['All','TikTok','Reels','Shorts'];
 
 const UPLOAD_ALLOWED_PLANS = new Set(['pro', 'professional', 'agency']);
@@ -186,10 +201,24 @@ export default function ClipsPage() {
     .filter(c => plat === 'All' || platMap(c.platform).toLowerCase() === plat.toLowerCase())
     .sort((a, b) => {
       if (sort === 'Most Viral') return b.virality_score - a.virality_score;
-      if (sort === 'Longest') return b.duration - a.duration;
-      if (sort === 'Shortest') return a.duration - b.duration;
+      if (sort === 'Newest')     return (b.created_at ?? '').localeCompare(a.created_at ?? '');
+      if (sort === 'Longest')    return b.duration - a.duration;
+      if (sort === 'Shortest')   return a.duration - b.duration;
       return 0;
     });
+
+  // Group by date, newest date first
+  const groupMap = new Map<string, Clip[]>();
+  for (const clip of filtered) {
+    const key = getDateKey(clip);
+    if (!groupMap.has(key)) groupMap.set(key, []);
+    groupMap.get(key)!.push(clip);
+  }
+  const groupKeys = [...groupMap.keys()].sort((a, b) => {
+    if (a === '__unknown__') return 1;
+    if (b === '__unknown__') return -1;
+    return b.localeCompare(a);
+  });
 
   async function handleClipDownload(clip: Clip, idx: number) {
     const url = clip.download_url || clip.clip_url || clip.video_url;
@@ -270,12 +299,21 @@ export default function ClipsPage() {
         </div>
       )}
 
-      {/* Clips grid */}
-      <div className="clips-grid" style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:'16px' }}>
-        {filtered.map((clip, idx) => {
-          const previewSrc = clip.clip_url || clip.video_url || '';
-          return (
-          <div key={idx} style={{ background:colors.surfaceContainerHigh, borderRadius:radius.lg, overflow:'hidden' }}>
+      {/* Clips grouped by date */}
+      {groupKeys.map((key, groupIdx) => {
+        const groupClips = groupMap.get(key)!;
+        return (
+          <div key={key}>
+            <div style={{ display:'flex', alignItems:'center', gap:12, margin: groupIdx === 0 ? '0 0 14px' : '28px 0 14px' }}>
+              <span style={{ fontSize:13, fontWeight:700, color:'#1A1714', whiteSpace:'nowrap' }}>{dateLabel(key)}</span>
+              <div style={{ flex:1, height:1, background:'rgba(0,0,0,0.08)' }} />
+              <span style={{ fontSize:11, color:'#6B6560', whiteSpace:'nowrap' }}>{groupClips.length} clip{groupClips.length !== 1 ? 's' : ''}</span>
+            </div>
+            <div className="clips-grid" style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:'16px' }}>
+              {groupClips.map((clip, idx) => {
+        const previewSrc = clip.clip_url || clip.video_url || '';
+        return (
+          <div key={clip.id ?? idx} style={{ background:colors.surfaceContainerHigh, borderRadius:radius.lg, overflow:'hidden' }}>
             {/* Thumbnail */}
             <div onClick={() => previewSrc ? setPlayingUrl(previewSrc) : setPreview(idx)} style={{ aspectRatio:'9/12', background:colors.surfaceContainer, position:'relative', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', overflow:'hidden' }}>
               {clip.thumbnail_url ? (
@@ -328,8 +366,11 @@ export default function ClipsPage() {
             </div>
           </div>
         );
-        })}
-      </div>
+              })}
+            </div>
+          </div>
+        );
+      })}
 
       {/* Video player modal */}
       {playingUrl && (

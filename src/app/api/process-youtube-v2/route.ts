@@ -54,6 +54,7 @@ export async function POST(req: NextRequest) {
       enableCaption = true,
       enableReframe = true,
       resolution = 'HD_1080',
+      captionLanguage = 'en',
     } = body;
 
     if (!videoUrl) {
@@ -115,6 +116,7 @@ export async function POST(req: NextRequest) {
         enableCaption,
         enableReframe,
         resolution,
+        captionLanguage,
       }),
     });
 

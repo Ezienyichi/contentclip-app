@@ -547,6 +547,7 @@ export default function ImportPage() {
   const [maxDuration, setMaxDuration] = useState(60);
   const [aspectRatio, setAspectRatio] = useState<AspectRatio>("9:16");
   const [subtitles, setSubtitles] = useState(true);
+  const [captionLanguage, setCaptionLanguage] = useState('en');
   const [userPlan, setUserPlan] = useState<string>("free");
   const [userCredits, setUserCredits] = useState<number>(0);
   const [loading, setLoading] = useState(false);
@@ -822,6 +823,7 @@ export default function ImportPage() {
           enableCaption: subtitles,
           enableReframe: aspectRatio !== "16:9",
           resolution: resolutionForPlan(userPlan),
+          captionLanguage,
         }),
       });
 
@@ -1533,6 +1535,32 @@ export default function ImportPage() {
                   />
                 </button>
               </div>
+
+              {/* Caption language — visible only when subtitles are on */}
+              {subtitles && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
+                  <div>
+                    <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: colors.onSurface }}>Caption language</p>
+                    <p style={{ margin: 0, fontSize: 11, color: colors.onSurfaceVariant }}>Language spoken in the video</p>
+                  </div>
+                  <select
+                    value={captionLanguage}
+                    onChange={e => setCaptionLanguage(e.target.value)}
+                    style={{ fontSize: 13, fontWeight: 500, color: colors.onSurface, background: colors.surfaceContainerHighest, border: `1px solid ${colors.outlineVariant}`, borderRadius: 8, padding: '5px 8px', cursor: 'pointer', outline: 'none', maxWidth: 140 }}
+                  >
+                    <option value="en">English</option>
+                    <option value="fr">French</option>
+                    <option value="sw">Swahili</option>
+                    <option value="yo">Yoruba</option>
+                    <option value="ig">Igbo</option>
+                    <option value="ha">Hausa</option>
+                    <option value="am">Amharic</option>
+                    <option value="pt">Portuguese</option>
+                    <option value="ar">Arabic</option>
+                    <option value="es">Spanish</option>
+                  </select>
+                </div>
+              )}
 
               {/* Minutes cost */}
               {(() => {
