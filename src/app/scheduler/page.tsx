@@ -109,7 +109,7 @@ function getGroup(iso: string): 'today' | 'tomorrow' | 'week' | 'later' | 'past'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-type Connection = { id: string; platform: string; account_name: string | null; account_avatar: string | null; connected_at: string };
+type Connection = { id: string; platform: string; account_name: string | null; account_avatar: string | null; connected_at: string; pfm_account_id: string };
 type ScheduledPost = {
   id: string; platform: string; scheduled_at: string; caption: string | null;
   status: string; published_url: string | null; error_message: string | null;
@@ -139,12 +139,12 @@ export default function SchedulerPage() {
   const [savedClips, setSavedClips] = useState<SavedClip[]>([]);
 
   // Modal
-  const [showModal,      setShowModal]      = useState(false);
-  const [modalClipId,    setModalClipId]    = useState('');
-  const [modalPlatforms, setModalPlatforms] = useState<string[]>([]);
-  const [modalCaption,   setModalCaption]   = useState('');
-  const [modalDate,      setModalDate]      = useState('');
-  const [modalTime,      setModalTime]      = useState('');
+  const [showModal,       setShowModal]       = useState(false);
+  const [modalClipId,     setModalClipId]     = useState('');
+  const [selectedConnIds, setSelectedConnIds] = useState<string[]>([]);
+  const [modalCaption,    setModalCaption]    = useState('');
+  const [modalDate,       setModalDate]       = useState('');
+  const [modalTime,       setModalTime]       = useState('');
   const [submitting,     setSubmitting]     = useState(false);
 
   // Preview modal
@@ -229,7 +229,7 @@ export default function SchedulerPage() {
     const next = new Date(); next.setHours(next.getHours() + 1, 0, 0, 0);
     setModalDate(next.toISOString().split('T')[0]);
     setModalTime(`${String(next.getHours()).padStart(2, '0')}:00`);
-    setModalClipId(''); setModalPlatforms([]); setModalCaption('');
+    setModalClipId(''); setSelectedConnIds([]); setModalCaption('');
     setShowModal(true);
   };
 
@@ -240,15 +240,26 @@ export default function SchedulerPage() {
   };
 
   const handleSchedule = async () => {
-    if (!modalClipId || modalPlatforms.length === 0 || !modalDate || !modalTime) return;
+    if (!modalClipId || selectedConnIds.length === 0 || !modalDate || !modalTime) return;
     setSubmitting(true);
     try {
       const scheduled_at = new Date(`${modalDate}T${modalTime}`).toISOString();
+      const selectedConns = connections.filter(c => selectedConnIds.includes(c.id));
       const results = await Promise.all(
-        modalPlatforms.map(platform =>
-          fetch('/api/scheduled-posts', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ clip_id: modalClipId, platform, caption: modalCaption, scheduled_at }) })
-            .then(async r => ({ platform, ok: r.ok, data: await r.json() }))
-            .catch(() => ({ platform, ok: false, data: { error: 'Network error.' } }))
+        selectedConns.map(conn =>
+          fetch('/api/scheduled-posts', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              clip_id:        modalClipId,
+              platform:       conn.platform,
+              pfm_account_id: conn.pfm_account_id, // specific account/page — verified server-side
+              caption:        modalCaption,
+              scheduled_at,
+            }),
+          })
+            .then(async r => ({ label: conn.account_name ?? PLATFORMS.find(p => p.id === conn.platform)?.label ?? conn.platform, ok: r.ok, data: await r.json() }))
+            .catch(() => ({ label: conn.account_name ?? conn.platform, ok: false, data: { error: 'Network error.' } }))
         )
       );
       const failures = results.filter(r => !r.ok);
@@ -258,8 +269,8 @@ export default function SchedulerPage() {
         setBanner({ type: 'success', msg: `${n} post${n !== 1 ? 's' : ''} scheduled.` });
         loadScheduledPosts();
       } else if (failures.length < results.length) {
-        const platLabels = failures.map(f => PLATFORMS.find(p => p.id === f.platform)?.label ?? f.platform).join(', ');
-        setBanner({ type: 'error', msg: `Scheduled on some platforms. Failed: ${platLabels}.` });
+        const failLabels = failures.map(f => f.label).join(', ');
+        setBanner({ type: 'error', msg: `Scheduled on some accounts. Failed: ${failLabels}.` });
         loadScheduledPosts();
       } else {
         setBanner({ type: 'error', msg: failures[0].data?.error ?? 'Failed to schedule posts.' });
@@ -331,7 +342,7 @@ export default function SchedulerPage() {
     .map(g => ({ key: g, label: GROUP_LABELS[g], posts: upcomingPosts.filter(p => getGroup(p.scheduled_at) === g) }))
     .filter(g => g.posts.length > 0);
 
-  const canSchedule = modalClipId && modalPlatforms.length > 0 && modalDate && modalTime && !submitting;
+  const canSchedule = modalClipId && selectedConnIds.length > 0 && modalDate && modalTime && !submitting;
 
   // ── Render helpers ──
   const renderPostCard = (post: ScheduledPost) => {
@@ -655,13 +666,13 @@ export default function SchedulerPage() {
 
       {/* ── Schedule a Post Modal ── */}
       {showModal && (
-        <div onClick={() => !submitting && setShowModal(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 50, overflowY: 'auto', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '40px 20px' }}>
+        <div onClick={() => { if (!submitting) { setShowModal(false); setSelectedConnIds([]); } }} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 50, overflowY: 'auto', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '40px 20px' }}>
           <div onClick={e => e.stopPropagation()} style={{ background: '#F5F3EF', borderRadius: radius.xl, padding: '28px', width: '100%', maxWidth: 480, position: 'relative' }}>
 
             {/* Header */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
               <h3 style={{ margin: 0, fontSize: 17, fontWeight: 800, color: colors.onSurface }}>Schedule a Post</h3>
-              <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: colors.onSurfaceVariant, lineHeight: 1, padding: '4px 6px' }}>×</button>
+              <button onClick={() => { setShowModal(false); setSelectedConnIds([]); }} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: colors.onSurfaceVariant, lineHeight: 1, padding: '4px 6px' }}>×</button>
             </div>
 
             {/* 1. Select clip */}
@@ -713,12 +724,16 @@ export default function SchedulerPage() {
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 20 }}>
                 {connections.map(conn => {
                   const plat    = PLATFORMS.find(p => p.id === conn.platform);
-                  const selected = modalPlatforms.includes(conn.platform);
-                  const toggle  = () => setModalPlatforms(prev => selected ? prev.filter(p => p !== conn.platform) : [...prev, conn.platform]);
+                  const selected = selectedConnIds.includes(conn.id);
+                  const toggle  = () => setSelectedConnIds(prev => selected ? prev.filter(id => id !== conn.id) : [...prev, conn.id]);
+                  // For Facebook, show the page name so users can distinguish between pages
+                  const displayLabel = conn.platform === 'facebook' && conn.account_name
+                    ? conn.account_name
+                    : (plat?.label ?? conn.platform);
                   return (
                     <button key={conn.id} onClick={toggle} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: radius.full, border: selected ? `2px solid ${colors.primary}` : '1px solid rgba(0,0,0,0.12)', background: selected ? 'rgba(155,93,229,0.08)' : '#fff', cursor: 'pointer', fontFamily: "'Inter',sans-serif", fontSize: 12, fontWeight: 600, color: selected ? colors.primary : colors.onSurface }}>
                       {plat?.iconSm}
-                      {plat?.label ?? conn.platform}
+                      {displayLabel}
                       {selected && <span style={{ fontSize: 10, marginLeft: 2 }}>✓</span>}
                     </button>
                   );
@@ -739,9 +754,9 @@ export default function SchedulerPage() {
 
             {/* Actions */}
             <div style={{ display: 'flex', gap: 10 }}>
-              <button onClick={() => setShowModal(false)} style={{ flex: 1, padding: '11px', borderRadius: radius.md, border: '1px solid rgba(0,0,0,0.1)', background: colors.surfaceContainerHighest, color: colors.onSurface, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: "'Inter',sans-serif" }}>Cancel</button>
+              <button onClick={() => { setShowModal(false); setSelectedConnIds([]); }} style={{ flex: 1, padding: '11px', borderRadius: radius.md, border: '1px solid rgba(0,0,0,0.1)', background: colors.surfaceContainerHighest, color: colors.onSurface, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: "'Inter',sans-serif" }}>Cancel</button>
               <button onClick={handleSchedule} disabled={!canSchedule} style={{ flex: 2, padding: '11px', borderRadius: radius.md, border: 'none', background: canSchedule ? gradients.primary : colors.surfaceContainerHighest, color: canSchedule ? '#fff' : colors.onSurfaceVariant, fontSize: 13, fontWeight: 700, cursor: canSchedule ? 'pointer' : 'default', fontFamily: "'Inter',sans-serif", transition: 'opacity 0.15s' }}>
-                {submitting ? 'Scheduling...' : modalPlatforms.length > 1 ? `Schedule to ${modalPlatforms.length} Platforms` : 'Schedule Post'}
+                {submitting ? 'Scheduling...' : selectedConnIds.length > 1 ? `Schedule to ${selectedConnIds.length} Accounts` : 'Schedule Post'}
               </button>
             </div>
           </div>

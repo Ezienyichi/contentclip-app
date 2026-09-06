@@ -24,7 +24,7 @@ export async function GET(_req: NextRequest) {
 
   const { data, error } = await supabase
     .from('social_connections')
-    .select('id, platform, account_name, account_avatar, connected_at, status')
+    .select('id, platform, account_name, account_avatar, connected_at, status, pfm_account_id')
     .eq('user_id', user.id)
     .eq('status', 'active')
     .order('connected_at', { ascending: false });

@@ -61,13 +61,14 @@ export async function POST(req: NextRequest) {
   const { data: { user }, error: authError } = await supabase.auth.getUser();
   if (authError || !user) return NextResponse.json({ error: 'Not authenticated.' }, { status: 401 });
 
-  let clip_id: string, platform: string, scheduled_at: string, caption: string;
+  let clip_id: string, platform: string, scheduled_at: string, caption: string, pfm_account_id: string | null;
   try {
     const body = await req.json();
-    clip_id      = String(body.clip_id      ?? '');
-    platform     = String(body.platform     ?? '');
-    scheduled_at = String(body.scheduled_at ?? '');
-    caption      = String(body.caption      ?? '');
+    clip_id        = String(body.clip_id        ?? '');
+    platform       = String(body.platform       ?? '');
+    scheduled_at   = String(body.scheduled_at   ?? '');
+    caption        = String(body.caption        ?? '');
+    pfm_account_id = typeof body.pfm_account_id === 'string' && body.pfm_account_id ? body.pfm_account_id : null;
   } catch {
     return NextResponse.json({ error: 'Invalid request body.' }, { status: 400 });
   }
@@ -91,16 +92,33 @@ export async function POST(req: NextRequest) {
   if (clipError || !clip)
     return NextResponse.json({ error: 'Clip not found.' }, { status: 404 });
 
-  // Look up the user's own active connection for this platform — never trust a client-supplied account ID
-  const { data: connection, error: connError } = await supabase
-    .from('social_connections')
-    .select('pfm_account_id')
-    .eq('user_id', user.id)
-    .eq('platform', platform)
-    .eq('status', 'active')
-    .single();
+  // Look up the user's active connection for this platform.
+  // When pfm_account_id is supplied (e.g. a specific Facebook Page), verify ownership by
+  // requiring BOTH user_id (from the verified session) AND the matching pfm_account_id —
+  // so a client can never post to an account/page that isn't theirs.
+  let connection: { pfm_account_id: string } | null = null;
+  if (pfm_account_id) {
+    const { data } = await supabase
+      .from('social_connections')
+      .select('pfm_account_id')
+      .eq('user_id', user.id)              // session user — cannot be forged by client
+      .eq('platform', platform)
+      .eq('pfm_account_id', pfm_account_id) // narrows to the specific account they picked
+      .eq('status', 'active')
+      .single();
+    connection = data ?? null;
+  } else {
+    const { data } = await supabase
+      .from('social_connections')
+      .select('pfm_account_id')
+      .eq('user_id', user.id)
+      .eq('platform', platform)
+      .eq('status', 'active')
+      .single();
+    connection = data ?? null;
+  }
 
-  if (connError || !connection)
+  if (!connection)
     return NextResponse.json({ error: `No active ${platform} connection found. Connect your account first.` }, { status: 404 });
 
   // Insert our scheduled_post row first so we have an ID for PfM's external_id

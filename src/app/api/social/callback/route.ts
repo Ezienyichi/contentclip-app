@@ -7,7 +7,6 @@ export const dynamic = 'force-dynamic';
 
 const PFM_API = 'https://api.postforme.dev/v1';
 
-// Service role client — bypasses RLS for the INSERT after OAuth redirect
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -18,46 +17,42 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
 export async function GET(req: NextRequest) {
   const { searchParams } = req.nextUrl;
 
-  const isSuccess    = searchParams.get('isSuccess');
-  const accountIds   = searchParams.get('accountIds') ?? '';
-  const provider     = searchParams.get('provider') ?? '';
-  const errorMsg     = searchParams.get('error');
+  const isSuccess = searchParams.get('isSuccess');
+  const accountIds = searchParams.get('accountIds') ?? '';
+  const provider   = searchParams.get('provider') ?? '';
+  const errorMsg   = searchParams.get('error');
 
-  // ── Failure: PfM reported an error ──
   if (isSuccess !== 'true' || !accountIds) {
     const reason = encodeURIComponent(errorMsg ?? 'Connection cancelled or failed.');
     return NextResponse.redirect(`${APP_URL}/scheduler?error=${reason}`);
   }
 
-  // PfM may return multiple accountIds (comma-separated); use the first
-  const pfmAccountId = accountIds.split(',')[0].trim();
+  // PfM may return multiple accountIds (comma-separated) — one per Facebook Page, etc.
+  // Store ALL of them so each page becomes its own selectable connection.
+  const allAccountIds = accountIds.split(',').map(s => s.trim()).filter(Boolean);
 
-  if (!pfmAccountId) {
+  if (allAccountIds.length === 0) {
     return NextResponse.redirect(`${APP_URL}/scheduler?error=No+account+ID+returned.`);
   }
 
-  // ── Fetch the connected account from PfM to get external_id + display info ──
-  // external_id is our user.id, set server-side at connect time — cannot be forged by client
-  const accountRes = await fetch(`${PFM_API}/social-accounts/${pfmAccountId}`, {
-    headers: { 'Authorization': `Bearer ${process.env.POST_FOR_ME_API_KEY!}` },
-  });
+  // Fetch all accounts from PfM in parallel to get display info + external_id
+  const accountResults = await Promise.all(
+    allAccountIds.map(id =>
+      fetch(`${PFM_API}/social-accounts/${id}`, {
+        headers: { 'Authorization': `Bearer ${process.env.POST_FOR_ME_API_KEY!}` },
+      })
+        .then(r => r.ok ? r.json() : null)
+        .catch(() => null)
+    )
+  );
 
+  // Resolve userId: all accounts share the same external_id (set at connect time, cannot be forged)
   let userId: string | null = null;
-  let accountName: string | null = null;
-  let accountAvatar: string | null = null;
-  let platform = provider || 'unknown';
-
-  if (accountRes.ok) {
-    const account = await accountRes.json();
-    userId       = account.external_id ?? null;
-    accountName  = account.name ?? account.username ?? account.handle ?? null;
-    accountAvatar= account.avatar_url ?? account.profile_image ?? null;
-    platform     = account.platform ?? provider;
-  } else {
-    console.error('[social/callback] Failed to fetch PfM account', pfmAccountId, accountRes.status);
+  for (const account of accountResults) {
+    if (account?.external_id) { userId = account.external_id; break; }
   }
 
-  // ── Secondary: try session cookie (works on most browsers) ──
+  // Fall back to session cookie if external_id wasn't returned by PfM
   if (!userId) {
     try {
       const cookieStore = await cookies();
@@ -83,26 +78,42 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(`${APP_URL}/scheduler?error=Could+not+identify+user.+Please+try+again.`);
   }
 
-  // ── Upsert connection (handles re-connecting a previously disconnected account) ──
-  const { error: dbError } = await supabaseAdmin
-    .from('social_connections')
-    .upsert(
-      {
-        user_id:        userId,
-        platform,
-        pfm_account_id: pfmAccountId,
-        account_name:   accountName,
-        account_avatar: accountAvatar,
-        status:         'active',
-        connected_at:   new Date().toISOString(),
-      },
-      { onConflict: 'user_id,platform,pfm_account_id' }
-    );
+  // Upsert each account as its own connection row.
+  // For Facebook, this means each Page becomes a separate row with its own pfm_account_id.
+  // UNIQUE (user_id, platform, pfm_account_id) handles deduplication on reconnect.
+  let successCount = 0;
+  for (let i = 0; i < allAccountIds.length; i++) {
+    const pfmAccountId  = allAccountIds[i];
+    const account       = accountResults[i];
+    const accountName   = account?.name ?? account?.username ?? account?.handle ?? null;
+    const accountAvatar = account?.avatar_url ?? account?.profile_image ?? null;
+    const platform      = account?.platform ?? provider;
 
-  if (dbError) {
-    console.error('[social/callback] DB upsert error', dbError);
+    const { error: dbError } = await supabaseAdmin
+      .from('social_connections')
+      .upsert(
+        {
+          user_id:        userId,
+          platform,
+          pfm_account_id: pfmAccountId,
+          account_name:   accountName,
+          account_avatar: accountAvatar,
+          status:         'active',
+          connected_at:   new Date().toISOString(),
+        },
+        { onConflict: 'user_id,platform,pfm_account_id' }
+      );
+
+    if (dbError) {
+      console.error('[social/callback] DB upsert error for', pfmAccountId, dbError);
+    } else {
+      successCount++;
+    }
+  }
+
+  if (successCount === 0) {
     return NextResponse.redirect(`${APP_URL}/scheduler?error=Failed+to+save+connection.`);
   }
 
-  return NextResponse.redirect(`${APP_URL}/scheduler?connected=${encodeURIComponent(platform)}`);
+  return NextResponse.redirect(`${APP_URL}/scheduler?connected=${encodeURIComponent(provider || 'unknown')}`);
 }
