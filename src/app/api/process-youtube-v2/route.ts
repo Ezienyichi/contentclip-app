@@ -49,7 +49,6 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const {
       videoUrl,
-      limit = 5,
       ratio = 'RATIO_9_16',
       enableCaption = true,
       enableReframe = true,
@@ -111,7 +110,7 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         videoUrl,
         userId: user.id,
-        limit,
+        limit: 40,
         ratio,
         enableCaption,
         enableReframe,
@@ -129,7 +128,6 @@ export async function POST(req: NextRequest) {
         task_id: data.task_id,
         source_url: videoUrl,
         status: 'processing',
-        num_clips: limit,
       });
     }
 

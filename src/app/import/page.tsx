@@ -542,7 +542,6 @@ export default function ImportPage() {
   const [prompt, setPrompt] = useState(
     "Find the most engaging, hook-worthy moments with high energy and emotional impact."
   );
-  const [numClips, setNumClips] = useState(3);
   const [minDuration, setMinDuration] = useState(15);
   const [maxDuration, setMaxDuration] = useState(60);
   const [aspectRatio, setAspectRatio] = useState<AspectRatio>("9:16");
@@ -818,7 +817,6 @@ export default function ImportPage() {
         credentials: "include",
         body: JSON.stringify({
           videoUrl,
-          limit: numClips,
           ratio: RATIO_ENUM_MAP[aspectRatio] || "RATIO_9_16",
           enableCaption: subtitles,
           enableReframe: aspectRatio !== "16:9",
@@ -858,7 +856,6 @@ export default function ImportPage() {
     isValidUrl,
     videoUrl,
     userPlan,
-    numClips,
     aspectRatio,
     subtitles,
     pollClipStatus,
@@ -880,18 +877,10 @@ export default function ImportPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { setError('Please sign in.'); setLoading(false); return; }
 
-      // Guard: check balance upfront
-      if (userCredits > 0 && userCredits < numClips) {
-        setError('Not enough credits. Upgrade or buy more.');
-        setLoading(false);
-        return;
-      }
-
       // ── UPLOAD TO PROCESSING SERVER ──
       const formData = new FormData();
       formData.append('file', selectedFile);
       formData.append('userId', user.id);
-      formData.append('numClips', String(numClips));
       formData.append('category', category);
       formData.append('prompt', buildSmartPrompt(category, selectedTs, contentMode));
       formData.append('plan', userPlan);
@@ -912,7 +901,7 @@ export default function ImportPage() {
             const data = JSON.parse(xhr.responseText);
             if (xhr.status >= 200 && xhr.status < 300 && data.clips?.length > 0) {
               uploadSucceeded = true;
-              serverCreditsUsed = typeof data.credits_used === 'number' ? data.credits_used : numClips;
+              serverCreditsUsed = typeof data.credits_used === 'number' ? data.credits_used : 0;
               setResult({
                 success: true,
                 jobId: '',
@@ -957,7 +946,7 @@ export default function ImportPage() {
       setStatus('idle');
       setUploadProgress(0);
     }
-  }, [selectedFile, durationLoading, numClips, category, selectedTs, contentMode, userCredits, userPlan]);
+  }, [selectedFile, durationLoading, category, selectedTs, contentMode, userCredits, userPlan]);
 
   const handleDownload = (clip: Clip) => {
     const a = document.createElement('a');
@@ -1412,29 +1401,6 @@ export default function ImportPage() {
                 </div>
               </div>
 
-              {/* Num Clips */}
-              <div>
-                <label
-                  style={{
-                    fontSize: 12,
-                    color: colors.onSurfaceVariant,
-                    display: "block",
-                    marginBottom: 8,
-                  }}
-                >
-                  Number of Clips:{" "}
-                  <strong style={{ color: colors.onSurface }}>{numClips}</strong>
-                </label>
-                <input
-                  type="range"
-                  min={1}
-                  max={10}
-                  value={numClips ?? 3}
-                  onChange={(e) => setNumClips(Number(e.target.value))}
-                  style={{ width: "100%", accentColor: colors.primary }}
-                />
-              </div>
-
               {/* Duration */}
               <div>
                 <label
@@ -1659,7 +1625,7 @@ export default function ImportPage() {
                     : "Processing... this takes 2-4 minutes. Please wait."}
                 </>
               ) : (
-                `Generate ${numClips} Clips`
+                `Generate Clips`
               )}
             </button>
 
