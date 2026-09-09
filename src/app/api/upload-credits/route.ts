@@ -34,30 +34,8 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json();
 
-  // ── REFUND PATH ──
-  if (body.action === 'refund') {
-    const amount = Number(body.amount);
-    if (!amount || amount <= 0) {
-      return NextResponse.json({ error: 'Invalid refund amount.' }, { status: 400 });
-    }
-
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('credits')
-      .eq('id', user.id)
-      .single();
-
-    const current = profile?.credits ?? 0;
-
-    await supabase
-      .from('profiles')
-      .update({ credits: current + amount })
-      .eq('id', user.id);
-
-    return NextResponse.json({ ok: true, credits_remaining: current + amount });
-  }
-
   // ── DEDUCT PATH ──
+  // Refund path removed — credit adjustments must go through server-side billing webhooks only.
   const creditsNeeded = Number(body.creditsNeeded);
   if (!creditsNeeded || creditsNeeded <= 0) {
     return NextResponse.json({ error: 'Invalid credits amount.' }, { status: 400 });

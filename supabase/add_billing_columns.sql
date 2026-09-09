@@ -29,6 +29,7 @@ CREATE TABLE IF NOT EXISTS public.transactions (
   user_id    uuid           NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
   reference  text           NOT NULL UNIQUE,
   amount     numeric(10,2)  NOT NULL,
+  currency   text           NOT NULL DEFAULT 'USD',
   plan       text           NOT NULL,
   period     text           CHECK (period IN ('monthly', 'annual')),
   status     text           NOT NULL DEFAULT 'pending',
@@ -40,3 +41,8 @@ CREATE INDEX IF NOT EXISTS idx_transactions_user_id   ON transactions(user_id);
 CREATE INDEX IF NOT EXISTS idx_transactions_reference ON transactions(reference);
 
 ALTER TABLE transactions ENABLE ROW LEVEL SECURITY;
+
+-- Users can read their own transactions; service role bypasses RLS for inserts.
+CREATE POLICY "Users view own transactions"
+  ON transactions FOR SELECT
+  USING (auth.uid() = user_id);
