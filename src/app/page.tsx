@@ -398,7 +398,7 @@ export default function HomePage() {
       </section>
 
       {/* ══ PHONE CLUSTER ══════════════════════════════════════════════════════ */}
-      <div style={{ maxWidth:mkt.maxW, margin:'0 auto', padding:'0 10px 0', overflow:'hidden' }}>
+      <div style={{ maxWidth:1340, margin:'0 auto', padding:'0 10px 0', overflow:'hidden' }}>
         <p style={{ textAlign:'center', fontSize:13, fontWeight:600, letterSpacing:'.09em', textTransform:'uppercase', color:mkt.muted, margin:'0 0 18px' }}>
           Illustrative examples
         </p>
