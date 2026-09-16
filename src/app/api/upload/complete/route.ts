@@ -3,20 +3,16 @@ import { createServerClient } from '@supabase/ssr';
 import { createClient as createAdminClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
 import { S3Client, HeadObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import { UPLOAD_RETENTION_DAYS, uploadRetentionDays, retentionExpiryISO } from '@/lib/retention';
 
 export const dynamic = 'force-dynamic';
 
-const PLAN_RETENTION: Record<string, number> = {
-  pro:          3,
-  professional: 3,
-  agency:       14,
-};
 const PLAN_MAX_BYTES: Record<string, number> = {
   pro:          100 * 1024 * 1024,
   professional: 100 * 1024 * 1024,
   agency:       200 * 1024 * 1024,
 };
-const PLAN_ALLOWED = new Set(Object.keys(PLAN_RETENTION));
+const PLAN_ALLOWED = new Set(Object.keys(UPLOAD_RETENTION_DAYS));
 
 function r2Client() {
   return new S3Client({
@@ -101,9 +97,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: `File exceeds ${mb}MB limit for your plan. Upload removed.` }, { status: 400 });
   }
 
-  const retentionDays = PLAN_RETENTION[plan];
+  // Floored at CLIP_RETENTION_DAYS, so an upload never expires sooner than a
+  // generated clip. PLAN_ALLOWED above already rejected plans with no entry.
+  const retentionDays = uploadRetentionDays(plan)!;
   const publicUrl   = `${process.env.R2_PUBLIC_URL}/${key}`;
-  const deleteAfter = new Date(Date.now() + retentionDays * 24 * 60 * 60 * 1000).toISOString();
+  const deleteAfter = retentionExpiryISO(retentionDays);
 
   const { data: clip, error: insertErr } = await admin
     .from('clips')

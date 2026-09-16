@@ -4,6 +4,7 @@ import DashboardLayout from '@/components/DashboardLayout';
 import Icon from '@/components/Icon';
 import { useRouter } from 'next/navigation';
 import { colors as _colors, gradients, radius } from '@/lib/tokens';
+import { CLIP_RETENTION_DAYS } from '@/lib/retention';
 import UpgradeModal from '@/components/UpgradeModal';
 
 const colors = {
@@ -36,8 +37,10 @@ function ExpiryBadge({ expiresAt }: { expiresAt?: string | null }) {
     return <span style={{ fontSize:10, fontWeight:600, color:'#DC2626', background:'rgba(220,38,38,0.1)', padding:'2px 7px', borderRadius:99 }}>Expired</span>;
   if (daysLeft <= 2)
     return <span style={{ fontSize:10, fontWeight:600, color:'#D97706', background:'rgba(245,158,11,0.1)', padding:'2px 7px', borderRadius:99 }}>Expires in {daysLeft}d</span>;
-  return <span style={{ fontSize:10, color:'#6B6560', background:'#E8E5DF', padding:'2px 7px', borderRadius:99 }}>
-    Until {new Date(expiresAt).toLocaleDateString('en-US', { month:'short', day:'numeric' })}
+  return <span
+    title={new Date(expiresAt).toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric' })}
+    style={{ fontSize:10, color:'#6B6560', background:'#E8E5DF', padding:'2px 7px', borderRadius:99 }}>
+    Expires in {daysLeft}d
   </span>;
 }
 
@@ -255,6 +258,14 @@ export default function ClipsPage() {
         onChange={handleFileSelect}
       />
 
+      {/* Retention notice */}
+      <div style={{ display:'flex', alignItems:'center', gap:8, padding:'10px 14px', marginBottom:14, borderRadius:radius.md, background:'rgba(155,93,229,0.07)', border:'1px solid rgba(155,93,229,0.18)' }}>
+        <Icon name="schedule" size={15} style={{ color:colors.primary, flexShrink:0 }}/>
+        <span style={{ fontSize:12.5, color:colors.onSurface }}>
+          Clips are available for <strong>{CLIP_RETENTION_DAYS} days</strong> after they&apos;re created. Download anything you want to keep.
+        </span>
+      </div>
+
       {/* Filters */}
       <div className="clips-filters" style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'16px', flexWrap:'wrap', gap:'12px' }}>
         <div style={{ display:'flex', gap:'8px' }}>
@@ -343,14 +354,11 @@ export default function ClipsPage() {
                 </p>
               )}
               <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:10, flexWrap:'wrap' }}>
-                {clip.source === 'upload' ? (
+                {clip.source === 'upload' && (
                   <span style={{ fontSize:10, fontWeight:600, color:'#7c3aed', background:'rgba(124,58,237,0.1)', padding:'2px 7px', borderRadius:99 }}>Uploaded</span>
-                ) : (
-                  <ExpiryBadge expiresAt={clip.expires_at} />
                 )}
-                {clip.source === 'upload' && clip.delete_after && (
-                  <ExpiryBadge expiresAt={clip.delete_after} />
-                )}
+                {/* Uploads set only delete_after; generated clips set both. */}
+                <ExpiryBadge expiresAt={clip.delete_after ?? clip.expires_at} />
                 {clip.source_video_name && (
                   <span style={{ fontSize:10, color:colors.onSurfaceVariant, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', maxWidth:120 }}>{clip.source_video_name}</span>
                 )}

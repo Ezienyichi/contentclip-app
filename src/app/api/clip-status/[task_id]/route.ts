@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { createClient } from '@supabase/supabase-js';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
 import { insertNotification } from '@/lib/notify';
 import { planMinutes } from '@/lib/planLimits';
@@ -8,6 +9,67 @@ import { planMinutes } from '@/lib/planLimits';
 export const dynamic = 'force-dynamic';
 
 const BACKEND_API_URL = process.env.BACKEND_API_URL!;
+
+/**
+ * Minutes to charge for a completed job, plus how we arrived at the number
+ * (logged, so a job that records nothing can be diagnosed from the server log).
+ */
+function minutesForJob(data: any): { minutes: number; basis: string } {
+  const cost = Number(data?.cost_usage);
+
+  if (Number.isFinite(cost) && cost > 0) {
+    // cost_usage is WayinVideo API credits (~1.9 per input minute), not minutes.
+    // Ceil rather than round, with a floor of 1: Math.round() charged 0 for
+    // anything under ~30s of source video, i.e. processed it for free.
+    return { minutes: Math.max(1, Math.ceil(cost / 2)), basis: `cost_usage=${cost}` };
+  }
+
+  // Backend omitted cost_usage. Fall back to how far into the source video the
+  // returned clips reach — a lower bound on the footage actually processed.
+  const ends: number[] = (Array.isArray(data?.clips) ? data.clips : [])
+    .map((c: any) => Number(c?.end_time))
+    .filter((n: number) => Number.isFinite(n) && n > 0);
+
+  if (ends.length > 0) {
+    const span = Math.max(...ends);
+    return {
+      minutes: Math.max(1, Math.ceil(span / 60)),
+      basis:   `clip span ${Math.round(span)}s (cost_usage missing)`,
+    };
+  }
+
+  return { minutes: 0, basis: 'indeterminate' };
+}
+
+/**
+ * profiles.minutes_used += delta, atomically where the RPC is installed
+ * (supabase/increment_minutes_used.sql). Falls back to read-modify-write so
+ * this keeps working before that migration is applied.
+ */
+async function addMinutesUsed(
+  admin: SupabaseClient,
+  userId: string,
+  delta: number,
+  knownCurrent: number,
+): Promise<void> {
+  const { error: rpcErr } = await admin.rpc('increment_minutes_used', {
+    p_user_id: userId,
+    p_minutes: delta,
+  });
+  if (!rpcErr) {
+    console.log('[clip-status] minutes_used +=', delta, 'for user', userId);
+    return;
+  }
+
+  console.warn('[clip-status] increment_minutes_used RPC unavailable, falling back to read-modify-write:', rpcErr.message);
+  const { error } = await admin
+    .from('profiles')
+    .update({ minutes_used: knownCurrent + delta })
+    .eq('id', userId);
+
+  if (error) console.error('[clip-status] minutes_used update FAILED:', error.message);
+  else       console.log('[clip-status] minutes_used set to', knownCurrent + delta, 'for user', userId);
+}
 
 function getAdmin() {
   return createClient(
@@ -69,11 +131,8 @@ export async function GET(
 
       // Only deduct once — skip if already charged
       if (job && job.minutes_charged == null) {
-        // cost_usage is WayinVideo API credits (~1.9 per input minute), not minutes.
-        // Divide by 2 to approximate actual video minutes consumed.
-        const rawCostUsage = data.cost_usage;
-        const minutesUsed = Math.round((rawCostUsage ?? 0) / 2);
-        console.log('[clip-status] cost_usage from backend:', rawCostUsage, '| minutesUsed (after /2):', minutesUsed);
+        const { minutes: minutesUsed, basis } = minutesForJob(data);
+        console.log('[clip-status] minutes for task', task_id, '=', minutesUsed, '| basis:', basis);
 
         // Fetch profile before deduction so we can compute remaining minutes
         const { data: currentProfile, error: profileErr } = await admin
@@ -85,22 +144,39 @@ export async function GET(
         console.log('[clip-status] profile fetch — minutes_used now:', currentProfile?.minutes_used, '| plan:', currentProfile?.plan, '| error:', profileErr?.message ?? null);
 
         if (minutesUsed > 0) {
-          const newTotal = (currentProfile?.minutes_used ?? 0) + minutesUsed;
-          console.log('[clip-status] writing minutes_used:', newTotal, 'to profiles for user:', user.id);
-          const { error: updateErr } = await admin
-            .from('profiles')
-            .update({ minutes_used: newTotal })
-            .eq('id', user.id);
-          console.log('[clip-status] profile UPDATE result — error:', updateErr?.message ?? 'none (success)');
-        } else {
-          console.warn('[clip-status] minutesUsed is 0 — skipping profile UPDATE (cost_usage was:', rawCostUsage, ')');
-        }
+          // Claim the job BEFORE touching the profile. The browser polls on an
+          // interval, so two requests can both see SUCCEEDED with
+          // minutes_charged still null; `.is('minutes_charged', null)` means
+          // exactly one of them matches a row and the job can't be charged twice.
+          const { data: claimed, error: claimErr } = await admin
+            .from('clip_jobs')
+            .update({ minutes_charged: minutesUsed, status: 'completed' })
+            .eq('id', job.id)
+            .is('minutes_charged', null)
+            .select('id')
+            .maybeSingle();
 
-        const { error: jobUpdateErr } = await admin
-          .from('clip_jobs')
-          .update({ minutes_charged: minutesUsed, status: 'completed' })
-          .eq('id', job.id);
-        console.log('[clip-status] clip_jobs UPDATE result — error:', jobUpdateErr?.message ?? 'none (success)');
+          if (claimErr) {
+            console.error('[clip-status] clip_jobs claim FAILED:', claimErr.message);
+          } else if (claimed) {
+            await addMinutesUsed(admin, user.id, minutesUsed, currentProfile?.minutes_used ?? 0);
+          } else {
+            console.log('[clip-status] task', task_id, 'already charged by a concurrent poll — skipping');
+          }
+        } else {
+          // Deliberately leave minutes_charged NULL. The previous code wrote
+          // minutes_charged: 0 here, which permanently marked the job charged
+          // (the guard above is `minutes_charged == null`), so those minutes
+          // could never be recovered and the account kept clipping for free.
+          console.error(
+            '[clip-status] could not determine minutes for task', task_id,
+            '— leaving job UNCHARGED so it can be recovered. cost_usage was:', data?.cost_usage,
+          );
+          await admin
+            .from('clip_jobs')
+            .update({ status: 'completed' })
+            .eq('id', job.id);
+        }
 
         // Clip-ready notification (fire and forget)
         void insertNotification({
