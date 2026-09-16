@@ -1,11 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
+import { createClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 300;
 
 const PROCESS_API_URL = 'https://api.vangelclip.app/api/process';
+
+// `credits` is a protected column (see supabase/lock_profile_privileged_columns.sql):
+// the user-scoped client can no longer write it. Deduct/refund run as the
+// service role. Authorisation is still the getUser() check below — this client
+// is only ever scoped to that verified user's own row.
+function getAdmin() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
 
 const PLAN_WINDOWS: Record<string, number> = {
   free:         300,
@@ -119,7 +131,10 @@ export async function POST(req: NextRequest) {
     }
 
     // ── DEDUCT CREDITS BEFORE PROCESSING ──
-    const { error: deductError } = await supabase
+    // .eq('credits', credits) keeps this a compare-and-swap: a concurrent
+    // request that already spent the balance makes this match 0 rows.
+    const admin = getAdmin();
+    const { error: deductError } = await admin
       .from('profiles')
       .update({ credits: credits - creditsNeeded })
       .eq('id', user.id)
@@ -174,7 +189,7 @@ export async function POST(req: NextRequest) {
 
     } catch (processingError: any) {
       // ── REFUND CREDITS ON FAILURE ──
-      await supabase
+      await admin
         .from('profiles')
         .update({ credits })
         .eq('id', user.id);

@@ -6,6 +6,7 @@ import DashboardLayout from '@/components/DashboardLayout';
 import Icon from '@/components/Icon';
 import { useRouter } from 'next/navigation';
 import { colors as _colors, gradients, radius, inputField as _inputField } from '@/lib/tokens';
+import { planUsage, planLabel } from '@/lib/planLimits';
 import { useTour } from '@/lib/useTour';
 import Tour from '@/components/tour/Tour';
 import TourInfoIcon from '@/components/tour/TourInfoIcon';
@@ -26,16 +27,6 @@ const colors = {
 const inputField: React.CSSProperties = { ..._inputField, background: '#F5F3EF', color: '#1A1714', border: '1px solid rgba(0,0,0,0.12)' };
 
 const supabase = createClient();
-
-// Minute budgets per plan (1 credit = 1 minute)
-const PLAN_INFO: Record<string, { label: string; minutes: number }> = {
-  free:         { label: 'Free',    minutes: 30  },
-  starter:      { label: 'Starter', minutes: 180 },
-  solo:         { label: 'Starter', minutes: 180 },
-  pro:          { label: 'Pro',     minutes: 400 },
-  professional: { label: 'Pro',     minutes: 400 },
-  agency:       { label: 'Agency',  minutes: 900 },
-};
 
 const TOP_TIERS = new Set(['pro', 'professional', 'agency']);
 
@@ -65,7 +56,7 @@ export default function SettingsPage() {
 
   // Plan / usage state
   const [userPlan, setUserPlan] = useState('free');
-  const [userCredits, setUserCredits] = useState(0);
+  const [userMinutesUsed, setUserMinutesUsed] = useState(0);
 
   // Notifications
   const [notifs, setNotifs] = useState({ clips: true, weekly: true, published: false, templates: false });
@@ -88,7 +79,7 @@ export default function SettingsPage() {
 
       const { data: p } = await supabase
         .from('profiles')
-        .select('full_name, plan, credits, created_at, clip_ready_notify, weekly_digest')
+        .select('full_name, plan, minutes_used, created_at, clip_ready_notify, weekly_digest')
         .eq('id', user.id)
         .single();
 
@@ -97,7 +88,7 @@ export default function SettingsPage() {
         setFirstName(parts[0] ?? '');
         setLastName(parts.slice(1).join(' ') ?? '');
         setUserPlan(p.plan ?? 'free');
-        setUserCredits(typeof p.credits === 'number' ? p.credits : 0);
+        setUserMinutesUsed(typeof p.minutes_used === 'number' ? p.minutes_used : 0);
         setMemberSince(p.created_at ?? '');
         setNotifs(n => ({
           ...n,
@@ -108,12 +99,11 @@ export default function SettingsPage() {
     })();
   }, []);
 
-  // Derived usage values
-  const planInfo   = PLAN_INFO[userPlan] ?? PLAN_INFO.free;
-  const planLimit  = planInfo.minutes;
-  const minutesRemaining = Math.min(userCredits, planLimit);
-  const minutesUsed      = Math.max(0, planLimit - minutesRemaining);
-  const usagePct         = planLimit > 0 ? Math.round((minutesUsed / planLimit) * 100) : 0;
+  // Derived usage values — from profiles.minutes_used, the column the quota
+  // check in /api/process-youtube-v2 enforces. Matches dashboard and sidebar.
+  const planName = planLabel(userPlan);
+  const { limit: planLimit, used: minutesUsed, remaining: minutesRemaining, pct: usagePct } =
+    planUsage(userPlan, userMinutesUsed);
   const isUpgradeable    = !TOP_TIERS.has(userPlan);
 
   const showToast = (msg: string, ok = true) => {
@@ -358,10 +348,10 @@ export default function SettingsPage() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
                 <div>
                   <p style={{ fontSize: '11px', fontWeight: 700, color: colors.onSurfaceVariant, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '4px' }}>Current Plan</p>
-                  <h3 style={{ fontSize: '26px', fontWeight: 800, letterSpacing: '-0.01em', color: '#1A1714' }}>{planInfo.label}</h3>
+                  <h3 style={{ fontSize: '26px', fontWeight: 800, letterSpacing: '-0.01em', color: '#1A1714' }}>{planName}</h3>
                 </div>
                 <span style={{ fontSize: '11px', fontWeight: 700, color: colors.primary, background: colors.primary + '18', padding: '4px 12px', borderRadius: radius.full, border: '1px solid ' + colors.primary + '40', marginTop: '4px' }}>
-                  {planInfo.label.toUpperCase()}
+                  {planName.toUpperCase()}
                 </span>
               </div>
 
@@ -531,13 +521,30 @@ export default function SettingsPage() {
                 <button
                   onClick={async () => {
                     setSaving(true);
-                    await supabase.from('profiles').update({ plan: 'free', credits: 30 }).eq('id', userId);
-                    await sendEmail('plan_cancelled', {});
-                    setShowCancel(false);
-                    setUserPlan('free');
-                    setUserCredits(30);
-                    showToast('Plan cancelled');
-                    setSaving(false);
+                    // plan / minutes_used are server-only columns now, so this
+                    // goes through /api/billing/cancel. That marks the
+                    // subscription cancelled and leaves the paid plan running
+                    // until next_renewal_at, which is what the copy above
+                    // promises; the daily cron downgrades to free after that.
+                    try {
+                      const res  = await fetch('/api/billing/cancel', { method: 'POST' });
+                      const data = await res.json();
+                      if (!res.ok) {
+                        showToast(data?.error ?? 'Could not cancel your plan.', false);
+                        return;
+                      }
+                      await sendEmail('plan_cancelled', {});
+                      setShowCancel(false);
+                      showToast(
+                        data.access_until
+                          ? `Plan cancelled — access continues until ${fmtDate(data.access_until)}`
+                          : 'Plan cancelled'
+                      );
+                    } catch {
+                      showToast('Could not cancel your plan.', false);
+                    } finally {
+                      setSaving(false);
+                    }
                   }}
                   style={{ flex: 1, padding: '12px', borderRadius: radius.md, background: 'transparent', color: colors.error, border: '1px solid rgba(255,180,171,0.3)', fontWeight: 600, fontSize: '13px', cursor: 'pointer', fontFamily: "'Inter',sans-serif" }}
                 >

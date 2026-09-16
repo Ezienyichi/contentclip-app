@@ -3,24 +3,27 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Icon from './Icon';
 import { colors, gradients, radius, shadows } from '@/lib/tokens';
+import { planMinutes } from '@/lib/planLimits';
 
 type Currency = 'NGN' | 'USD';
 
-// Display-only prices — actual charge is enforced server-side in BILLING_PLANS
+// Display-only prices — actual charge is enforced server-side in BILLING_PLANS.
+// Minutes come from planLimits so the modal can't advertise a cap the backend
+// won't honour.
 const PLANS: Array<{
   key: string; name: string; minutes: number; badge?: string;
   USD: { monthly: number; annual: number; annualMo: number };
   NGN: { monthly: number; annual: number; annualMo: number };
 }> = [
-  { key: 'starter', name: 'Starter', minutes: 180,
+  { key: 'starter', name: 'Starter', minutes: planMinutes('starter'),
     USD: { monthly: 29,     annual: 290,     annualMo: 24     },
     NGN: { monthly: 39000,  annual: 390000,  annualMo: 32500  },
   },
-  { key: 'pro', name: 'Pro', minutes: 400, badge: 'Most Popular',
+  { key: 'pro', name: 'Pro', minutes: planMinutes('pro'), badge: 'Most Popular',
     USD: { monthly: 59,     annual: 590,     annualMo: 49     },
     NGN: { monthly: 79000,  annual: 790000,  annualMo: 65833  },
   },
-  { key: 'agency', name: 'Agency', minutes: 900,
+  { key: 'agency', name: 'Agency', minutes: planMinutes('agency'),
     USD: { monthly: 119,    annual: 1190,    annualMo: 99     },
     NGN: { monthly: 159000, annual: 1590000, annualMo: 132500 },
   },

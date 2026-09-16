@@ -6,6 +6,7 @@ import Icon from './Icon';
 import { colors, gradients, radius } from '@/lib/tokens';
 import { createClient } from '@/lib/supabase-browser';
 import { clearClipStorage } from '@/lib/clearClipStorage';
+import { planMinutes } from '@/lib/planLimits';
 import UpgradeModal from './UpgradeModal';
 
 const ADMIN_EMAIL = 'adminvangelclip@gmail.com';
@@ -17,8 +18,6 @@ const NAV = [
   { label: 'Settings',  icon: 'settings',       href: '/settings' },
 ];
 
-const PLAN_MAX: Record<string, number> = { free: 30, solo: 180, starter: 180, professional: 400, pro: 400, agency: 900 };
-
 export default function Sidebar() {
   const pathname  = usePathname();
   const router    = useRouter();
@@ -27,6 +26,7 @@ export default function Sidebar() {
   const [plan,         setPlan]         = useState<string>('free');
   const [showMore,     setShowMore]     = useState(false);
   const [showUpgrade,  setShowUpgrade]  = useState(false);
+  const [usageLoaded,  setUsageLoaded]  = useState(false);
 
   const isActive = (href: string) =>
     href === '/dashboard' ? pathname === '/dashboard' : pathname.startsWith(href);
@@ -36,14 +36,22 @@ export default function Sidebar() {
     supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) return;
       setIsAdmin(user.email === ADMIN_EMAIL);
-      const { data: profile } = await supabase
+      // Same source the dashboard and the quota check use: profiles.minutes_used.
+      // (Settings reads `credits` instead — a different, prepaid balance.)
+      const { data: profile, error } = await supabase
         .from('profiles')
         .select('minutes_used, plan')
         .eq('id', user.id)
         .single();
+      if (error) {
+        // Don't paint a misleading "0 / 30" when the read failed.
+        console.warn('[Sidebar] usage fetch failed:', error.message);
+        return;
+      }
       if (profile) {
         setCredits(profile.minutes_used ?? 0);
         setPlan(profile.plan ?? 'free');
+        setUsageLoaded(true);
       }
     });
   }, []);
@@ -66,16 +74,16 @@ export default function Sidebar() {
   // causing React to unmount/remount it and swallow the setShowUpgrade state update.
 
   function renderUsageWidget(compact?: boolean) {
-    const maxCr = PLAN_MAX[plan.toLowerCase()] ?? 30;
+    const maxCr = planMinutes(plan);
     const pct   = Math.min(100, maxCr > 0 ? Math.round((credits / maxCr) * 100) : 0);
     return (
-      <div style={{ background: colors.surfaceContainerHigh, borderRadius: radius.lg, padding: compact ? '12px' : '16px', marginBottom: compact ? '8px' : '12px' }}>
+      <div style={{ background: colors.surfaceContainerHigh, borderRadius: radius.lg, padding: compact ? '12px' : '16px', marginBottom: compact ? '8px' : '12px', flexShrink: 0 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
           <span style={{ fontSize: '11px', color: colors.onSurfaceVariant, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Minutes</span>
-          <span style={{ fontSize: '10px', fontWeight: 700, color: '#cc97ff', background: 'rgba(156,72,234,0.15)', padding: '2px 8px', borderRadius: radius.full }}>{plan.toUpperCase()}</span>
+          <span style={{ fontSize: '10px', fontWeight: 700, color: '#cc97ff', background: 'rgba(156,72,234,0.15)', padding: '2px 8px', borderRadius: radius.full }}>{usageLoaded ? plan.toUpperCase() : '—'}</span>
         </div>
         <div style={{ fontSize: '22px', fontWeight: 800, color: '#fff' }}>
-          {credits}{' '}
+          {usageLoaded ? credits : '—'}{' '}
           <span style={{ fontSize: '12px', color: colors.onSurfaceVariant, fontWeight: 500 }}>/ {maxCr}</span>
         </div>
         <div style={{ width: '100%', height: '4px', background: colors.surfaceContainer, borderRadius: radius.full, marginTop: '8px', overflow: 'hidden' }}>
@@ -87,6 +95,18 @@ export default function Sidebar() {
           </button>
         )}
       </div>
+    );
+  }
+
+  // ── One nav row. Shared so Settings can be rendered apart from the rest,
+  //    with the usage widget sitting between them.
+  function navButton(item: { label: string; icon: string; href: string }) {
+    const a = isActive(item.href);
+    return (
+      <button key={item.href} onClick={() => go(item.href)} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 12px', borderRadius: a ? '0 6px 6px 0' : '6px', background: a ? 'rgba(156,72,234,0.08)' : 'transparent', color: a ? '#cc97ff' : colors.onSurfaceVariant, fontWeight: a ? 600 : 500, fontSize: '13px', border: 'none', cursor: 'pointer', width: '100%', textAlign: 'left', fontFamily: "'Inter', sans-serif", flexShrink: 0, borderLeftStyle: 'solid' as const, borderLeftWidth: '2px', borderLeftColor: a ? '#9c48ea' : 'transparent' }}>
+        <Icon name={item.icon} size={20} style={{ color: a ? '#cc97ff' : colors.onSurfaceVariant }} />
+        <span style={{ flex: 1 }}>{item.label}</span>
+      </button>
     );
   }
 
@@ -123,20 +143,25 @@ export default function Sidebar() {
         <Icon name="add_circle" size={20} /> Create New
       </button>
 
-      <nav style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '2px' }}>
-        {NAV.map((item) => {
-          const a = isActive(item.href);
-          return (
-            <button key={item.href} onClick={() => go(item.href)} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 12px', borderRadius: a ? '0 6px 6px 0' : '6px', background: a ? 'rgba(156,72,234,0.08)' : 'transparent', borderLeft: `2px solid ${a ? '#9c48ea' : 'transparent'}`, color: a ? '#cc97ff' : colors.onSurfaceVariant, fontWeight: a ? 600 : 500, fontSize: '13px', border: 'none', cursor: 'pointer', width: '100%', textAlign: 'left', fontFamily: "'Inter', sans-serif", borderLeftStyle: 'solid' as const, borderLeftWidth: '2px', borderLeftColor: a ? '#9c48ea' : 'transparent' }}>
-              <Icon name={item.icon} size={20} style={{ color: a ? '#cc97ff' : colors.onSurfaceVariant }} />
-              <span style={{ flex: 1 }}>{item.label}</span>
-            </button>
-          );
-        })}
+      {/* Main nav, minus Settings — sized to its content, never grows. */}
+      <nav style={{ display: 'flex', flexDirection: 'column', gap: '2px', flexShrink: 0 }}>
+        {NAV.filter(i => i.href !== '/settings').map(navButton)}
       </nav>
 
+      {/* Collapsible spacer: pushes the block below to the bottom on tall
+          viewports, but shrinks to 0 on short ones so nothing is pushed
+          out of view. (Previously `flex:1` lived on <nav>, which could not
+          collapse and forced the usage widget below the fold.) */}
+      <div style={{ flex: '1 1 0', minHeight: 0 }} />
+
       {renderUsageWidget()}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+
+      {/* Settings sits directly under the usage widget */}
+      <nav style={{ display: 'flex', flexDirection: 'column', gap: '2px', flexShrink: 0, marginBottom: '4px' }}>
+        {NAV.filter(i => i.href === '/settings').map(navButton)}
+      </nav>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', flexShrink: 0 }}>
         <BottomActions />
       </div>
     </>

@@ -5,6 +5,7 @@ import Icon from '@/components/Icon';
 import { useRouter } from 'next/navigation';
 import { colors, gradients, radius } from '@/lib/tokens';
 import { createClient } from '@/lib/supabase-browser';
+import { planUsage } from '@/lib/planLimits';
 import { useTour } from '@/lib/useTour';
 import Tour from '@/components/tour/Tour';
 import TourInfoIcon from '@/components/tour/TourInfoIcon';
@@ -40,10 +41,6 @@ type ActivityItem = {
   iconColor: string;
   created_at: string;
   link?: string;
-};
-
-const PLAN_LIMITS: Record<string, number> = {
-  free: 30, solo: 180, starter: 180, professional: 400, pro: 400, agency: 900,
 };
 
 const PLATFORM_LABELS: Record<string, string> = {
@@ -155,10 +152,8 @@ export default function DashboardPage() {
 
   // ── Derived: usage bar ────────────────────────────────────────────────────
 
-  const planLimit        = PLAN_LIMITS[profile?.plan ?? 'free'] ?? 30;
-  const minutesUsed      = profile?.minutes_used ?? 0;
-  const minutesRemaining = Math.max(0, planLimit - minutesUsed);
-  const usagePct         = Math.min(100, planLimit > 0 ? (minutesUsed / planLimit) * 100 : 0);
+  const { limit: planLimit, used: minutesUsed, remaining: minutesRemaining, pct: usagePct } =
+    planUsage(profile?.plan, profile?.minutes_used);
   const isLow            = usagePct >= 80;
   const planLabel        = profile ? (profile.plan.charAt(0).toUpperCase() + profile.plan.slice(1)) : 'Free';
   const isUpgradeable    = !['agency'].includes(profile?.plan ?? 'free');

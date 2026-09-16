@@ -3,8 +3,7 @@ import { createServerClient } from '@supabase/ssr';
 import { createClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
 import { insertNotification } from '@/lib/notify';
-
-const PLAN_LIMITS: Record<string, number> = { free: 30, solo: 180, starter: 180, professional: 400, pro: 400, agency: 900 };
+import { planMinutes } from '@/lib/planLimits';
 
 export const dynamic = 'force-dynamic';
 
@@ -114,7 +113,7 @@ export async function GET(
 
         // Low-minutes warning (dedup: at most once per 24h)
         if (minutesUsed > 0 && currentProfile) {
-          const planLimit = PLAN_LIMITS[currentProfile.plan ?? 'free'] ?? 30;
+          const planLimit = planMinutes(currentProfile.plan);
           const totalUsed = (currentProfile.minutes_used ?? 0) + minutesUsed;
           const remaining = planLimit - totalUsed;
           if (remaining < planLimit * 0.2) {

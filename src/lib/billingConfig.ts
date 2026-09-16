@@ -1,6 +1,10 @@
 // Server-side only. Never import this in client components.
 // Client sends only plan + period + currency — never the amount.
 
+// Plan → monthly minutes lives in planLimits.ts (client-safe, since the usage
+// widgets need it) and is re-exported here so server billing code has one import.
+export { PLAN_MINUTES, planMinutes, planLabel, planUsage } from './planLimits';
+
 export type Currency = 'USD' | 'NGN';
 export type PlanKey  = 'starter' | 'pro' | 'agency';
 export type Period   = 'monthly' | 'annual';

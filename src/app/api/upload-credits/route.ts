@@ -1,8 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
+import { createClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
 
 export const dynamic = 'force-dynamic';
+
+// `credits` is a protected column (supabase/lock_profile_privileged_columns.sql)
+// and is no longer writable by the user-scoped client. The getUser() check below
+// is still what authorises the deduct; this client only touches that user's row.
+function getAdmin() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
 
 async function getSupabase() {
   const cookieStore = await cookies();
@@ -61,7 +72,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Compare-and-swap deduct (matches the process route pattern)
-  const { error: deductError } = await supabase
+  const { error: deductError } = await getAdmin()
     .from('profiles')
     .update({ credits: credits - creditsNeeded })
     .eq('id', user.id)

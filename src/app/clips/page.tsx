@@ -329,9 +329,6 @@ export default function ClipsPage() {
               <div style={{ width:56, height:56, borderRadius:'50%', background:'rgba(255,255,255,0.1)', backdropFilter:'blur(8px)', display:'flex', alignItems:'center', justifyContent:'center', position:'relative', zIndex:2 }}>
                 <Icon name="play_arrow" filled size={28} style={{ color:'#fff' }}/>
               </div>
-              <div style={{ position:'absolute', bottom:12, left:12, right:12, background:'rgba(0,0,0,0.7)', backdropFilter:'blur(8px)', padding:'8px 12px', borderRadius:radius.md, zIndex:2 }}>
-                <p style={{ fontSize:'11px', color:'#fff', fontWeight:500, lineHeight:1.4 }}>&ldquo;{clip.hook_text}&rdquo;</p>
-              </div>
             </div>
 
             {/* Info */}
@@ -340,6 +337,11 @@ export default function ClipsPage() {
               <p style={{ fontSize:'11px', color:colors.onSurfaceVariant, textTransform:'capitalize', marginBottom:'6px' }}>
                 <Icon name="smart_display" size={12} style={{ verticalAlign:'middle', marginRight:4 }}/>{platMap(clip.platform)}
               </p>
+              {clip.hook_text && (
+                <p style={{ fontSize:'11px', color:colors.onSurfaceVariant, lineHeight:1.5, marginBottom:'8px', display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical' as any, overflow:'hidden' }}>
+                  &ldquo;{clip.hook_text}&rdquo;
+                </p>
+              )}
               <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:10, flexWrap:'wrap' }}>
                 {clip.source === 'upload' ? (
                   <span style={{ fontSize:10, fontWeight:600, color:'#7c3aed', background:'rgba(124,58,237,0.1)', padding:'2px 7px', borderRadius:99 }}>Uploaded</span>
@@ -358,6 +360,9 @@ export default function ClipsPage() {
               <div style={{ display:'flex', gap:'6px' }}>
                 <button onClick={() => { sessionStorage.setItem('editor_clip', JSON.stringify({ id: clip.id, video_url: clip.clip_url || clip.video_url || '', clip_url: clip.clip_url || '', download_url: clip.download_url || clip.clip_url || clip.video_url || '', thumbnail_url: clip.thumbnail_url || '', title: clip.title, hook_text: clip.hook_text || '', virality_score: clip.virality_score, caption: clip.suggested_caption || '', hashtags: clip.hashtags || '' })); router.push('/editor'); }} style={{ flex:1, padding:'8px', borderRadius:radius.md, background:colors.surfaceContainer, border:'1px solid '+colors.outlineVariant, color:colors.onSurface, fontSize:'11px', fontWeight:600, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:'4px', fontFamily:"'Inter',sans-serif" }}>
                   <Icon name="edit" size={13}/> Edit
+                </button>
+                <button onClick={() => router.push(`/scheduler?clip_id=${clip.id}&caption=${encodeURIComponent(clip.suggested_caption || '')}`)} disabled={!clip.id} style={{ padding:'8px 10px', borderRadius:radius.md, background:colors.surfaceContainer, border:'1px solid '+colors.outlineVariant, color:colors.onSurface, fontSize:'11px', fontWeight:600, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:'4px', fontFamily:"'Inter',sans-serif" }}>
+                  <Icon name="schedule" size={13}/>
                 </button>
                 <button onClick={() => handleClipDownload(clip, idx)} disabled={downloadingIdx === idx || !(clip.download_url||clip.clip_url||clip.video_url)} style={{ padding:'8px 10px', borderRadius:radius.md, background:clip.download_url||clip.clip_url||clip.video_url ? gradients.primary : colors.surfaceContainer, color:'#FAF7FF', border:'none', fontSize:'11px', fontWeight:600, cursor:clip.download_url||clip.clip_url||clip.video_url ? 'pointer' : 'default', display:'flex', alignItems:'center', justifyContent:'center', gap:'4px', opacity:downloadingIdx===idx ? 0.5 : (clip.download_url||clip.clip_url||clip.video_url ? 1 : 0.4) }}>
                   <Icon name={downloadingIdx === idx ? 'hourglass_empty' : 'download'} size={13}/>

@@ -153,6 +153,10 @@ export default function SchedulerPage() {
   const [savingCaption,  setSavingCaption]  = useState(false);
   const [captionSaveErr, setCaptionSaveErr] = useState<string | null>(null);
 
+  // Pre-selected clip (from ?clip_id query param — used by clips page + editor Schedule button)
+  const [pendingClipId,  setPendingClipId]  = useState<string | null>(null);
+  const [pendingCaption, setPendingCaption] = useState('');
+
   // Banner
   const [banner, setBanner] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
 
@@ -190,6 +194,9 @@ export default function SchedulerPage() {
     const params = new URLSearchParams(window.location.search);
     const connected = params.get('connected');
     const err       = params.get('error');
+    const clipId    = params.get('clip_id');
+    const caption   = params.get('caption') ?? '';
+    if (clipId) { setPendingClipId(clipId); setPendingCaption(caption); }
     if (connected) {
       const label = PLATFORMS.find(p => p.id === connected)?.label ?? connected;
       setBanner({ type: 'success', msg: `${label} connected successfully.` });
@@ -202,6 +209,23 @@ export default function SchedulerPage() {
     loadScheduledPosts();
     loadSavedClips();
   }, [loadConnections, loadScheduledPosts, loadSavedClips, router]);
+
+  // Auto-open the compose modal when a clip_id is passed via query param.
+  // Waits for savedClips to populate before opening so the clip is selectable.
+  useEffect(() => {
+    if (!pendingClipId || savedClips.length === 0) return;
+    const clip = savedClips.find(c => c.id === pendingClipId);
+    if (!clip) return;
+    const next = new Date(); next.setHours(next.getHours() + 1, 0, 0, 0);
+    setModalDate(next.toISOString().split('T')[0]);
+    setModalTime(`${String(next.getHours()).padStart(2, '0')}:00`);
+    setModalClipId(pendingClipId);
+    setModalCaption(pendingCaption || clip.suggested_caption || '');
+    setSelectedConnIds([]);
+    setShowModal(true);
+    setPendingClipId(null);
+    router.replace('/scheduler', { scroll: false });
+  }, [pendingClipId, savedClips, pendingCaption, router]);
 
   // ── Connect / Disconnect ──
   const handleConnect = async (platformId: string) => {

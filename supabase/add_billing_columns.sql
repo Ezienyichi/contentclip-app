@@ -46,3 +46,8 @@ ALTER TABLE transactions ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users view own transactions"
   ON transactions FOR SELECT
   USING (auth.uid() = user_id);
+
+-- ── Top-up minutes balance ─────────────────────────────────────────────────
+-- Persists across monthly resets. Never touched by minutes_used reset logic.
+ALTER TABLE profiles
+  ADD COLUMN IF NOT EXISTS topup_minutes_balance integer NOT NULL DEFAULT 0;

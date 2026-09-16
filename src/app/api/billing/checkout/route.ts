@@ -6,7 +6,7 @@ import {
   BILLING_PLANS, isPlanKey, isPeriod, isCurrency,
   type PlanKey, type Period, type Currency,
 } from '@/lib/billingConfig';
-import { initializePayment, ensurePaymentPlan } from '@/lib/flutterwaveProvider';
+import { initializeTransaction } from '@/lib/paystackProvider';
 
 export const dynamic = 'force-dynamic';
 
@@ -43,47 +43,36 @@ export async function POST(req: NextRequest) {
   if (!isPeriod(period))     return NextResponse.json({ error: 'Invalid period.'   }, { status: 400 });
   if (!isCurrency(currency)) return NextResponse.json({ error: 'Invalid currency.' }, { status: 400 });
 
-  const amount     = BILLING_PLANS[plan][currency][period];
-  const txRef      = randomUUID();
-  const origin     = req.headers.get('origin') ?? process.env.NEXT_PUBLIC_APP_URL ?? '';
-  const redirectUrl = `${origin}/billing/success?plan=${plan}&period=${period}`;
+  // Amount from server-side config — never from the client.
+  const amount      = BILLING_PLANS[plan][currency][period];
+  const amountKobo  = amount * 100;   // Paystack expects subunits (kobo for NGN, cents for USD)
+  const reference   = randomUUID();
+  const origin      = req.headers.get('origin') ?? process.env.NEXT_PUBLIC_APP_URL ?? '';
+  const callbackUrl = `${origin}/billing/success?plan=${plan}&period=${period}`;
 
-  console.log('[checkout] amount:', amount, currency, '| redirectUrl:', redirectUrl);
-  console.log('[checkout] FW key set:', !!process.env.FLUTTERWAVE_SECRET_KEY);
-
-  // Attach a Flutterwave payment plan for auto-renewal. Non-fatal if it fails.
-  let paymentPlanId: number | undefined;
-  try {
-    const interval = period === 'annual' ? 'yearly' : 'monthly';
-    const planName = `VangelClip ${plan[0].toUpperCase() + plan.slice(1)} (${interval})`;
-    paymentPlanId = await ensurePaymentPlan({ name: planName, amount, currency, interval });
-    console.log('[checkout] payment plan id:', paymentPlanId);
-  } catch (err) {
-    console.warn('[checkout] Could not attach FW payment plan (non-fatal):', String(err));
-  }
+  console.log('[checkout] amount:', amount, currency, '| amountKobo:', amountKobo, '| callbackUrl:', callbackUrl);
+  console.log('[checkout] Paystack key set:', !!process.env.PAYSTACK_SECRET_KEY);
 
   let payment_link: string;
   try {
-    console.log('[checkout] (c) calling initializePayment…');
-    const result = await initializePayment({
-      email:   user.email,
-      name:    (user.user_metadata?.full_name as string | undefined) ?? user.email,
-      amount,
+    console.log('[checkout] (c) calling initializeTransaction…');
+    const result = await initializeTransaction({
+      email:       user.email,
+      amountKobo,
       currency,
-      txRef,
-      redirectUrl,
-      paymentPlanId,
-      meta: {
-        user_id: user.id,
+      reference,
+      callbackUrl,
+      metadata: {
+        user_id:  user.id,
         plan,
         period,
         currency,
       },
     });
     payment_link = result.payment_link;
-    console.log('[checkout] (d) FW init SUCCESS — payment_link:', payment_link);
+    console.log('[checkout] (d) Paystack init SUCCESS — payment_link:', payment_link);
   } catch (err) {
-    console.error('[checkout] (d) FW init FAILED:', String(err));
+    console.error('[checkout] (d) Paystack init FAILED:', String(err));
     return NextResponse.json({ error: `Payment provider error: ${String(err)}` }, { status: 502 });
   }
 

@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase-browser";
 import DashboardLayout from "@/components/DashboardLayout";
 import { colors as _colors, gradients, radius } from "@/lib/tokens";
 import EngagementPanel, { EngagementProfile } from "@/components/engagement/EngagementPanel";
+import { planMinutes } from '@/lib/planLimits';
 import { useTour } from '@/lib/useTour';
 import Tour from '@/components/tour/Tour';
 import TourInfoIcon from '@/components/tour/TourInfoIcon';
@@ -602,8 +603,10 @@ export default function ImportPage() {
   const isClipping = Status === 'queued' || Status === 'preprocessing' || Status === 'processing';
   const tour = useTour('import', IMPORT_STEPS.length);
 
-  const PLAN_MAX: Record<string, number> = { free: 30, starter: 150, pro: 400, agency: 1200 };
-  const minutesRemaining = Math.max(0, (PLAN_MAX[userPlan] ?? 30) - userCredits);
+  // Was a local map with drifted values (starter 150, agency 1200) that did not
+  // match the server's enforced caps (180 / 900), so this screen advertised
+  // minutes the backend would refuse. Now shares the single source of truth.
+  const minutesRemaining = Math.max(0, planMinutes(userPlan) - userCredits);
   const insufficientCredits = userCredits > 0 && minutesRemaining <= 0;
   const uploadInsufficientCredits = userCredits > 0 && minutesRemaining <= 0;
 

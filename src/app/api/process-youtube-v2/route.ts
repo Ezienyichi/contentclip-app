@@ -2,13 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { createClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
+import { planMinutes } from '@/lib/planLimits';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
 const BACKEND_API_URL = process.env.BACKEND_API_URL!;
-
-const PLAN_MAX: Record<string, number> = { free: 30, solo: 180, starter: 180, professional: 400, pro: 400, agency: 900 };
 
 function getAdmin() {
   return createClient(
@@ -91,7 +90,7 @@ export async function POST(req: NextRequest) {
         profile.minutes_used = 0;
       }
 
-      const cap = PLAN_MAX[profile.plan ?? 'free'] ?? 30;
+      const cap = planMinutes(profile.plan);
       if ((profile.minutes_used ?? 0) >= cap) {
         return NextResponse.json(
           {

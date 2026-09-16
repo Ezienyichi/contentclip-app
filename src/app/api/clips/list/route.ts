@@ -53,6 +53,7 @@ export async function GET(_req: NextRequest) {
     expires_at:        c.expires_at ?? null,
     source_video_name: c.source_video_name ?? '',
     source:            c.source ?? 'generated',
+    created_at:        c.created_at ?? null,
     delete_after:      c.delete_after ?? null,
     file_size_bytes:   c.file_size_bytes ?? null,
   }));
