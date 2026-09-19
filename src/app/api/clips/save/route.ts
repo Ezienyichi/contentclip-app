@@ -126,57 +126,72 @@ export async function POST(req: NextRequest) {
 
   const savedClips = data ?? [];
 
-  // Re-host each clip from WayinVideo (signed CloudFront, expires ~15-24h) to R2 (permanent).
-  // URL is guaranteed fresh here — clips/save fires within seconds of SUCCEEDED.
-  // On failure, the WayinVideo URL stays as fallback (valid for the next ~15-24h).
+  // Respond NOW. The rows already carry the WayinVideo URL, so clips render
+  // immediately no matter how many there are. Re-hosting to R2 (permanent)
+  // runs after the response and swaps each URL in as its upload lands.
+  // WayinVideo URLs are signed CloudFront and stay valid ~15-24h, so they are
+  // the fallback for anything the background pass doesn't reach.
+  const response = NextResponse.json({ savedClips });
 
   // Check R2 env vars before attempting uploads
   const missingR2 = (['CLOUDFLARE_R2_ACCOUNT_ID', 'R2_ACCESS_KEY_ID', 'R2_SECRET_ACCESS_KEY', 'R2_BUCKET', 'R2_PUBLIC_URL'] as const)
     .filter(k => !process.env[k]);
   if (missingR2.length) {
     console.error('[clips/save] MISSING R2 env vars — rehost skipped:', missingR2.join(', '));
-    return NextResponse.json({ savedClips });
+    return response;
   }
   console.log('[clips/save] R2 env OK, bucket:', process.env.R2_BUCKET, 'pubUrl:', process.env.R2_PUBLIC_URL);
 
-  const s3 = r2Client();
-  const admin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
+  // Pair each new row id with the URL it was inserted with up front, so the
+  // background pass never depends on savedClips/rows index alignment.
+  const jobs = savedClips
+    .map((saved, i) => ({ id: saved.id as string, wainUrl: rows[i]?.video_url ?? '' }))
+    .filter(j => j.wainUrl.startsWith('http'));
 
-  let ok = 0, skipped = 0, failed = 0;
-  await Promise.allSettled(
-    savedClips.map(async (saved, i) => {
-      const wainUrl = rows[i]?.video_url;
-      if (!wainUrl || !wainUrl.startsWith('http')) {
-        console.warn(`[clips/save] clip=${saved.id} no valid video_url to rehost — skipping`);
-        skipped++;
-        return;
+  const skipped = savedClips.length - jobs.length;
+  if (skipped > 0) {
+    console.warn(`[clips/save] ${skipped} clip(s) had no valid video_url to rehost — skipping`);
+  }
+
+  after(async () => {
+    const s3 = r2Client();
+    const admin = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+
+    const queue = [...jobs];
+    let ok = 0, failed = 0;
+
+    const worker = async () => {
+      for (let job = queue.shift(); job; job = queue.shift()) {
+        const r2Url = await rehostToR2(s3, job.wainUrl, user.id, job.id);
+        if (!r2Url) {
+          console.warn(`[clips/save] clip=${job.id} rehost returned null — WayinVideo URL kept as fallback`);
+          failed++;
+          continue;
+        }
+
+        const { error: updateErr } = await admin
+          .from('clips')
+          .update({ video_url: r2Url, download_url: r2Url })
+          .eq('id', job.id);
+
+        if (updateErr) {
+          console.error(`[clips/save] clip=${job.id} DB update after rehost failed:`, updateErr.message);
+          failed++;
+        } else {
+          ok++;
+        }
       }
+    };
 
-      const r2Url = await rehostToR2(s3, wainUrl, user.id, saved.id);
-      if (!r2Url) {
-        console.warn(`[clips/save] clip=${saved.id} rehost returned null — WayinVideo URL kept as fallback`);
-        failed++;
-        return;
-      }
+    await Promise.all(
+      Array.from({ length: Math.min(REHOST_CONCURRENCY, queue.length) }, worker)
+    );
 
-      const { error: updateErr } = await admin
-        .from('clips')
-        .update({ video_url: r2Url, download_url: r2Url })
-        .eq('id', saved.id);
+    console.log(`[clips/save] R2 rehost done: ok=${ok} failed=${failed} skipped=${skipped} total=${savedClips.length}`);
+  });
 
-      if (updateErr) {
-        console.error(`[clips/save] clip=${saved.id} DB update after rehost failed:`, updateErr.message);
-        failed++;
-      } else {
-        ok++;
-      }
-    })
-  );
-
-  console.log(`[clips/save] R2 rehost done: ok=${ok} failed=${failed} skipped=${skipped} total=${savedClips.length}`);
-
-  return NextResponse.json({ savedClips });
+  return response;
 }
