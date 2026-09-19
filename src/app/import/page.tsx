@@ -42,6 +42,11 @@ const supabase = createClient();
 
 const CLIPS_STORAGE_KEY = 'vangelclip_cached_clips';
 
+// How many clips to ask WayinVideo for. Kept at/below the server's own ceiling
+// so every clip returned can finish re-hosting to R2 before its WayinVideo URL
+// expires. The API clamps this regardless — see api/process-youtube-v2.
+const CLIP_REQUEST_LIMIT = 15;
+
 const SAMPLE_CLIPS: { url: string; label?: string }[] = [
   // Add sample clip URLs here to show the "See it in action" teaser.
   // Example: { url: 'https://your-cdn.com/clip1.mp4', label: 'Sermon' },
@@ -826,6 +831,7 @@ export default function ImportPage() {
           enableReframe: aspectRatio !== "16:9",
           resolution: resolutionForPlan(userPlan),
           captionLanguage,
+          limit: CLIP_REQUEST_LIMIT,
         }),
       });
 

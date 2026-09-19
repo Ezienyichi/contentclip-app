@@ -9,6 +9,12 @@ export const maxDuration = 60;
 
 const BACKEND_API_URL = process.env.BACKEND_API_URL!;
 
+// Ceiling on clips requested from WayinVideo. Sized so every returned clip can
+// finish re-hosting to R2 inside clips/save's 60s budget (Vercel Hobby) — a
+// longer tail would keep its WayinVideo URL and die at that URL's expiry
+// instead of lasting CLIP_RETENTION_DAYS. WayinVideo ranks best-first.
+const MAX_CLIP_LIMIT = 15;
+
 function getAdmin() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -53,7 +59,11 @@ export async function POST(req: NextRequest) {
       enableReframe = true,
       resolution = 'HD_1080',
       captionLanguage = 'en',
+      limit = MAX_CLIP_LIMIT,
     } = body;
+
+    // Clamped server-side: the client may ask for fewer, never more.
+    const clipLimit = Math.min(MAX_CLIP_LIMIT, Math.max(1, Number(limit) || MAX_CLIP_LIMIT));
 
     if (!videoUrl) {
       return NextResponse.json({ error: 'Video URL is required.' }, { status: 400 });
@@ -109,7 +119,7 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         videoUrl,
         userId: user.id,
-        limit: 40,
+        limit: clipLimit,
         ratio,
         enableCaption,
         enableReframe,

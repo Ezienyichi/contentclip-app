@@ -2,8 +2,8 @@ import { NextRequest, NextResponse, after } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { createClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { CLIP_RETENTION_DAYS, retentionExpiryISO } from '@/lib/retention';
+import { r2Client, rehostToR2, missingR2Env } from '@/lib/rehost';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
@@ -11,55 +11,6 @@ export const maxDuration = 60;
 // Parallel R2 uploads. Each worker holds a whole clip in memory, so keep this
 // low — unbounded fan-out is what used to push this route past maxDuration.
 const REHOST_CONCURRENCY = 3;
-
-// One client instance shared across all parallel uploads in this request
-function r2Client() {
-  return new S3Client({
-    region: 'auto',
-    endpoint: `https://${process.env.CLOUDFLARE_R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-    credentials: {
-      accessKeyId:     process.env.R2_ACCESS_KEY_ID!,
-      secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!,
-    },
-  });
-}
-
-async function rehostToR2(
-  s3: S3Client,
-  wainUrl: string,
-  userId: string,
-  clipId: string,
-): Promise<string | null> {
-  try {
-    console.log(`[rehostToR2] clip=${clipId} downloading ${wainUrl.slice(0, 100)}`);
-    const res = await fetch(wainUrl, { signal: AbortSignal.timeout(30_000) });
-    if (!res.ok) {
-      console.error(`[rehostToR2] clip=${clipId} download HTTP ${res.status} ${res.statusText}`);
-      return null;
-    }
-
-    const contentType = res.headers.get('content-type') ?? 'video/mp4';
-    const today = new Date().toISOString().slice(0, 10);
-    const key = `clips/${userId}/${today}/${clipId}.mp4`;
-    const buffer = Buffer.from(await res.arrayBuffer());
-    console.log(`[rehostToR2] clip=${clipId} downloaded ${buffer.length} bytes → uploading key=${key}`);
-
-    await s3.send(new PutObjectCommand({
-      Bucket:        process.env.R2_BUCKET!,
-      Key:           key,
-      Body:          buffer,
-      ContentType:   contentType,
-      ContentLength: buffer.length,
-    }));
-
-    const r2Url = `${process.env.R2_PUBLIC_URL}/${key}`;
-    console.log(`[rehostToR2] clip=${clipId} success → ${r2Url}`);
-    return r2Url;
-  } catch (err) {
-    console.error(`[rehostToR2] clip=${clipId} threw:`, err instanceof Error ? err.message : String(err));
-    return null;
-  }
-}
 
 export async function POST(req: NextRequest) {
   const cookieStore = await cookies();
@@ -134,8 +85,7 @@ export async function POST(req: NextRequest) {
   const response = NextResponse.json({ savedClips });
 
   // Check R2 env vars before attempting uploads
-  const missingR2 = (['CLOUDFLARE_R2_ACCOUNT_ID', 'R2_ACCESS_KEY_ID', 'R2_SECRET_ACCESS_KEY', 'R2_BUCKET', 'R2_PUBLIC_URL'] as const)
-    .filter(k => !process.env[k]);
+  const missingR2 = missingR2Env();
   if (missingR2.length) {
     console.error('[clips/save] MISSING R2 env vars — rehost skipped:', missingR2.join(', '));
     return response;
