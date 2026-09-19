@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse, after } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { createClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
@@ -7,6 +7,10 @@ import { CLIP_RETENTION_DAYS, retentionExpiryISO } from '@/lib/retention';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
+
+// Parallel R2 uploads. Each worker holds a whole clip in memory, so keep this
+// low — unbounded fan-out is what used to push this route past maxDuration.
+const REHOST_CONCURRENCY = 3;
 
 // One client instance shared across all parallel uploads in this request
 function r2Client() {

@@ -7,6 +7,7 @@ import { insertNotification } from '@/lib/notify';
 import { planMinutes } from '@/lib/planLimits';
 
 export const dynamic = 'force-dynamic';
+export const maxDuration = 60;
 
 const BACKEND_API_URL = process.env.BACKEND_API_URL!;
 

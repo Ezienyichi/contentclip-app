@@ -721,7 +721,7 @@ export default function ImportPage() {
           return;
         }
 
-        if (data.status === "SUCCEEDED") {
+        if (data.status === "SUCCEEDED" || data.status === "completed") {
           stopPolling();
           console.log('[clip-status] raw SUCCEEDED response:', JSON.stringify(data, null, 2));
           const rawClips: any[] = data.clips ?? [];
@@ -759,6 +759,7 @@ export default function ImportPage() {
           fetch('/api/clips/save', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
             body: JSON.stringify({ clips: normalizedClips, source_video_name: videoUrl }),
           })
             .then(async r => {
@@ -915,6 +916,13 @@ export default function ImportPage() {
               setClips(data.clips);
               setGenerationSuccess(true);
               localStorage.setItem(CLIPS_STORAGE_KEY, JSON.stringify({ clips: data.clips, videoUrl: selectedFile.name, generatedAt: new Date().toISOString() }));
+              // Save to DB so clips appear in /clips library
+              fetch('/api/clips/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ clips: data.clips, source_video_name: selectedFile.name }),
+              }).catch(() => {});
             } else if (xhr.status === 402 || data.plan_limit_exceeded) {
               setError(data.error || 'This range exceeds your plan limit. Upgrade to process longer videos.');
             } else {
@@ -1799,7 +1807,10 @@ export default function ImportPage() {
                               method: 'POST',
                               headers: { 'Content-Type': 'application/json' },
                               credentials: 'include',
-                              body: JSON.stringify({ ...clip, video_url: clip.video_url || videoUrl }),
+                              body: JSON.stringify({
+                                clips: [{ ...clip, video_url: clip.video_url || videoUrl }],
+                                source_video_name: videoUrl,
+                              }),
                             });
                           } catch {}
                         }}
