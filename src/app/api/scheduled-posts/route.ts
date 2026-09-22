@@ -6,7 +6,7 @@ import { insertNotification } from '@/lib/notify';
 
 export const dynamic = 'force-dynamic';
 
-const PFM_API        = 'https://api.postforme.dev/v1';
+const PFM_API        = 'https://api.postforme.dev';
 const VALID_PLATFORMS = ['tiktok', 'instagram', 'youtube', 'facebook', 'twitter'] as const;
 
 // Service role — bypasses RLS for pfm_post_id back-fill and failure status updates
