@@ -20,6 +20,8 @@ export const CLIP_RETENTION_DAYS = 10;
  * generated clip. Agency keeps its longer 14-day entitlement.
  */
 export const UPLOAD_RETENTION_DAYS: Record<string, number> = {
+  starter:      Math.max(10, CLIP_RETENTION_DAYS),
+  solo:         Math.max(10, CLIP_RETENTION_DAYS),  // legacy alias
   pro:          Math.max(10, CLIP_RETENTION_DAYS),
   professional: Math.max(10, CLIP_RETENTION_DAYS),
   agency:       Math.max(14, CLIP_RETENTION_DAYS),

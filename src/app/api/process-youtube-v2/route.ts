@@ -9,11 +9,10 @@ export const maxDuration = 60;
 
 const BACKEND_API_URL = process.env.BACKEND_API_URL!;
 
-// Ceiling on clips requested from WayinVideo. Sized so every returned clip can
-// finish re-hosting to R2 inside clips/save's 60s budget (Vercel Hobby) — a
-// longer tail would keep its WayinVideo URL and die at that URL's expiry
-// instead of lasting CLIP_RETENTION_DAYS. WayinVideo ranks best-first.
-const MAX_CLIP_LIMIT = 15;
+// Ceiling on clips requested from WayinVideo. clips/save re-hosts what it can
+// inside its 60s budget; the tail beyond that is picked up by the rehost
+// sweeper before the WayinVideo URLs expire.
+const MAX_CLIP_LIMIT = 40;
 
 function getAdmin() {
   return createClient(

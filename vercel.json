@@ -8,6 +8,10 @@
     {
       "path": "/api/cron/downgrade-lapsed",
       "schedule": "0 1 * * *"
+    },
+    {
+      "path": "/api/cron/rehost-sweep",
+      "schedule": "15 2 * * *"
     }
   ]
 }

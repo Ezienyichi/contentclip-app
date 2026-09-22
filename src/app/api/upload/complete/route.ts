@@ -8,6 +8,8 @@ import { UPLOAD_RETENTION_DAYS, uploadRetentionDays, retentionExpiryISO } from '
 export const dynamic = 'force-dynamic';
 
 const PLAN_MAX_BYTES: Record<string, number> = {
+  starter:      100 * 1024 * 1024,
+  solo:         100 * 1024 * 1024,
   pro:          100 * 1024 * 1024,
   professional: 100 * 1024 * 1024,
   agency:       200 * 1024 * 1024,
@@ -71,7 +73,7 @@ export async function POST(req: NextRequest) {
 
   const plan = (profile?.plan ?? 'free').toLowerCase();
   if (!PLAN_ALLOWED.has(plan)) {
-    return NextResponse.json({ error: 'Video upload is available on Pro and Agency plans.' }, { status: 403 });
+    return NextResponse.json({ error: 'Video upload is available on Starter, Pro, and Agency plans.' }, { status: 403 });
   }
 
   // Validate key belongs to this user

@@ -3,7 +3,7 @@ import { createServerClient } from '@supabase/ssr';
 import { createClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
 import { CLIP_RETENTION_DAYS, retentionExpiryISO } from '@/lib/retention';
-import { r2Client, rehostToR2, missingR2Env } from '@/lib/rehost';
+import { r2Client, rehostToR2, missingR2Env, triggerSweep } from '@/lib/rehost';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
@@ -11,6 +11,10 @@ export const maxDuration = 60;
 // Parallel R2 uploads. Each worker holds a whole clip in memory, so keep this
 // low — unbounded fan-out is what used to push this route past maxDuration.
 const REHOST_CONCURRENCY = 3;
+
+// Stop starting new uploads with ~15s left. Whatever is still queued is handed
+// to the sweeper, which picks it up with a fresh 60s budget — see lib/rehost.
+const REHOST_BUDGET_MS = 45_000;
 
 export async function POST(req: NextRequest) {
   const cookieStore = await cookies();
@@ -103,6 +107,8 @@ export async function POST(req: NextRequest) {
     console.warn(`[clips/save] ${skipped} clip(s) had no valid video_url to rehost — skipping`);
   }
 
+  const deadlineAt = Date.now() + REHOST_BUDGET_MS;
+
   after(async () => {
     const s3 = r2Client();
     const admin = createClient(
@@ -111,10 +117,15 @@ export async function POST(req: NextRequest) {
     );
 
     const queue = [...jobs];
-    let ok = 0, failed = 0;
+    let ok = 0, failed = 0, hitDeadline = false;
 
     const worker = async () => {
       for (let job = queue.shift(); job; job = queue.shift()) {
+        if (Date.now() > deadlineAt) {
+          hitDeadline = true;
+          return;   // the sweeper takes it from here
+        }
+
         const r2Url = await rehostToR2(s3, job.wainUrl, user.id, job.id);
         if (!r2Url) {
           console.warn(`[clips/save] clip=${job.id} rehost returned null — WayinVideo URL kept as fallback`);
@@ -140,7 +151,17 @@ export async function POST(req: NextRequest) {
       Array.from({ length: Math.min(REHOST_CONCURRENCY, queue.length) }, worker)
     );
 
-    console.log(`[clips/save] R2 rehost done: ok=${ok} failed=${failed} skipped=${skipped} total=${savedClips.length}`);
+    console.log(
+      `[clips/save] R2 rehost done: ok=${ok} failed=${failed} skipped=${skipped} ` +
+      `total=${savedClips.length} deadline=${hitDeadline}`
+    );
+
+    // Anything not re-hosted here still has an expiring WayinVideo URL. Hand
+    // off to the sweeper, which starts at a fresh 60s budget and chains until
+    // there is nothing left in the window.
+    if (hitDeadline || failed > 0) {
+      await triggerSweep(1, '[clips/save]');
+    }
   });
 
   return response;

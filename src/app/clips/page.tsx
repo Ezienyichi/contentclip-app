@@ -61,7 +61,7 @@ function dateLabel(key: string) {
 }
 const PLATS = ['All','TikTok','Reels','Shorts'];
 
-const UPLOAD_ALLOWED_PLANS = new Set(['pro', 'professional', 'agency']);
+const UPLOAD_ALLOWED_PLANS = new Set(['starter', 'solo', 'pro', 'professional', 'agency']);
 
 function fmt_bytes(b: number) {
   if (b < 1024 * 1024) return `${(b / 1024).toFixed(0)} KB`;
@@ -286,7 +286,7 @@ export default function ClipsPage() {
           ) : (
             <button
               onClick={() => setShowUpgrade(true)}
-              title="Available on Pro and Agency plans"
+              title="Available on Starter, Pro, and Agency plans"
               style={{ display:'flex', alignItems:'center', gap:'6px', padding:'8px 16px', borderRadius:radius.full, background:'rgba(155,93,229,0.08)', color:colors.primary, border:'1px solid rgba(155,93,229,0.25)', fontWeight:600, fontSize:'12px', cursor:'pointer', fontFamily:"'Inter',sans-serif", whiteSpace:'nowrap' }}>
               <Icon name="lock" size={14}/>
               Upload Clip

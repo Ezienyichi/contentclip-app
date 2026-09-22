@@ -6,6 +6,7 @@
 //   - api/admin/rehost-orphans — rescue pass for rows that never got re-hosted
 
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 export const R2_ENV_KEYS = [
   'CLOUDFLARE_R2_ACCOUNT_ID',
@@ -85,5 +86,167 @@ export async function rehostToR2(
   } catch (err) {
     console.error(`[rehostToR2] clip=${clipId} threw:`, err instanceof Error ? err.message : String(err));
     return null;
+  }
+}
+
+// ── Sweep ────────────────────────────────────────────────────────────────────
+// Shared by api/cron/rehost-sweep and api/admin/rehost-orphans so the two can't
+// drift. Finds clips still pointing at an expiring WayinVideo/CloudFront URL
+// and pulls them into R2, newest-urgent-first, within a time budget.
+
+/** Only sweep clips this recent — older signed URLs are already dead, and
+ *  retrying them would burn the batch on guaranteed failures. Also what keeps
+ *  a permanently-failing row from blocking the head of the queue forever: it
+ *  ages out of the window on its own. */
+export const SWEEP_MAX_AGE_HOURS = 20;
+
+export const SWEEP_BATCH = 12;
+export const SWEEP_CONCURRENCY = 3;
+
+export interface SweepOptions {
+  db: SupabaseClient;
+  batch?: number;
+  maxAgeHours?: number;
+  concurrency?: number;
+  /** Epoch ms after which no new upload is started (the in-flight ones finish). */
+  deadlineAt?: number;
+  /** Log prefix, e.g. '[rehost-sweep]'. */
+  label?: string;
+}
+
+export interface SweepResult {
+  /** Orphans found in the window (not just this batch). */
+  scanned: number;
+  rehosted: number;
+  failed: number;
+  /** Orphans still left after this pass — drives chaining / repeat calls. */
+  remaining: number;
+  hitDeadline: boolean;
+}
+
+export async function sweepOrphanClips(opts: SweepOptions): Promise<SweepResult> {
+  const {
+    db,
+    batch       = SWEEP_BATCH,
+    maxAgeHours = SWEEP_MAX_AGE_HOURS,
+    concurrency = SWEEP_CONCURRENCY,
+    deadlineAt,
+    label       = '[sweep]',
+  } = opts;
+
+  const since = new Date(Date.now() - maxAgeHours * 3_600_000).toISOString();
+
+  const { data: rows, error } = await db
+    .from('clips')
+    .select('id, user_id, video_url, download_url, created_at')
+    .neq('status', 'error')
+    .not('video_url', 'is', null)
+    .gt('created_at', since)
+    .order('created_at', { ascending: true })   // oldest in window = closest to expiry
+    .limit(500);
+
+  if (error) throw new Error(`sweep query failed: ${error.message}`);
+
+  // The R2-vs-not test runs in JS via isR2Url so the origin comparison matches
+  // exactly what clips/save writes; a SQL LIKE would miss trailing-slash and
+  // path variations in R2_PUBLIC_URL.
+  const orphans = (rows ?? []).filter(
+    r => typeof r.video_url === 'string'
+      && r.video_url.startsWith('http')
+      && !isR2Url(r.video_url)
+  );
+
+  const queue = orphans.slice(0, batch);
+  const s3 = r2Client();
+  let rehosted = 0, failed = 0, hitDeadline = false;
+
+  const worker = async () => {
+    for (let row = queue.shift(); row; row = queue.shift()) {
+      if (deadlineAt && Date.now() > deadlineAt) {
+        hitDeadline = true;
+        return;   // leave the rest queued for the next pass
+      }
+
+      const r2Url = await rehostToR2(s3, row.video_url, row.user_id, row.id);
+      if (!r2Url) {
+        console.warn(`${label} clip=${row.id} rehost failed — left for next pass`);
+        failed++;
+        continue;
+      }
+
+      // Only repoint download_url if it is also on an expiring host; one
+      // already on R2 belongs to something else and stays put.
+      const patch: Record<string, string> = { video_url: r2Url };
+      if (!row.download_url || !isR2Url(row.download_url)) {
+        patch.download_url = r2Url;
+      }
+
+      const { error: updErr } = await db.from('clips').update(patch).eq('id', row.id);
+      if (updErr) {
+        console.error(`${label} clip=${row.id} DB update failed:`, updErr.message);
+        failed++;
+      } else {
+        rehosted++;
+      }
+    }
+  };
+
+  await Promise.all(
+    Array.from({ length: Math.min(concurrency, queue.length) }, worker)
+  );
+
+  const remaining = orphans.length - rehosted;
+  console.log(
+    `${label} scanned=${orphans.length} rehosted=${rehosted} failed=${failed} ` +
+    `remaining=${remaining} deadline=${hitDeadline}`
+  );
+
+  return { scanned: orphans.length, rehosted, failed, remaining, hitDeadline };
+}
+
+// ── Chaining ─────────────────────────────────────────────────────────────────
+// Vercel Hobby caps cron at once per day, which is far too slow to beat the
+// WayinVideo URL expiry. Instead each pass hands off to the next with a fresh
+// 60s function budget, so a 40-clip job drains in a few minutes. The daily
+// cron in vercel.json is only a backstop.
+
+/** Hard cap on hops so a persistent failure can't loop forever. */
+export const SWEEP_MAX_HOPS = 6;
+
+function appBaseUrl(): string | null {
+  const explicit = process.env.NEXT_PUBLIC_APP_URL;
+  if (explicit) return explicit.replace(/\/$/, '');
+  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
+  return null;
+}
+
+/**
+ * Fire the next sweep pass. Fire-and-forget: never throws, never awaited for
+ * its body — the caller is already out of budget, which is why it is chaining.
+ */
+export async function triggerSweep(hop: number, label = '[sweep]'): Promise<void> {
+  if (hop > SWEEP_MAX_HOPS) {
+    console.warn(`${label} hop cap ${SWEEP_MAX_HOPS} reached — leaving the rest to the daily cron`);
+    return;
+  }
+
+  const base = appBaseUrl();
+  const secret = process.env.CRON_SECRET;
+  if (!base || !secret) {
+    console.warn(`${label} cannot chain: ${!base ? 'no NEXT_PUBLIC_APP_URL/VERCEL_URL' : 'no CRON_SECRET'}`);
+    return;
+  }
+
+  try {
+    // The sweep route acknowledges immediately and does its work in its own
+    // after(), so this resolves in milliseconds — we are never aborting a
+    // long-running request, which could otherwise tear down the next pass.
+    const res = await fetch(`${base}/api/cron/rehost-sweep?hop=${hop}`, {
+      headers: { authorization: `Bearer ${secret}` },
+      signal: AbortSignal.timeout(10_000),
+    });
+    console.log(`${label} chained to sweep hop=${hop} → ${res.status}`);
+  } catch (err) {
+    console.error(`${label} chain to hop=${hop} failed:`, err instanceof Error ? err.message : String(err));
   }
 }
