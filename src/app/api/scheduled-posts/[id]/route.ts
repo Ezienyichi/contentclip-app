@@ -4,7 +4,7 @@ import { cookies } from 'next/headers';
 
 export const dynamic = 'force-dynamic';
 
-const PFM_API = 'https://api.postforme.dev';
+const PFM_API = 'https://api.postforme.dev/v1';
 
 async function makeSupabase() {
   const cookieStore = await cookies();

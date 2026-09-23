@@ -7,7 +7,7 @@ import { isR2Url } from '@/lib/rehost';
 
 export const dynamic = 'force-dynamic';
 
-const PFM_API        = 'https://api.postforme.dev';
+const PFM_API        = 'https://api.postforme.dev/v1';
 const VALID_PLATFORMS = ['tiktok', 'instagram', 'youtube', 'facebook', 'twitter'] as const;
 
 // Service role — bypasses RLS for pfm_post_id back-fill and failure status updates
