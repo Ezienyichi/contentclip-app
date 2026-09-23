@@ -116,7 +116,7 @@ type ScheduledPost = {
   pfm_post_id: string | null;
   clips: { id: string; title: string; thumbnail_url: string | null; video_url: string | null } | null;
 };
-type SavedClip = { id: string; title: string; suggested_caption: string; virality_score: number; thumbnail_url: string | null };
+type SavedClip = { id: string; title: string; suggested_caption: string; virality_score: number | null; thumbnail_url: string | null; source: string };
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
@@ -183,7 +183,8 @@ export default function SchedulerPage() {
         const data = await res.json();
         setSavedClips((data.clips ?? []).map((c: any) => ({
           id: c.id, title: c.title, suggested_caption: c.suggested_caption ?? '',
-          virality_score: c.virality_score, thumbnail_url: c.thumbnail_url ?? null,
+          virality_score: c.virality_score ?? null, thumbnail_url: c.thumbnail_url ?? null,
+          source: c.source ?? 'generated',
         })));
       }
     } catch {}
@@ -717,8 +718,11 @@ export default function SchedulerPage() {
                         {c.thumbnail_url
                           ? <img src={c.thumbnail_url} alt={c.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                           : <span style={{ fontSize: 22, opacity: 0.4 }}>▶</span>}
-                        {/* Virality badge */}
-                        <span style={{ position: 'absolute', top: 5, right: 5, fontSize: 9, fontWeight: 800, color: '#fff', background: 'rgba(0,0,0,0.55)', padding: '2px 5px', borderRadius: 4, letterSpacing: '0.02em' }}>{c.virality_score}</span>
+                        {/* Source / virality badge */}
+                        {c.source === 'upload'
+                          ? <span style={{ position: 'absolute', top: 5, right: 5, fontSize: 9, fontWeight: 800, color: '#fff', background: 'rgba(124,58,237,0.75)', padding: '2px 5px', borderRadius: 4, letterSpacing: '0.02em' }}>Upload</span>
+                          : c.virality_score != null && <span style={{ position: 'absolute', top: 5, right: 5, fontSize: 9, fontWeight: 800, color: '#fff', background: 'rgba(0,0,0,0.55)', padding: '2px 5px', borderRadius: 4, letterSpacing: '0.02em' }}>{c.virality_score}</span>
+                        }
                         {/* Selected checkmark */}
                         {selected && (
                           <div style={{ position: 'absolute', inset: 0, background: 'rgba(155,93,229,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
