@@ -181,6 +181,8 @@ export async function POST(req: NextRequest) {
     pfmPayload.platform_configurations = { youtube: { title: clip.title ?? caption, privacy_status: 'public' } };
   }
 
+  console.log('[scheduled-posts POST] submitting to PfM', { pfm_account_id: connection.pfm_account_id, platform, mediaUrl });
+
   let pfmPostId: string | null = null;
 
   try {

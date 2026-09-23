@@ -83,11 +83,15 @@ export async function GET(req: NextRequest) {
   // UNIQUE (user_id, platform, pfm_account_id) handles deduplication on reconnect.
   let successCount = 0;
   for (let i = 0; i < allAccountIds.length; i++) {
-    const pfmAccountId  = allAccountIds[i];
     const account       = accountResults[i];
+    // Use PfM's internal id (sa_XXXX format) from the fetched account object.
+    // The accountIds URL param may be platform-native IDs, not PfM's own IDs.
+    const pfmAccountId  = account?.id ?? allAccountIds[i];
     const accountName   = account?.name ?? account?.username ?? account?.handle ?? null;
     const accountAvatar = account?.avatar_url ?? account?.profile_image ?? null;
     const platform      = account?.platform ?? provider;
+
+    console.log('[social/callback] account', i, { urlId: allAccountIds[i], pfmId: pfmAccountId, platform, accountName });
 
     const { error: dbError } = await supabaseAdmin
       .from('social_connections')
