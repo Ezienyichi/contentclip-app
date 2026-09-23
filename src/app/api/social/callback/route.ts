@@ -18,80 +18,90 @@ export async function GET(req: NextRequest) {
   const { searchParams } = req.nextUrl;
 
   const isSuccess = searchParams.get('isSuccess');
-  const accountIds = searchParams.get('accountIds') ?? '';
   const provider   = searchParams.get('provider') ?? '';
   const errorMsg   = searchParams.get('error');
 
-  if (isSuccess !== 'true' || !accountIds) {
+  if (isSuccess !== 'true') {
     const reason = encodeURIComponent(errorMsg ?? 'Connection cancelled or failed.');
     return NextResponse.redirect(`${APP_URL}/scheduler?error=${reason}`);
   }
 
-  // PfM may return multiple accountIds (comma-separated) — one per Facebook Page, etc.
-  // Store ALL of them so each page becomes its own selectable connection.
-  const allAccountIds = accountIds.split(',').map(s => s.trim()).filter(Boolean);
-
-  if (allAccountIds.length === 0) {
-    return NextResponse.redirect(`${APP_URL}/scheduler?error=No+account+ID+returned.`);
-  }
-
-  // Fetch all accounts from PfM in parallel to get display info + external_id
-  const accountResults = await Promise.all(
-    allAccountIds.map(id =>
-      fetch(`${PFM_ACCOUNTS_API}/social-accounts/${id}`, {
-        headers: { 'Authorization': `Bearer ${process.env.POST_FOR_ME_API_KEY!}` },
-      })
-        .then(r => r.ok ? r.json() : null)
-        .catch(() => null)
-    )
-  );
-
-  // Resolve userId: all accounts share the same external_id (set at connect time, cannot be forged)
+  // Identify the user from their session cookie.
+  // The session is available because the user initiated the OAuth flow from our app.
   let userId: string | null = null;
-  for (const account of accountResults) {
-    if (account?.external_id) { userId = account.external_id; break; }
+  try {
+    const cookieStore = await cookies();
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() { return cookieStore.getAll(); },
+          setAll(cs) { try { cs.forEach(({ name, value, options }) => cookieStore.set(name, value, options)); } catch {} },
+        },
+      }
+    );
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) userId = user.id;
+  } catch {
+    // session unavailable in this redirect context
   }
 
-  // Fall back to session cookie if external_id wasn't returned by PfM
   if (!userId) {
-    try {
-      const cookieStore = await cookies();
-      const supabase = createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        {
-          cookies: {
-            getAll() { return cookieStore.getAll(); },
-            setAll(cs) { try { cs.forEach(({ name, value, options }) => cookieStore.set(name, value, options)); } catch {} },
-          },
-        }
-      );
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) userId = user.id;
-    } catch {
-      // session not available in this redirect context — external_id is primary
+    console.error('[social/callback] Could not identify user — no session');
+    return NextResponse.redirect(`${APP_URL}/scheduler?error=Could+not+identify+user.+Please+log+in+and+try+again.`);
+  }
+
+  const pfmApiKey = process.env.POST_FOR_ME_API_KEY!;
+
+  // The accountIds query param from PfM's callback contains spc_ (connection) IDs, NOT sa_ IDs.
+  // We must list social accounts filtered by our external_id (the userId we set at connect time)
+  // to get the actual sa_ IDs that social_accounts requires when creating posts.
+  const listUrl = new URL(`${PFM_ACCOUNTS_API}/social-accounts`);
+  listUrl.searchParams.set('external_id', userId);
+  listUrl.searchParams.set('status', 'connected');
+  if (provider) listUrl.searchParams.set('platform', provider);
+  listUrl.searchParams.set('limit', '25');
+
+  let pfmAccounts: Array<Record<string, unknown>> = [];
+  try {
+    const listRes = await fetch(listUrl.toString(), {
+      headers: { 'Authorization': `Bearer ${pfmApiKey}` },
+    });
+    if (listRes.ok) {
+      const listData = await listRes.json();
+      pfmAccounts = listData?.data ?? [];
+      console.log('[social/callback] fetched sa_ accounts', {
+        userId,
+        provider,
+        count: pfmAccounts.length,
+        ids: pfmAccounts.map((a: any) => a.id),
+      });
+    } else {
+      const errText = await listRes.text();
+      console.error('[social/callback] PfM list accounts failed', listRes.status, errText);
     }
+  } catch (err) {
+    console.error('[social/callback] error listing PfM accounts', err);
   }
 
-  if (!userId) {
-    console.error('[social/callback] Could not identify user — no external_id and no session');
-    return NextResponse.redirect(`${APP_URL}/scheduler?error=Could+not+identify+user.+Please+try+again.`);
+  if (pfmAccounts.length === 0) {
+    console.error('[social/callback] no connected sa_ accounts found for user', userId);
+    return NextResponse.redirect(
+      `${APP_URL}/scheduler?error=No+social+accounts+found+after+connecting.+Please+try+again.`
+    );
   }
 
-  // Upsert each account as its own connection row.
-  // For Facebook, this means each Page becomes a separate row with its own pfm_account_id.
+  // Upsert each sa_ account row.
   // UNIQUE (user_id, platform, pfm_account_id) handles deduplication on reconnect.
   let successCount = 0;
-  for (let i = 0; i < allAccountIds.length; i++) {
-    const account       = accountResults[i];
-    // Use PfM's internal id (sa_XXXX format) from the fetched account object.
-    // The accountIds URL param may be platform-native IDs, not PfM's own IDs.
-    const pfmAccountId  = account?.id ?? allAccountIds[i];
-    const accountName   = account?.name ?? account?.username ?? account?.handle ?? null;
-    const accountAvatar = account?.avatar_url ?? account?.profile_image ?? null;
-    const platform      = account?.platform ?? provider;
+  for (const account of pfmAccounts) {
+    const pfmAccountId  = account.id as string;           // sa_XXXX — PfM's internal account ID
+    const accountName   = (account.username ?? null) as string | null;
+    const accountAvatar = (account.profile_photo_url ?? null) as string | null;
+    const platform      = (account.platform ?? provider) as string;
 
-    console.log('[social/callback] account', i, { urlId: allAccountIds[i], pfmId: pfmAccountId, platform, accountName });
+    console.log('[social/callback] upserting', { pfmAccountId, platform, accountName });
 
     const { error: dbError } = await supabaseAdmin
       .from('social_connections')
