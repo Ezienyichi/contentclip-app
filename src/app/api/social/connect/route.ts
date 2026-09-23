@@ -4,7 +4,7 @@ import { cookies } from 'next/headers';
 
 export const dynamic = 'force-dynamic';
 
-const PFM_API = 'https://api.postforme.dev';
+const PFM_ACCOUNTS_API = 'https://api.postforme.dev/v1';
 const VALID_PLATFORMS = ['tiktok', 'instagram', 'youtube', 'facebook', 'twitter'] as const;
 type Platform = typeof VALID_PLATFORMS[number];
 
@@ -45,9 +45,9 @@ export async function POST(req: NextRequest) {
   }
 
   const payload = { platform, external_id: user.id };
-  const endpoint = `${PFM_API}/social-accounts/auth-url`;
+  const endpoint = `${PFM_ACCOUNTS_API}/social-accounts/auth-url`;
 
-  console.log('[social/connect] Calling PfM', { endpoint, payload });
+  console.log('[social/connect] Calling PfM', { endpoint, platform, userId: user.id });
 
   const pfmRes = await fetch(endpoint, {
     method: 'POST',

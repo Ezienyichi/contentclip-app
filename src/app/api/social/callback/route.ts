@@ -5,7 +5,7 @@ import { cookies } from 'next/headers';
 
 export const dynamic = 'force-dynamic';
 
-const PFM_API = 'https://api.postforme.dev';
+const PFM_ACCOUNTS_API = 'https://api.postforme.dev/v1';
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -38,7 +38,7 @@ export async function GET(req: NextRequest) {
   // Fetch all accounts from PfM in parallel to get display info + external_id
   const accountResults = await Promise.all(
     allAccountIds.map(id =>
-      fetch(`${PFM_API}/social-accounts/${id}`, {
+      fetch(`${PFM_ACCOUNTS_API}/social-accounts/${id}`, {
         headers: { 'Authorization': `Bearer ${process.env.POST_FOR_ME_API_KEY!}` },
       })
         .then(r => r.ok ? r.json() : null)
