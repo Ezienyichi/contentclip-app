@@ -77,6 +77,7 @@ export default function ClipsPage() {
   const [preview, setPreview] = useState<number|null>(null);
   const [playingUrl, setPlayingUrl] = useState<string|null>(null);
   const [downloadingIdx, setDownloadingIdx] = useState<number|null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [, setDbLoaded] = useState(false);
   const [uploadPlan, setUploadPlan] = useState<string>('free');
   const [uploadUsage, setUploadUsage] = useState<{ count: number; limits: { daily_cap: number; max_bytes: number } | null }>({ count: 0, limits: null });
@@ -223,6 +224,21 @@ export default function ClipsPage() {
     return b.localeCompare(a);
   });
 
+  async function handleDeleteClip(clip: Clip) {
+    if (!clip.id) return;
+    if (!window.confirm(`Delete "${clip.title}"? This cannot be undone.`)) return;
+    setDeletingId(clip.id);
+    try {
+      const res = await fetch(`/api/clips/${clip.id}`, { method: 'DELETE' });
+      if (!res.ok) { const d = await res.json(); throw new Error(d.error || 'Delete failed.'); }
+      setClips(prev => prev.filter(c => c.id !== clip.id));
+    } catch (err: any) {
+      alert(err.message ?? 'Failed to delete clip.');
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
   async function handleClipDownload(clip: Clip, idx: number) {
     const url = clip.download_url || clip.clip_url || clip.video_url;
     if (!url) return;
@@ -354,8 +370,10 @@ export default function ClipsPage() {
                 </p>
               )}
               <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:10, flexWrap:'wrap' }}>
-                {clip.source === 'upload' && (
+                {clip.source === 'upload' ? (
                   <span style={{ fontSize:10, fontWeight:600, color:'#7c3aed', background:'rgba(124,58,237,0.1)', padding:'2px 7px', borderRadius:99 }}>Uploaded</span>
+                ) : (
+                  <span style={{ fontSize:10, fontWeight:600, color:'#0369a1', background:'rgba(3,105,161,0.1)', padding:'2px 7px', borderRadius:99 }}>AI Clip</span>
                 )}
                 {/* Uploads set only delete_after; generated clips set both. */}
                 <ExpiryBadge expiresAt={clip.delete_after ?? clip.expires_at} />
@@ -374,6 +392,9 @@ export default function ClipsPage() {
                 </button>
                 <button onClick={() => handleClipDownload(clip, idx)} disabled={downloadingIdx === idx || !(clip.download_url||clip.clip_url||clip.video_url)} style={{ padding:'8px 10px', borderRadius:radius.md, background:clip.download_url||clip.clip_url||clip.video_url ? gradients.primary : colors.surfaceContainer, color:'#FAF7FF', border:'none', fontSize:'11px', fontWeight:600, cursor:clip.download_url||clip.clip_url||clip.video_url ? 'pointer' : 'default', display:'flex', alignItems:'center', justifyContent:'center', gap:'4px', opacity:downloadingIdx===idx ? 0.5 : (clip.download_url||clip.clip_url||clip.video_url ? 1 : 0.4) }}>
                   <Icon name={downloadingIdx === idx ? 'hourglass_empty' : 'download'} size={13}/>
+                </button>
+                <button onClick={() => handleDeleteClip(clip)} disabled={deletingId === clip.id} title="Delete clip" style={{ padding:'8px 10px', borderRadius:radius.md, background:'rgba(220,38,38,0.08)', border:'1px solid rgba(220,38,38,0.18)', color:'#DC2626', fontSize:'11px', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', opacity:deletingId === clip.id ? 0.5 : 1 }}>
+                  <Icon name={deletingId === clip.id ? 'hourglass_empty' : 'delete'} size={13}/>
                 </button>
               </div>
             </div>

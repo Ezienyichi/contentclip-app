@@ -3,6 +3,7 @@ import { createServerClient } from '@supabase/ssr';
 import { createClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
 import { insertNotification } from '@/lib/notify';
+import { isR2Url } from '@/lib/rehost';
 
 export const dynamic = 'force-dynamic';
 
@@ -84,7 +85,7 @@ export async function POST(req: NextRequest) {
   // Verify the clip belongs to this user + fetch video_url and title for PfM
   const { data: clip, error: clipError } = await supabase
     .from('clips')
-    .select('id, title, video_url')
+    .select('id, title, video_url, download_url')
     .eq('id', clip_id)
     .eq('user_id', user.id)
     .single();
@@ -152,9 +153,25 @@ export async function POST(req: NextRequest) {
     external_id:     post.id,                       // our row ID for traceability
   };
 
-  if (clip.video_url) {
-    pfmPayload.media = [{ url: clip.video_url }];
+  // Prefer whichever URL is already on R2 (permanent + publicly reachable).
+  // Both video_url and download_url are updated to R2 after rehosting completes.
+  // If neither is on R2 yet the WayinVideo/CloudFront URL has likely expired —
+  // reject early rather than sending a dead URL to Post for Me.
+  const mediaUrl = isR2Url(clip.video_url)    ? clip.video_url
+                 : isR2Url(clip.download_url) ? clip.download_url
+                 : null;
+
+  if (!mediaUrl) {
+    await supabaseAdmin.from('scheduled_posts')
+      .update({ status: 'failed', error_message: 'Clip video is not yet on permanent storage. Wait a moment for processing, then reschedule.' })
+      .eq('id', post.id);
+    return NextResponse.json(
+      { error: 'Clip video is not ready yet. Please wait a moment for processing to complete, then try again.' },
+      { status: 409 }
+    );
   }
+
+  pfmPayload.media = [{ url: mediaUrl }];
 
   if (platform === 'instagram') {
     pfmPayload.platform_configurations = { instagram: { placement: 'reels' } };
@@ -173,7 +190,7 @@ export async function POST(req: NextRequest) {
       body:    JSON.stringify(pfmPayload),
     });
     const pfmText = await pfmRes.text();
-    console.log('[scheduled-posts POST] PfM', pfmRes.status, pfmText.slice(0, 500));
+    console.log('[scheduled-posts POST] PfM', pfmRes.status, 'mediaUrl:', mediaUrl, pfmText.slice(0, 500));
 
     if (!pfmRes.ok) {
       console.error('[scheduled-posts POST] PfM error', pfmRes.status, pfmText);
