@@ -4,7 +4,7 @@ import { cookies } from 'next/headers';
 
 export const dynamic = 'force-dynamic';
 
-const PFM_API = 'https://api.postforme.dev/v1';
+const PFM_API = 'https://api.postforme.dev';
 const VALID_PLATFORMS = ['tiktok', 'instagram', 'youtube', 'facebook', 'twitter'] as const;
 type Platform = typeof VALID_PLATFORMS[number];
 
