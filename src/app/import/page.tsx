@@ -574,6 +574,7 @@ export default function ImportPage() {
   const [scheduleDate, setScheduleDate] = useState('');
   const [scheduleTime, setScheduleTime] = useState('');
   const [scheduling, setScheduling] = useState(false);
+  const [schedulingClipIdx, setSchedulingClipIdx] = useState<number | null>(null);
   const [importSchedCaption, setImportSchedCaption] = useState('');
   const [importSchedHashtags, setImportSchedHashtags] = useState('');
   const [generationSuccess, setGenerationSuccess] = useState(false);
@@ -963,6 +964,30 @@ export default function ImportPage() {
       setUploadProgress(0);
     }
   }, [selectedFile, durationLoading, category, selectedTs, contentMode, userCredits, userPlan]);
+
+  async function handleScheduleImportClip(clip: any, idx: number) {
+    setSchedulingClipIdx(idx);
+    try {
+      const res = await fetch('/api/clips/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          clips: [{ ...clip, video_url: clip.video_url || videoUrl }],
+          source_video_name: videoUrl,
+        }),
+      });
+      const data = res.ok ? await res.json() : null;
+      const dbId = data?.savedClips?.[0]?.id;
+      router.push(dbId
+        ? `/scheduler?clip_id=${dbId}&caption=${encodeURIComponent(clip.caption || '')}`
+        : '/scheduler');
+    } catch {
+      router.push('/scheduler');
+    } finally {
+      setSchedulingClipIdx(null);
+    }
+  }
 
   const handleDownload = (clip: Clip) => {
     const a = document.createElement('a');
@@ -1772,8 +1797,8 @@ export default function ImportPage() {
                       </p>
                     )}
 
-                    {/* 3-button row */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '6px' }}>
+                    {/* 2×2 button grid */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
                       <button
                         onClick={() => {
                           sessionStorage.setItem('editor_clip', JSON.stringify({
@@ -1795,6 +1820,13 @@ export default function ImportPage() {
                         style={{ padding: '8px 4px', background: 'linear-gradient(135deg,#7c3aed,#5b21b6)', borderRadius: '7px', color: '#fff', fontSize: '11px', fontWeight: 700, border: 'none', cursor: 'pointer' }}
                       >
                         Edit
+                      </button>
+                      <button
+                        onClick={() => handleScheduleImportClip(clip, index)}
+                        disabled={schedulingClipIdx === index}
+                        style={{ padding: '8px 4px', background: 'rgba(124,58,237,0.12)', border: '1px solid rgba(124,58,237,0.3)', borderRadius: '7px', color: '#a78bfa', fontSize: '11px', fontWeight: 600, cursor: schedulingClipIdx === index ? 'not-allowed' : 'pointer', opacity: schedulingClipIdx === index ? 0.6 : 1 }}
+                      >
+                        {schedulingClipIdx === index ? '…' : 'Schedule'}
                       </button>
                       <button
                         onClick={() => {
