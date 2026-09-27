@@ -181,6 +181,10 @@ export default function SchedulerPage() {
       const res = await fetch('/api/clips/list');
       if (res.ok) {
         const data = await res.json();
+        // NOTE: uploaded clips (source === 'upload') are intentionally included here.
+        // /api/clips/list applies no source filter, and the picker below tolerates a
+        // null thumbnail_url and virality_score. Do NOT add a source/virality/thumbnail
+        // filter — it would silently drop uploads from the scheduler.
         setSavedClips((data.clips ?? []).map((c: any) => ({
           id: c.id, title: c.title, suggested_caption: c.suggested_caption ?? '',
           virality_score: c.virality_score ?? null, thumbnail_url: c.thumbnail_url ?? null,

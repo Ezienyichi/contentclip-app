@@ -21,10 +21,10 @@ const colors = {
 
 type Clip = {
   id?: string; db_id?: string; title: string; hook_text: string;
-  start_time: number; end_time: number; virality_score: number;
+  start_time: number; end_time: number; virality_score: number | null;
   suggested_caption: string; hashtags: string; platform: string;
   clip_url?: string; video_url?: string; download_url?: string;
-  thumbnail_url?: string; duration: number; status?: string;
+  thumbnail_url?: string; duration: number | null; status?: string;
   expires_at?: string | null; source_video_name?: string;
   source?: string; delete_after?: string | null; file_size_bytes?: number | null;
   created_at?: string | null;
@@ -204,10 +204,12 @@ export default function ClipsPage() {
   const filtered = clips
     .filter(c => plat === 'All' || platMap(c.platform).toLowerCase() === plat.toLowerCase())
     .sort((a, b) => {
-      if (sort === 'Most Viral') return b.virality_score - a.virality_score;
+      // Uploads have a null virality_score — treat as lowest so they sort to the
+      // bottom of "Most Viral" instead of producing NaN (which scrambles order).
+      if (sort === 'Most Viral') return (b.virality_score ?? -1) - (a.virality_score ?? -1);
       if (sort === 'Newest')     return (b.created_at ?? '').localeCompare(a.created_at ?? '');
-      if (sort === 'Longest')    return b.duration - a.duration;
-      if (sort === 'Shortest')   return a.duration - b.duration;
+      if (sort === 'Longest')    return (b.duration ?? 0) - (a.duration ?? 0);
+      if (sort === 'Shortest')   return (a.duration ?? 0) - (b.duration ?? 0);
       return 0;
     });
 
@@ -311,6 +313,11 @@ export default function ClipsPage() {
         </div>
       </div>
 
+      {/* Upload-to-schedule hint */}
+      <p style={{ fontSize:12.5, color:colors.onSurfaceVariant, margin:'0 0 16px', opacity:0.85 }}>
+        Upload your own edits to schedule to your handles.
+      </p>
+
       {/* Upload progress bar */}
       {uploading && uploadProgress > 0 && (
         <div style={{ height:3, background:'rgba(155,93,229,0.15)', borderRadius:99, marginBottom:16, overflow:'hidden' }}>
@@ -348,11 +355,17 @@ export default function ClipsPage() {
               ) : previewSrc ? (
                 <video src={previewSrc} style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover' }} muted playsInline preload="metadata"/>
               ) : null}
-              <div style={{ position:'absolute', top:12, left:12, background:'rgba(0,0,0,0.7)', backdropFilter:'blur(8px)', padding:'4px 10px', borderRadius:radius.full, display:'flex', alignItems:'center', gap:'4px', zIndex:2 }}>
-                <Icon name="local_fire_department" size={14} style={{ color:sc(clip.virality_score) }} filled/>
-                <span style={{ fontSize:'12px', fontWeight:700, color:sc(clip.virality_score) }}>{clip.virality_score}</span>
-              </div>
-              <div style={{ position:'absolute', top:12, right:12, background:'rgba(0,0,0,0.7)', padding:'4px 8px', borderRadius:radius.sm, fontSize:'11px', color:'#fff', fontWeight:600, zIndex:2 }}>{formatDuration(clip.duration)}</div>
+              {/* Uploads have no virality_score — only show the fire badge for scored clips */}
+              {clip.virality_score != null && (
+                <div style={{ position:'absolute', top:12, left:12, background:'rgba(0,0,0,0.7)', backdropFilter:'blur(8px)', padding:'4px 10px', borderRadius:radius.full, display:'flex', alignItems:'center', gap:'4px', zIndex:2 }}>
+                  <Icon name="local_fire_department" size={14} style={{ color:sc(clip.virality_score) }} filled/>
+                  <span style={{ fontSize:'12px', fontWeight:700, color:sc(clip.virality_score) }}>{clip.virality_score}</span>
+                </div>
+              )}
+              {/* Uploads have no duration — only show the duration pill when we have one */}
+              {clip.duration ? (
+                <div style={{ position:'absolute', top:12, right:12, background:'rgba(0,0,0,0.7)', padding:'4px 8px', borderRadius:radius.sm, fontSize:'11px', color:'#fff', fontWeight:600, zIndex:2 }}>{formatDuration(clip.duration)}</div>
+              ) : null}
               <div style={{ width:56, height:56, borderRadius:'50%', background:'rgba(255,255,255,0.1)', backdropFilter:'blur(8px)', display:'flex', alignItems:'center', justifyContent:'center', position:'relative', zIndex:2 }}>
                 <Icon name="play_arrow" filled size={28} style={{ color:'#fff' }}/>
               </div>

@@ -82,7 +82,11 @@ export async function POST(req: NextRequest) {
   if (new Date(scheduled_at) <= new Date())
     return NextResponse.json({ error: 'Scheduled time must be in the future.' }, { status: 400 });
 
-  // Verify the clip belongs to this user + fetch video_url and title for PfM
+  // Verify the clip belongs to this user + fetch video_url and title for PfM.
+  // Uploaded clips (source === 'upload') post identically to generated ones: this
+  // fetch is not gated on `source`, and the R2 check below passes for uploads
+  // because their video_url is already an R2 public URL. Do NOT add source-based
+  // gating here — it would block uploads from being scheduled.
   const { data: clip, error: clipError } = await supabase
     .from('clips')
     .select('id, title, video_url, download_url')
