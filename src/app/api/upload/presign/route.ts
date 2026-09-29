@@ -9,11 +9,11 @@ import { randomUUID } from 'crypto';
 export const dynamic = 'force-dynamic';
 
 const PLAN_LIMITS: Record<string, { maxBytes: number; dailyCap: number }> = {
-  starter:      { maxBytes: 100 * 1024 * 1024, dailyCap: 10 },
-  solo:         { maxBytes: 100 * 1024 * 1024, dailyCap: 10 },
-  pro:          { maxBytes: 100 * 1024 * 1024, dailyCap: 10 },
-  professional: { maxBytes: 100 * 1024 * 1024, dailyCap: 10 },
-  agency:       { maxBytes: 200 * 1024 * 1024, dailyCap: 25 },
+  starter:      { maxBytes: 500 * 1024 * 1024, dailyCap: 10 },
+  solo:         { maxBytes: 500 * 1024 * 1024, dailyCap: 10 },
+  pro:          { maxBytes: 500 * 1024 * 1024, dailyCap: 10 },
+  professional: { maxBytes: 500 * 1024 * 1024, dailyCap: 10 },
+  agency:       { maxBytes: 500 * 1024 * 1024, dailyCap: 25 },
 };
 
 function r2Client() {
