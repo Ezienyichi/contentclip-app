@@ -3,6 +3,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import DashboardLayout from '@/components/DashboardLayout';
 import { colors as _colors, gradients, radius } from '@/lib/tokens';
+import { createClient as createSupabaseBrowser } from '@/lib/supabase-browser';
 
 const colors = {
   ..._colors,
@@ -272,6 +273,8 @@ export default function SchedulerPage() {
     if (!modalClipId || selectedConnIds.length === 0 || !modalDate || !modalTime) return;
     setSubmitting(true);
     try {
+      // Ensure fresh session cookies before the SSR schedule route reads them.
+      await createSupabaseBrowser().auth.getSession();
       const scheduled_at = new Date(`${modalDate}T${modalTime}`).toISOString();
       const selectedConns = connections.filter(c => selectedConnIds.includes(c.id));
       const results = await Promise.all(

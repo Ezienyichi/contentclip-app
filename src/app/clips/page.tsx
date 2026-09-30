@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { colors as _colors, gradients, radius } from '@/lib/tokens';
 import { CLIP_RETENTION_DAYS } from '@/lib/retention';
 import UpgradeModal from '@/components/UpgradeModal';
+import { createClient as createSupabaseBrowser } from '@/lib/supabase-browser';
 
 const colors = {
   ..._colors,
@@ -162,6 +163,13 @@ export default function ClipsPage() {
       });
 
       setUploadProgress(95);
+
+      // Refresh the Supabase session before registering — the long XHR to R2
+      // runs outside Next.js middleware, so the browser client may have rotated
+      // its refresh token without updating server-side cookies. Calling
+      // getSession() here forces the browser client to sync fresh tokens into
+      // document.cookie so the upload/complete SSR route sees a valid session.
+      await createSupabaseBrowser().auth.getSession();
 
       // 3. Register in DB
       const nameNoExt = file.name.replace(/\.[^.]+$/, '');
