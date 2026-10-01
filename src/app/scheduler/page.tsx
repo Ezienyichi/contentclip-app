@@ -117,7 +117,7 @@ type ScheduledPost = {
   pfm_post_id: string | null;
   clips: { id: string; title: string; thumbnail_url: string | null; video_url: string | null } | null;
 };
-type SavedClip = { id: string; title: string; suggested_caption: string; virality_score: number | null; thumbnail_url: string | null; source: string };
+type SavedClip = { id: string; title: string; suggested_caption: string; hashtags: string; virality_score: number | null; thumbnail_url: string | null; source: string };
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
@@ -188,6 +188,7 @@ export default function SchedulerPage() {
         // filter — it would silently drop uploads from the scheduler.
         setSavedClips((data.clips ?? []).map((c: any) => ({
           id: c.id, title: c.title, suggested_caption: c.suggested_caption ?? '',
+          hashtags: c.hashtags ?? '',
           virality_score: c.virality_score ?? null, thumbnail_url: c.thumbnail_url ?? null,
           source: c.source ?? 'generated',
         })));
@@ -226,7 +227,8 @@ export default function SchedulerPage() {
     setModalDate(next.toISOString().split('T')[0]);
     setModalTime(`${String(next.getHours()).padStart(2, '0')}:00`);
     setModalClipId(pendingClipId);
-    setModalCaption(pendingCaption || clip.suggested_caption || '');
+    const caption = [clip.suggested_caption, clip.hashtags].filter(Boolean).join('\n\n');
+    setModalCaption(caption || '');
     setSelectedConnIds([]);
     setShowModal(true);
     setPendingClipId(null);
@@ -266,7 +268,10 @@ export default function SchedulerPage() {
   const handleClipSelect = (clipId: string) => {
     setModalClipId(clipId);
     const clip = savedClips.find(c => c.id === clipId);
-    if (clip?.suggested_caption) setModalCaption(clip.suggested_caption);
+    if (clip) {
+      const caption = [clip.suggested_caption, clip.hashtags].filter(Boolean).join('\n\n');
+      setModalCaption(caption);
+    }
   };
 
   const handleSchedule = async () => {

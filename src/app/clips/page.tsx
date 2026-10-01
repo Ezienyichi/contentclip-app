@@ -361,7 +361,7 @@ export default function ClipsPage() {
               {clip.thumbnail_url ? (
                 <img src={clip.thumbnail_url} alt={clip.title} style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover' }}/>
               ) : previewSrc ? (
-                <video src={previewSrc} style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover' }} muted playsInline preload="metadata"/>
+                <video src={previewSrc + '#t=0.001'} style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover' }} muted playsInline preload="metadata"/>
               ) : null}
               {/* Uploads have no virality_score — only show the fire badge for scored clips */}
               {clip.virality_score != null && (

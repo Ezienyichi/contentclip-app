@@ -159,9 +159,14 @@ export default function PricingPage() {
                       : 'Billed monthly'}
                   </p>
                 )}
-                <p style={{ fontSize: '12px', fontWeight: 600, color: colors.primary, margin: '0 0 20px' }}>
+                <p style={{ fontSize: '12px', fontWeight: 600, color: colors.primary, margin: '0 0 8px' }}>
                   {plan.min.toLocaleString()} minutes/month
                 </p>
+                {plan.name === 'Free' && (
+                  <p style={{ fontSize: '11px', color: colors.onSurfaceVariant, margin: '0 0 16px', lineHeight: 1.5 }}>
+                    For videos under 30 min. Longer videos require a paid plan.
+                  </p>
+                )}
                 <button
                   onClick={() => dp === 0 ? router.push('/auth') : handleUpgrade(plan.name)}
                   disabled={checkingOut === plan.name.toLowerCase()}
