@@ -352,7 +352,7 @@ function AuthPageInner() {
           Enter your email and we will send you a reset link.
         </p>
         {error && (
-          <div style={{ padding: '12px 16px', borderRadius: radius.md, background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#dc2626', fontSize: 13, marginBottom: 16 }}>
+          <div style={{ padding: '12px 16px', borderRadius: radius.md, background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#1A1714', fontSize: 13, marginBottom: 16 }}>
             {error}
           </div>
         )}
@@ -426,7 +426,7 @@ function AuthPageInner() {
         </div>
 
         {error && (
-          <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '8px', padding: '12px 16px', color: '#dc2626', fontSize: '14px', marginBottom: '16px', lineHeight: 1.5 }}>
+          <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '8px', padding: '12px 16px', color: '#1A1714', fontSize: '14px', marginBottom: '16px', lineHeight: 1.5 }}>
             {error}
           </div>
         )}

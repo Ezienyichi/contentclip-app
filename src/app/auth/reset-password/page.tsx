@@ -237,9 +237,9 @@ function ResetPasswordInner() {
               <p style={{
                 margin:       0,
                 fontSize:     13,
-                color:        colors.error,
-                background:   `${colors.error}10`,
-                border:       `1px solid ${colors.error}30`,
+                color:        '#1A1714',
+                background:   'rgba(220,38,38,0.08)',
+                border:       '1px solid rgba(220,38,38,0.25)',
                 borderRadius: radius.md,
                 padding:      '10px 14px',
               }}>

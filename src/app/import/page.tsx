@@ -885,85 +885,146 @@ export default function ImportPage() {
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { setError('Please sign in.'); setLoading(false); return; }
+      if (!user) { setError('Please sign in.'); setLoading(false); setStatus('idle'); return; }
 
-      // ── UPLOAD TO PROCESSING SERVER ──
-      const formData = new FormData();
-      formData.append('file', selectedFile);
-      formData.append('userId', user.id);
-      formData.append('category', category);
-      formData.append('prompt', buildSmartPrompt(category, selectedTs, contentMode));
-      formData.append('plan', userPlan);
+      // ── 1. GET PRESIGNED URL ──
+      const presignRes = await fetch('/api/upload/presign', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ file_name: selectedFile.name, file_size: selectedFile.size, mime_type: selectedFile.type }),
+      });
+      const presignData = await presignRes.json();
+      if (!presignRes.ok) throw new Error(presignData.error || 'Failed to get upload URL.');
+      const { upload_url, key } = presignData;
 
-      let uploadSucceeded = false;
-      let serverCreditsUsed = 0;
-
-      await new Promise<void>((resolve) => {
+      // ── 2. PUT FILE DIRECTLY TO R2 (no Cloudflare proxy, no body-size limit) ──
+      await new Promise<void>((resolve, reject) => {
         const xhr = new XMLHttpRequest();
-        xhr.open('POST', 'https://api.vangelclip.app/api/process-upload');
+        xhr.open('PUT', upload_url);
         xhr.upload.onprogress = (e) => {
-          if (e.lengthComputable) {
-            setUploadProgress(Math.round((e.loaded / e.total) * 100));
-          }
+          if (e.lengthComputable) setUploadProgress(Math.round((e.loaded / e.total) * 100));
         };
-        xhr.onload = () => {
-          try {
-            const data = JSON.parse(xhr.responseText);
-            if (xhr.status >= 200 && xhr.status < 300 && data.clips?.length > 0) {
-              uploadSucceeded = true;
-              serverCreditsUsed = typeof data.credits_used === 'number' ? data.credits_used : 0;
-              setResult({
-                success: true,
-                jobId: '',
-                clips: data.clips,
-                creditsUsed: serverCreditsUsed,
-                creditsRemaining: userCredits, // updated after deduction below
-              });
-              setClips(data.clips);
-              setGenerationSuccess(true);
-              localStorage.setItem(CLIPS_STORAGE_KEY, JSON.stringify({ clips: data.clips, videoUrl: selectedFile.name, generatedAt: new Date().toISOString() }));
-              // Save to DB so clips appear in /clips library
-              fetch('/api/clips/save', {
+        xhr.onload = () =>
+          xhr.status >= 200 && xhr.status < 300
+            ? resolve()
+            : reject(new Error(`Upload to storage failed (${xhr.status}). Please try again.`));
+        xhr.onerror = () => reject(new Error('Upload failed. Check your connection and try again.'));
+        xhr.setRequestHeader('Content-Type', selectedFile.type || 'application/octet-stream');
+        xhr.send(selectedFile);
+      });
+
+      // ── 3. SYNC SESSION (long XHR may have rotated tokens outside middleware) ──
+      await supabase.auth.getSession();
+
+      // ── 4. REGISTER UPLOAD IN DB ──
+      const nameNoExt = selectedFile.name.replace(/\.[^.]+$/, '');
+      const completeRes = await fetch('/api/upload/complete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key, file_name: selectedFile.name, file_size: selectedFile.size, title: nameNoExt }),
+      });
+      const completeData = await completeRes.json();
+      if (!completeRes.ok) throw new Error(completeData.error || 'Failed to register upload.');
+      const r2Url = completeData.video_url as string;
+
+      // ── 5. TRIGGER BACKEND PROCESSING (server-to-server, no size limit) ──
+      setUploadProgress(100);
+      const processRes = await fetch('/api/process-upload-r2', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          r2_url:   r2Url,
+          category,
+          prompt:   buildSmartPrompt(category, selectedTs, contentMode),
+          numClips: CLIP_REQUEST_LIMIT,
+        }),
+      });
+      const processData = await processRes.json();
+      if (!processRes.ok) {
+        setError(processData.error || (processRes.status === 402
+          ? 'You have used all your minutes for this month. Upgrade to continue.'
+          : 'Failed to start processing.'));
+        setLoading(false);
+        setStatus('idle');
+        return;
+      }
+      const jobId = processData.job_id as string;
+
+      // ── 6. POLL FOR STATUS EVERY 5 s ──
+      pollDeadlineRef.current = Date.now() + POLL_TIMEOUT_MS;
+      pollTimerRef.current = setInterval(async () => {
+        if (Date.now() > pollDeadlineRef.current) {
+          stopPolling();
+          setLoading(false);
+          setStatus('idle');
+          setError('Processing timed out. Please try again.');
+          return;
+        }
+        try {
+          const statusRes  = await fetch(`/api/process-upload-r2/${jobId}`, { credentials: 'include' });
+          const statusData = await statusRes.json();
+
+          if (statusData.status === 'completed') {
+            stopPolling();
+            const rawClips: any[] = statusData.clips ?? [];
+            const normalizedClips = rawClips.map((c: any) => ({
+              video_url:     c.video_url     || '',
+              download_url:  c.download_url  || '',
+              title:         c.title         || 'Clip',
+              caption:       c.desc          || c.caption || '',
+              ai_score:      c.score         ?? c.ai_score,
+              thumbnail_url: c.thumbnail     || c.thumbnail_url || '',
+              hashtags:      c.tags          || c.hashtags || [],
+              start_time:    c.start_time    ?? 0,
+              end_time:      c.end_time      ?? 60,
+              id:            c.id,
+              duration:      c.duration,
+            }));
+            setStatus('completed');
+            setResult({ success: true, jobId, clips: normalizedClips, creditsUsed: 0, creditsRemaining: userCredits });
+            setClips(normalizedClips);
+            setGenerationSuccess(true);
+            localStorage.setItem(CLIPS_STORAGE_KEY, JSON.stringify({ clips: normalizedClips, videoUrl: selectedFile.name, generatedAt: new Date().toISOString() }));
+            // Save derived clips to DB
+            fetch('/api/clips/save', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'include',
+              body: JSON.stringify({ clips: normalizedClips, source_video_name: selectedFile.name }),
+            }).catch(() => {});
+            // Deduct minutes after successful processing
+            if (uploadDuration && uploadDuration > 0) {
+              const minsNeeded = Math.ceil(uploadDuration / 60);
+              fetch('/api/upload-credits', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
-                body: JSON.stringify({ clips: data.clips, source_video_name: selectedFile.name }),
+                body: JSON.stringify({ minutesNeeded: minsNeeded }),
+              }).then(r => r.json()).then(d => {
+                if (d.minutes_remaining !== undefined) setUserCredits(d.minutes_remaining);
               }).catch(() => {});
-            } else if (xhr.status === 402 || data.plan_limit_exceeded) {
-              setError(data.error || 'This range exceeds your plan limit. Upgrade to process longer videos.');
-            } else {
-              setError(data.error || 'No clips found. Try a different video.');
             }
-          } catch { setError('Failed to parse server response.'); }
-          resolve();
-        };
-        xhr.onerror = () => { setError('Upload failed. Check your connection and try again.'); resolve(); };
-        xhr.send(formData);
-      });
-
-      // ── DEDUCT CREDITS AFTER SUCCESSFUL PROCESSING ──
-      if (uploadSucceeded && serverCreditsUsed > 0) {
-        const deductRes = await fetch('/api/upload-credits', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({ creditsNeeded: serverCreditsUsed }),
-        });
-        const deductData = await deductRes.json();
-        if (deductData.credits_remaining !== undefined) {
-          setUserCredits(deductData.credits_remaining);
-          setResult(prev => prev ? { ...prev, creditsRemaining: deductData.credits_remaining } : prev);
+            setLoading(false);
+          } else if (statusData.status === 'failed' || statusData.status === 'not_found') {
+            stopPolling();
+            setLoading(false);
+            setStatus('idle');
+            setError(statusData.error || 'Processing failed. Please try again.');
+          }
+          // status === 'processing' → keep polling
+        } catch {
+          // network error mid-poll — keep trying until timeout
         }
-      }
+      }, POLL_INTERVAL_MS);
 
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Upload error');
-    } finally {
       setLoading(false);
       setStatus('idle');
       setUploadProgress(0);
     }
-  }, [selectedFile, durationLoading, category, selectedTs, contentMode, userCredits, userPlan]);
+  }, [selectedFile, durationLoading, category, selectedTs, contentMode, userCredits, userPlan, uploadDuration, stopPolling]);
 
   async function handleScheduleImportClip(clip: any, idx: number) {
     setSchedulingClipIdx(idx);

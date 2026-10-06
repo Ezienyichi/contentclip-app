@@ -114,9 +114,9 @@ export default function PricingPage() {
         </div>
 
         {checkoutError && (
-          <div style={{ maxWidth: 500, margin: '0 auto 20px', padding: '12px 16px', borderRadius: radius.md, background: 'rgba(220,38,38,0.08)', border: '1px solid rgba(220,38,38,0.2)', color: '#DC2626', fontSize: '13px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ maxWidth: 500, margin: '0 auto 20px', padding: '12px 16px', borderRadius: radius.md, background: 'rgba(220,38,38,0.08)', border: '1px solid rgba(220,38,38,0.2)', color: '#1A1714', fontSize: '13px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span>{checkoutError}</span>
-            <button onClick={() => setCheckoutError(null)} style={{ background: 'none', border: 'none', color: '#DC2626', cursor: 'pointer', fontSize: 18, lineHeight: 1, padding: 0 }}>×</button>
+            <button onClick={() => setCheckoutError(null)} style={{ background: 'none', border: 'none', color: '#1A1714', cursor: 'pointer', fontSize: 18, lineHeight: 1, padding: 0 }}>×</button>
           </div>
         )}
 

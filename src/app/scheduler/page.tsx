@@ -399,7 +399,7 @@ export default function SchedulerPage() {
             {post.clips?.title ?? 'Clip'}
           </p>
           <p style={{ margin: '2px 0 0', fontSize: 11, color: colors.onSurfaceVariant }}>{plat?.label ?? post.platform} · {date} at {time}</p>
-          {post.error_message && <p style={{ margin: '2px 0 0', fontSize: 11, color: '#DC2626' }}>{post.error_message}</p>}
+          {post.error_message && <p style={{ margin: '2px 0 0', fontSize: 11, color: '#1A1714' }}>{post.error_message}</p>}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
           <span style={{ fontSize: 11, fontWeight: 700, color: st.color, background: st.bg, padding: '4px 10px', borderRadius: radius.full, letterSpacing: '0.02em' }}>{st.label}</span>
@@ -421,7 +421,7 @@ export default function SchedulerPage() {
 
       {/* ── Banner ── */}
       {banner && (
-        <div style={{ marginBottom: 20, padding: '12px 18px', borderRadius: radius.lg, background: banner.type === 'success' ? 'rgba(5,150,105,0.10)' : 'rgba(220,38,38,0.10)', border: `1px solid ${banner.type === 'success' ? 'rgba(5,150,105,0.25)' : 'rgba(220,38,38,0.25)'}`, color: banner.type === 'success' ? '#059669' : '#DC2626', fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+        <div style={{ marginBottom: 20, padding: '12px 18px', borderRadius: radius.lg, background: banner.type === 'success' ? 'rgba(5,150,105,0.10)' : 'rgba(220,38,38,0.10)', border: `1px solid ${banner.type === 'success' ? 'rgba(5,150,105,0.25)' : 'rgba(220,38,38,0.25)'}`, color: banner.type === 'success' ? '#059669' : '#1A1714', fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
           <span>{banner.type === 'success' ? '✓ ' : '✕ '}{banner.msg}</span>
           <button onClick={() => setBanner(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', fontSize: 16, lineHeight: 1, padding: '0 4px' }}>×</button>
         </div>
@@ -643,12 +643,12 @@ export default function SchedulerPage() {
 
             {/* Caption save error */}
             {captionSaveErr && (
-              <p style={{ margin: '0 0 10px', fontSize: 12, color: '#DC2626', fontWeight: 500 }}>{captionSaveErr}</p>
+              <p style={{ margin: '0 0 10px', fontSize: 12, color: '#1A1714', fontWeight: 500 }}>{captionSaveErr}</p>
             )}
 
             {/* Post error_message */}
             {previewPost.error_message && (
-              <div style={{ marginBottom: 14, padding: '9px 12px', borderRadius: radius.md, background: 'rgba(220,38,38,0.06)', border: '1px solid rgba(220,38,38,0.15)', fontSize: 12, color: '#DC2626', lineHeight: 1.5 }}>
+              <div style={{ marginBottom: 14, padding: '9px 12px', borderRadius: radius.md, background: 'rgba(220,38,38,0.06)', border: '1px solid rgba(220,38,38,0.15)', fontSize: 12, color: '#1A1714', lineHeight: 1.5 }}>
                 ⚠️ {previewPost.error_message}
               </div>
             )}

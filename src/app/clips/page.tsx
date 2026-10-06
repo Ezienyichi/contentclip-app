@@ -357,9 +357,9 @@ export default function ClipsPage() {
 
       {/* Upload error */}
       {uploadError && (
-        <div style={{ padding:'10px 16px', borderRadius:radius.md, background:'rgba(220,38,38,0.08)', border:'1px solid rgba(220,38,38,0.2)', color:'#DC2626', fontSize:'13px', fontWeight:500, marginBottom:16, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+        <div style={{ padding:'10px 16px', borderRadius:radius.md, background:'rgba(220,38,38,0.08)', border:'1px solid rgba(220,38,38,0.2)', color:'#1A1714', fontSize:'13px', fontWeight:500, marginBottom:16, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
           <span>{uploadError}</span>
-          <button onClick={() => setUploadError(null)} style={{ background:'none', border:'none', color:'#DC2626', cursor:'pointer', fontSize:18, lineHeight:1, padding:0 }}>×</button>
+          <button onClick={() => setUploadError(null)} style={{ background:'none', border:'none', color:'#1A1714', cursor:'pointer', fontSize:18, lineHeight:1, padding:0 }}>×</button>
         </div>
       )}
 
