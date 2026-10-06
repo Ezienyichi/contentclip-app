@@ -40,8 +40,10 @@ export async function POST(req: NextRequest) {
 
   console.log('[pfm-webhook] event:', event_type, '| pfm post_id:', data.post_id ?? '(none)');
 
-  // Return 200 for all other event types so PfM doesn't retry them
-  if (event_type !== 'social.post.result.created') {
+  // Log unrecognised event types so we can identify the correct name from PfM's deliveries
+  const HANDLED_EVENTS = new Set(['social.post.result.created', 'social.post.published']);
+  if (!HANDLED_EVENTS.has(event_type)) {
+    console.log('[pfm-webhook] unhandled event_type:', event_type, '| data keys:', Object.keys(data));
     return NextResponse.json({ ok: true });
   }
 

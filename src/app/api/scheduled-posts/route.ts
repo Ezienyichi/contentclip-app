@@ -209,7 +209,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    pfmPostId = JSON.parse(pfmText).id ?? null;
+    const pfmJson = JSON.parse(pfmText);
+    pfmPostId = pfmJson.id ?? pfmJson.post_id ?? pfmJson.data?.id ?? null;
+    console.log('[scheduled-posts POST] PfM response keys:', Object.keys(pfmJson), '| pfmPostId:', pfmPostId);
   } catch (err) {
     console.error('[scheduled-posts POST] PfM network error', err);
     await supabaseAdmin.from('scheduled_posts')

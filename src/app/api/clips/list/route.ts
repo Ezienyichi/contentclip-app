@@ -44,7 +44,10 @@ export async function GET(_req: NextRequest) {
     duration:          c.duration,
     virality_score:    c.virality_score,
     suggested_caption: c.suggested_caption ?? '',
-    hashtags:          Array.isArray(c.hashtags) ? c.hashtags.join(' ') : '',
+    hashtags:          Array.isArray(c.hashtags)
+      ? c.hashtags.join(' ')
+      : typeof c.hashtags === 'string' ? c.hashtags
+      : '',
     platform:          'tiktok',
     video_url:         c.video_url ?? '',
     download_url:      c.download_url ?? '',
