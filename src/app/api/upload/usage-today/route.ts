@@ -6,11 +6,11 @@ import { cookies } from 'next/headers';
 export const dynamic = 'force-dynamic';
 
 const PLAN_LIMITS: Record<string, { maxBytes: number; dailyCap: number }> = {
-  starter:      { maxBytes: 500 * 1024 * 1024, dailyCap: 10 },
-  solo:         { maxBytes: 500 * 1024 * 1024, dailyCap: 10 },
-  pro:          { maxBytes: 500 * 1024 * 1024, dailyCap: 10 },
-  professional: { maxBytes: 500 * 1024 * 1024, dailyCap: 10 },
-  agency:       { maxBytes: 500 * 1024 * 1024, dailyCap: 25 },
+  starter:      { maxBytes: 1024 * 1024 * 1024,      dailyCap: 10 }, // 1 GB
+  solo:         { maxBytes: 1024 * 1024 * 1024,      dailyCap: 10 }, // 1 GB
+  pro:          { maxBytes: 1536 * 1024 * 1024,      dailyCap: 10 }, // 1.5 GB
+  professional: { maxBytes: 1536 * 1024 * 1024,      dailyCap: 10 }, // 1.5 GB
+  agency:       { maxBytes: 2 * 1024 * 1024 * 1024, dailyCap: 25 }, // 2 GB
 };
 
 export async function GET(_req: NextRequest) {

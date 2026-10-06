@@ -8,11 +8,11 @@ import { UPLOAD_RETENTION_DAYS, uploadRetentionDays, retentionExpiryISO } from '
 export const dynamic = 'force-dynamic';
 
 const PLAN_MAX_BYTES: Record<string, number> = {
-  starter:      500 * 1024 * 1024,
-  solo:         500 * 1024 * 1024,
-  pro:          500 * 1024 * 1024,
-  professional: 500 * 1024 * 1024,
-  agency:       500 * 1024 * 1024,
+  starter:      1024 * 1024 * 1024,      // 1 GB
+  solo:         1024 * 1024 * 1024,      // 1 GB
+  pro:          1536 * 1024 * 1024,      // 1.5 GB
+  professional: 1536 * 1024 * 1024,     // 1.5 GB
+  agency:       2 * 1024 * 1024 * 1024, // 2 GB
 };
 const PLAN_ALLOWED = new Set(Object.keys(UPLOAD_RETENTION_DAYS));
 
@@ -95,8 +95,8 @@ export async function POST(req: NextRequest) {
   if (actualBytes > maxBytes) {
     // Delete the oversized object from R2 before rejecting
     try { await s3.send(new DeleteObjectCommand({ Bucket: process.env.R2_BUCKET!, Key: key })); } catch {}
-    const mb = Math.round(maxBytes / 1024 / 1024);
-    return NextResponse.json({ error: `File exceeds ${mb}MB limit for your plan. Upload removed.` }, { status: 400 });
+    const limitGb = (maxBytes / 1024 / 1024 / 1024).toFixed(1);
+    return NextResponse.json({ error: `File exceeds the ${limitGb}GB limit for your plan. Upload removed.` }, { status: 400 });
   }
 
   // Floored at CLIP_RETENTION_DAYS, so an upload never expires sooner than a

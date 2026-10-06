@@ -9,11 +9,11 @@ import { randomUUID } from 'crypto';
 export const dynamic = 'force-dynamic';
 
 const PLAN_LIMITS: Record<string, { maxBytes: number; dailyCap: number }> = {
-  starter:      { maxBytes: 500 * 1024 * 1024, dailyCap: 10 },
-  solo:         { maxBytes: 500 * 1024 * 1024, dailyCap: 10 },
-  pro:          { maxBytes: 500 * 1024 * 1024, dailyCap: 10 },
-  professional: { maxBytes: 500 * 1024 * 1024, dailyCap: 10 },
-  agency:       { maxBytes: 500 * 1024 * 1024, dailyCap: 25 },
+  starter:      { maxBytes: 1024 * 1024 * 1024,      dailyCap: 10 }, // 1 GB
+  solo:         { maxBytes: 1024 * 1024 * 1024,      dailyCap: 10 }, // 1 GB
+  pro:          { maxBytes: 1536 * 1024 * 1024,      dailyCap: 10 }, // 1.5 GB
+  professional: { maxBytes: 1536 * 1024 * 1024,      dailyCap: 10 }, // 1.5 GB
+  agency:       { maxBytes: 2 * 1024 * 1024 * 1024, dailyCap: 25 }, // 2 GB
 };
 
 function r2Client() {
@@ -87,8 +87,11 @@ export async function POST(req: NextRequest) {
   }
 
   if (fileSize > limits.maxBytes) {
-    const mb = Math.round(limits.maxBytes / 1024 / 1024);
-    return NextResponse.json({ error: `File exceeds ${mb}MB limit for your plan.` }, { status: 400 });
+    const fileSizeGb = (fileSize / 1024 / 1024 / 1024).toFixed(2);
+    const limitGb    = (limits.maxBytes / 1024 / 1024 / 1024).toFixed(1);
+    return NextResponse.json({
+      error: `This file is ${fileSizeGb}GB, over the ${limitGb}GB max for your plan. Please export at 1080p or use a video link instead.`,
+    }, { status: 400 });
   }
 
   // Check daily cap

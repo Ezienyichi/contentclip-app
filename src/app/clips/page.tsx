@@ -65,8 +65,9 @@ const PLATS = ['All','TikTok','Reels','Shorts'];
 const UPLOAD_ALLOWED_PLANS = new Set(['starter', 'solo', 'pro', 'professional', 'agency']);
 
 function fmt_bytes(b: number) {
-  if (b < 1024 * 1024) return `${(b / 1024).toFixed(0)} KB`;
-  return `${(b / 1024 / 1024).toFixed(1)} MB`;
+  if (b < 1024 * 1024)        return `${(b / 1024).toFixed(0)} KB`;
+  if (b < 1024 * 1024 * 1024) return `${(b / 1024 / 1024).toFixed(1)} MB`;
+  return `${(b / 1024 / 1024 / 1024).toFixed(2)} GB`;
 }
 
 export default function ClipsPage() {
@@ -128,6 +129,17 @@ export default function ClipsPage() {
   async function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    if (uploadUsage.limits && file.size > uploadUsage.limits.max_bytes) {
+      const fileSizeGb = (file.size / 1024 / 1024 / 1024).toFixed(2);
+      const limitGb    = (uploadUsage.limits.max_bytes / 1024 / 1024 / 1024).toFixed(1);
+      setUploadError(
+        `This file is ${fileSizeGb}GB, over the ${limitGb}GB max for your plan. ` +
+        `Please export at 1080p or use a video link instead.`
+      );
+      setInputKey(k => k + 1);
+      return;
+    }
 
     setUploadError(null);
     setUploading(true);
@@ -323,9 +335,18 @@ export default function ClipsPage() {
       </div>
 
       {/* Upload-to-schedule hint */}
-      <p style={{ fontSize:12.5, color:colors.onSurfaceVariant, margin:'0 0 16px', opacity:0.85 }}>
+      <p style={{ fontSize:12.5, color:colors.onSurfaceVariant, margin:'0 0 12px', opacity:0.85 }}>
         Upload your own edits to schedule to your handles.
       </p>
+
+      {UPLOAD_ALLOWED_PLANS.has(uploadPlan) && (
+        <div style={{ display:'flex', alignItems:'flex-start', gap:8, padding:'10px 14px', marginBottom:16, borderRadius:radius.md, background:'rgba(0,0,0,0.03)', border:'1px solid rgba(0,0,0,0.07)' }}>
+          <Icon name="info" size={15} style={{ color:colors.onSurfaceVariant, flexShrink:0, marginTop:1 }}/>
+          <span style={{ fontSize:12, color:colors.onSurfaceVariant, lineHeight:1.55 }}>
+            <strong style={{ color:colors.onSurface }}>Recording in 4K?</strong> For social clips, export at 1080p — TikTok, Reels &amp; Shorts display at 1080p max, so you get identical quality with a much smaller, faster upload. For very large files, use a video link instead.
+          </span>
+        </div>
+      )}
 
       {/* Upload progress bar */}
       {uploading && uploadProgress > 0 && (
