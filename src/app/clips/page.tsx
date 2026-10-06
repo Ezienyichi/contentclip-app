@@ -85,6 +85,7 @@ export default function ClipsPage() {
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [inputKey, setInputKey] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   function loadClips() {
@@ -127,10 +128,6 @@ export default function ClipsPage() {
   async function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    // Reset the input so the same file can be re-selected later.
-    // Do this via the ref if available; if the ref is somehow null we still
-    // have the file reference and can continue uploading.
-    if (fileInputRef.current) fileInputRef.current.value = '';
 
     setUploadError(null);
     setUploading(true);
@@ -198,6 +195,7 @@ export default function ClipsPage() {
     } finally {
       setUploading(false);
       setTimeout(() => setUploadProgress(0), 1200);
+      setInputKey(k => k + 1); // remount input so same file can be re-selected
     }
   }
 
@@ -277,12 +275,14 @@ export default function ClipsPage() {
     <>
     {showUpgrade && <UpgradeModal onClose={() => setShowUpgrade(false)} />}
     <DashboardLayout title="Generated Clips" subtitle={clips.length + ' clips ready'} bg="#E4E2DD" titleColor="#1A1714" subtitleColor="#6B6560">
-      {/* Hidden file input */}
+      {/* Hidden file input — keyed so remounting it resets selection without touching e.target.files mid-handler */}
       <input
+        key={inputKey}
+        id="clip-upload-input"
         ref={fileInputRef}
         type="file"
         accept="video/*"
-        style={{ display: 'none' }}
+        style={{ position: 'absolute', opacity: 0, width: 0, height: 0, overflow: 'hidden', pointerEvents: 'none' }}
         onChange={handleFileSelect}
       />
 
@@ -303,14 +303,13 @@ export default function ClipsPage() {
           {PLATS.map(p => <button key={p} onClick={() => setPlat(p)} style={{ padding:'8px 14px', borderRadius:radius.full, background:plat===p?colors.surfaceContainerHighest:'transparent', color:plat===p?colors.onSurface:colors.onSurfaceVariant, border:plat===p?'1px solid '+colors.outlineVariant:'1px solid transparent', fontWeight:500, fontSize:'12px', cursor:'pointer', fontFamily:"'Inter',sans-serif" }}>{p}</button>)}
           {/* Upload button */}
           {UPLOAD_ALLOWED_PLANS.has(uploadPlan) ? (
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              disabled={uploading}
+            <label
+              htmlFor={uploading ? undefined : 'clip-upload-input'}
               title={uploadUsage.limits ? `${uploadUsage.count}/${uploadUsage.limits.daily_cap} uploads today · max ${fmt_bytes(uploadUsage.limits.max_bytes)}/file` : ''}
-              style={{ display:'flex', alignItems:'center', gap:'6px', padding:'8px 16px', borderRadius:radius.full, background:gradients.primary, color:'#fff', border:'none', fontWeight:600, fontSize:'12px', cursor:uploading ? 'not-allowed' : 'pointer', opacity:uploading ? 0.7 : 1, fontFamily:"'Inter',sans-serif", whiteSpace:'nowrap' }}>
+              style={{ display:'flex', alignItems:'center', gap:'6px', padding:'8px 16px', borderRadius:radius.full, background:gradients.primary, color:'#fff', border:'none', fontWeight:600, fontSize:'12px', cursor:uploading ? 'not-allowed' : 'pointer', opacity:uploading ? 0.7 : 1, fontFamily:"'Inter',sans-serif", whiteSpace:'nowrap', userSelect:'none' }}>
               <Icon name={uploading ? 'hourglass_empty' : 'upload'} size={14}/>
               {uploading ? `Uploading ${uploadProgress}%` : 'Upload Clip'}
-            </button>
+            </label>
           ) : (
             <button
               onClick={() => setShowUpgrade(true)}
