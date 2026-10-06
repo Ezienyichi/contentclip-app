@@ -126,9 +126,11 @@ export default function ClipsPage() {
 
   async function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
-    if (!fileInputRef.current) return;
-    fileInputRef.current.value = '';
     if (!file) return;
+    // Reset the input so the same file can be re-selected later.
+    // Do this via the ref if available; if the ref is somehow null we still
+    // have the file reference and can continue uploading.
+    if (fileInputRef.current) fileInputRef.current.value = '';
 
     setUploadError(null);
     setUploading(true);
