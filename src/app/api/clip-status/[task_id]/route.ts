@@ -1,76 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { createClient } from '@supabase/supabase-js';
-import type { SupabaseClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
 import { insertNotification } from '@/lib/notify';
 import { planMinutes } from '@/lib/planLimits';
+import { minutesForJob, addMinutesUsed, saveClipsAdmin, normalizeClips } from '@/lib/job-utils';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
 const BACKEND_API_URL = process.env.BACKEND_API_URL!;
 
-/**
- * Minutes to charge for a completed job, plus how we arrived at the number
- * (logged, so a job that records nothing can be diagnosed from the server log).
- */
-function minutesForJob(data: any): { minutes: number; basis: string } {
-  const cost = Number(data?.cost_usage);
-
-  if (Number.isFinite(cost) && cost > 0) {
-    // cost_usage is WayinVideo API credits (~1.9 per input minute), not minutes.
-    // Ceil rather than round, with a floor of 1: Math.round() charged 0 for
-    // anything under ~30s of source video, i.e. processed it for free.
-    return { minutes: Math.max(1, Math.ceil(cost / 2)), basis: `cost_usage=${cost}` };
-  }
-
-  // Backend omitted cost_usage. Fall back to how far into the source video the
-  // returned clips reach — a lower bound on the footage actually processed.
-  const ends: number[] = (Array.isArray(data?.clips) ? data.clips : [])
-    .map((c: any) => Number(c?.end_time))
-    .filter((n: number) => Number.isFinite(n) && n > 0);
-
-  if (ends.length > 0) {
-    const span = Math.max(...ends);
-    return {
-      minutes: Math.max(1, Math.ceil(span / 60)),
-      basis:   `clip span ${Math.round(span)}s (cost_usage missing)`,
-    };
-  }
-
-  return { minutes: 0, basis: 'indeterminate' };
-}
-
-/**
- * profiles.minutes_used += delta, atomically where the RPC is installed
- * (supabase/increment_minutes_used.sql). Falls back to read-modify-write so
- * this keeps working before that migration is applied.
- */
-async function addMinutesUsed(
-  admin: SupabaseClient,
-  userId: string,
-  delta: number,
-  knownCurrent: number,
-): Promise<void> {
-  const { error: rpcErr } = await admin.rpc('increment_minutes_used', {
-    p_user_id: userId,
-    p_minutes: delta,
-  });
-  if (!rpcErr) {
-    console.log('[clip-status] minutes_used +=', delta, 'for user', userId);
-    return;
-  }
-
-  console.warn('[clip-status] increment_minutes_used RPC unavailable, falling back to read-modify-write:', rpcErr.message);
-  const { error } = await admin
-    .from('profiles')
-    .update({ minutes_used: knownCurrent + delta })
-    .eq('id', userId);
-
-  if (error) console.error('[clip-status] minutes_used update FAILED:', error.message);
-  else       console.log('[clip-status] minutes_used set to', knownCurrent + delta, 'for user', userId);
-}
 
 function getAdmin() {
   return createClient(
@@ -123,7 +63,7 @@ export async function GET(
 
       const { data: job, error: jobErr } = await admin
         .from('clip_jobs')
-        .select('id, minutes_charged')
+        .select('id, minutes_charged, clips_saved, source_name')
         .eq('task_id', task_id)
         .eq('user_id', user.id)
         .single();
@@ -177,6 +117,29 @@ export async function GET(
             .from('clip_jobs')
             .update({ status: 'completed' })
             .eq('id', job.id);
+        }
+
+        // Server-side clip save — idempotent via clips_saved compare-and-swap.
+        // Runs whether or not the user is still on the page, so clips survive navigation.
+        if (job && !job.clips_saved) {
+          const rawClips = Array.isArray(data?.clips) ? data.clips : [];
+          if (rawClips.length > 0) {
+            const { data: claimed } = await admin
+              .from('clip_jobs')
+              .update({ clips_saved: true })
+              .eq('id', job.id)
+              .eq('clips_saved', false)
+              .select('id')
+              .maybeSingle();
+            if (claimed) {
+              await saveClipsAdmin(
+                admin,
+                user.id,
+                normalizeClips(rawClips),
+                job.source_name ?? task_id,
+              );
+            }
+          }
         }
 
         // Clip-ready notification (fire and forget)

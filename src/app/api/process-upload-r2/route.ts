@@ -45,12 +45,15 @@ export async function POST(req: NextRequest) {
 
     let r2_url: string, category: string, prompt: string, numClips: number;
     let timeStart: number | undefined, timeEnd: number | undefined;
+    let source_name: string, duration_seconds: number | undefined;
     try {
       const body = await req.json();
-      r2_url   = String(body.r2_url   ?? '').trim();
-      category = String(body.category ?? 'faith');
-      prompt   = String(body.prompt   ?? '');
-      numClips = Math.min(40, Math.max(1, Number(body.numClips) || 40));
+      r2_url          = String(body.r2_url      ?? '').trim();
+      category        = String(body.category    ?? 'faith');
+      prompt          = String(body.prompt      ?? '');
+      numClips        = Math.min(40, Math.max(1, Number(body.numClips) || 40));
+      source_name     = String(body.source_name ?? r2_url).slice(0, 500);
+      duration_seconds = body.duration_seconds != null ? Number(body.duration_seconds) : undefined;
       timeStart = body.timeStart != null ? Number(body.timeStart) : undefined;
       timeEnd   = body.timeEnd   != null ? Number(body.timeEnd)   : undefined;
     } catch {
@@ -130,6 +133,20 @@ export async function POST(req: NextRequest) {
 
     const data = await backendRes.json();
     console.log('[process-upload-r2] backend', backendRes.status, JSON.stringify(data).slice(0, 200));
+
+    // Record the job so the import page can resume polling after navigation
+    if (backendRes.ok && data.job_id) {
+      await admin.from('clip_jobs').insert({
+        user_id:          user.id,
+        task_id:          data.job_id,
+        source_url:       r2_url,
+        source:           'upload',
+        source_name,
+        duration_seconds: duration_seconds ?? null,
+        status:           'processing',
+      });
+    }
+
     return NextResponse.json(data, { status: backendRes.status });
 
   } catch (err: any) {

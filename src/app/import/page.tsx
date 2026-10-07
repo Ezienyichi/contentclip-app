@@ -42,10 +42,6 @@ const supabase = createClient();
 
 const CLIPS_STORAGE_KEY = 'vangelclip_cached_clips';
 
-// How many clips to ask WayinVideo for. The API clamps this to its own ceiling
-// regardless — see api/process-youtube-v2.
-const CLIP_REQUEST_LIMIT = 40;
-
 const SAMPLE_CLIPS: { url: string; label?: string }[] = [
   // Add sample clip URLs here to show the "See it in action" teaser.
   // Example: { url: 'https://your-cdn.com/clip1.mp4', label: 'Sermon' },
@@ -552,6 +548,7 @@ export default function ImportPage() {
   const [aspectRatio, setAspectRatio] = useState<AspectRatio>("9:16");
   const [subtitles, setSubtitles] = useState(true);
   const [captionLanguage, setCaptionLanguage] = useState('en');
+  const [numClips, setNumClips] = useState(10);
   const [userPlan, setUserPlan] = useState<string>("free");
   const [userCredits, setUserCredits] = useState<number>(0);
   const [loading, setLoading] = useState(false);
@@ -584,6 +581,7 @@ export default function ImportPage() {
   const POLL_TIMEOUT_MS = 10 * 60 * 1000; // 10 minutes
   const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pollDeadlineRef = useRef<number>(0);
+  const startUploadPollRef = useRef<((jobId: string) => void) | null>(null);
   const [inputTab, setInputTab] = useState<'youtube' | 'upload'>('youtube');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -595,6 +593,7 @@ export default function ImportPage() {
   const [engagementProfile, setEngagementProfile] = useState<EngagementProfile | null>(null);
   const [engagementDismissed, setEngagementDismissed] = useState(false);
   const [msgIdx, setMsgIdx] = useState(0);
+  const [clipsReadyBanner, setClipsReadyBanner] = useState(false);
 
   const CLIPPING_MESSAGES = [
     'Analyzing your video...',
@@ -639,6 +638,38 @@ export default function ImportPage() {
         });
     });
   }, []);
+
+  // Resume in-progress jobs and surface recently completed ones when the page loads
+  useEffect(() => {
+    if (!userId) return;
+    const threeHoursAgo = new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString();
+    supabase
+      .from('clip_jobs')
+      .select('task_id, source, source_name, status, clips_saved')
+      .gte('created_at', threeHoursAgo)
+      .in('status', ['processing', 'completed'])
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+      .then(({ data: job }) => {
+        if (!job) return;
+        if (job.status === 'processing') {
+          setLoading(true);
+          setStatus('processing');
+          if (job.source === 'url' && job.source_name) {
+            setVideoUrl(job.source_name);
+            setInputTab('youtube');
+            pollClipStatus(job.task_id);
+          } else if (job.source === 'upload') {
+            setInputTab('upload');
+            // startUploadPoll is defined below; defined as ref to avoid circular deps
+            startUploadPollRef.current?.(job.task_id);
+          }
+        } else if (job.status === 'completed' && job.clips_saved) {
+          setClipsReadyBanner(true);
+        }
+      });
+  }, [userId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Load cached clips from localStorage on mount
   useEffect(() => {
@@ -820,6 +851,21 @@ export default function ImportPage() {
     setResult(null);
 
     try {
+      // Resume existing job for this URL instead of submitting a duplicate
+      const threeHoursAgo = new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString();
+      const { data: existingJob } = await supabase
+        .from('clip_jobs')
+        .select('task_id')
+        .eq('source_name', videoUrl)
+        .eq('status', 'processing')
+        .gte('created_at', threeHoursAgo)
+        .maybeSingle();
+      if (existingJob) {
+        setStatus('processing');
+        pollClipStatus(existingJob.task_id);
+        return;
+      }
+
       const response = await fetch("/api/process-youtube-v2", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -831,7 +877,7 @@ export default function ImportPage() {
           enableReframe: aspectRatio !== "16:9",
           resolution: resolutionForPlan(userPlan),
           captionLanguage,
-          limit: CLIP_REQUEST_LIMIT,
+          limit: numClips,
         }),
       });
 
@@ -871,6 +917,70 @@ export default function ImportPage() {
     pollClipStatus,
     stopPolling,
   ]);
+
+  // Extracted so both handleUpload and the resume-on-return effect can start polling
+  const startUploadPoll = useCallback((jobId: string) => {
+    pollDeadlineRef.current = Date.now() + POLL_TIMEOUT_MS;
+    pollTimerRef.current = setInterval(async () => {
+      if (Date.now() > pollDeadlineRef.current) {
+        stopPolling();
+        setLoading(false);
+        setStatus('idle');
+        setError('Processing timed out. Please try again.');
+        return;
+      }
+      try {
+        const statusRes  = await fetch(`/api/process-upload-r2/${jobId}`, { credentials: 'include' });
+        const statusData = await statusRes.json();
+
+        if (statusData.status === 'completed') {
+          stopPolling();
+          const rawClips: any[] = statusData.clips ?? [];
+          const normalizedClips = rawClips.map((c: any) => ({
+            video_url:     c.video_url     || '',
+            download_url:  c.download_url  || '',
+            title:         c.title         || 'Clip',
+            caption:       c.desc          || c.caption || '',
+            ai_score:      c.score         ?? c.ai_score,
+            thumbnail_url: c.thumbnail     || c.thumbnail_url || '',
+            hashtags:      c.tags          || c.hashtags || [],
+            start_time:    c.start_time    ?? 0,
+            end_time:      c.end_time      ?? 60,
+            id:            c.id,
+            duration:      c.duration,
+          }));
+          setStatus('completed');
+          setResult({ success: true, jobId, clips: normalizedClips, creditsUsed: 0, creditsRemaining: userCredits });
+          setClips(normalizedClips);
+          setGenerationSuccess(true);
+          // Save derived clips to DB (client path — server-side save already happened in the status route)
+          fetch('/api/clips/save', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ clips: normalizedClips, source_video_name: jobId }),
+          }).then(async r => {
+            if (!r.ok) return;
+            const saved = await r.json();
+            if (saved?.savedClips?.length) {
+              setClips(normalizedClips.map((c: any, i: number) => ({ ...c, db_id: saved.savedClips[i]?.id ?? null })));
+            }
+          }).catch(() => {});
+          setLoading(false);
+        } else if (statusData.status === 'failed' || statusData.status === 'not_found') {
+          stopPolling();
+          setLoading(false);
+          setStatus('idle');
+          setError(statusData.error || 'Processing failed. Please try again.');
+        }
+      } catch {
+        // network error mid-poll — keep trying until timeout
+      }
+    }, POLL_INTERVAL_MS);
+  }, [stopPolling, userCredits]);
+
+  // Keep ref in sync so the resume effect can call it without circular deps
+  useEffect(() => { startUploadPollRef.current = startUploadPoll; }, [startUploadPoll]);
 
   const handleUpload = useCallback(async () => {
     if (!selectedFile || durationLoading) return;
@@ -927,17 +1037,34 @@ export default function ImportPage() {
       if (!completeRes.ok) throw new Error(completeData.error || 'Failed to register upload.');
       const r2Url = completeData.video_url as string;
 
-      // ── 5. TRIGGER BACKEND PROCESSING (server-to-server, no size limit) ──
+      // ── 5. CHECK FOR DUPLICATE IN-PROGRESS JOB ──
+      const threeHoursAgo = new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString();
+      const { data: existingJob } = await supabase
+        .from('clip_jobs')
+        .select('task_id')
+        .eq('source_name', selectedFile.name)
+        .eq('status', 'processing')
+        .gte('created_at', threeHoursAgo)
+        .maybeSingle();
+      if (existingJob) {
+        setStatus('processing');
+        startUploadPoll(existingJob.task_id);
+        return;
+      }
+
+      // ── 6. TRIGGER BACKEND PROCESSING (server-to-server, no size limit) ──
       setUploadProgress(100);
       const processRes = await fetch('/api/process-upload-r2', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({
-          r2_url:   r2Url,
+          r2_url:           r2Url,
           category,
-          prompt:   buildSmartPrompt(category, selectedTs, contentMode),
-          numClips: CLIP_REQUEST_LIMIT,
+          prompt:           buildSmartPrompt(category, selectedTs, contentMode),
+          numClips:         numClips,
+          source_name:      selectedFile.name,
+          duration_seconds: uploadDuration ? Math.round(uploadDuration) : undefined,
         }),
       });
       const processData = await processRes.json();
@@ -951,72 +1078,8 @@ export default function ImportPage() {
       }
       const jobId = processData.job_id as string;
 
-      // ── 6. POLL FOR STATUS EVERY 5 s ──
-      pollDeadlineRef.current = Date.now() + POLL_TIMEOUT_MS;
-      pollTimerRef.current = setInterval(async () => {
-        if (Date.now() > pollDeadlineRef.current) {
-          stopPolling();
-          setLoading(false);
-          setStatus('idle');
-          setError('Processing timed out. Please try again.');
-          return;
-        }
-        try {
-          const statusRes  = await fetch(`/api/process-upload-r2/${jobId}`, { credentials: 'include' });
-          const statusData = await statusRes.json();
-
-          if (statusData.status === 'completed') {
-            stopPolling();
-            const rawClips: any[] = statusData.clips ?? [];
-            const normalizedClips = rawClips.map((c: any) => ({
-              video_url:     c.video_url     || '',
-              download_url:  c.download_url  || '',
-              title:         c.title         || 'Clip',
-              caption:       c.desc          || c.caption || '',
-              ai_score:      c.score         ?? c.ai_score,
-              thumbnail_url: c.thumbnail     || c.thumbnail_url || '',
-              hashtags:      c.tags          || c.hashtags || [],
-              start_time:    c.start_time    ?? 0,
-              end_time:      c.end_time      ?? 60,
-              id:            c.id,
-              duration:      c.duration,
-            }));
-            setStatus('completed');
-            setResult({ success: true, jobId, clips: normalizedClips, creditsUsed: 0, creditsRemaining: userCredits });
-            setClips(normalizedClips);
-            setGenerationSuccess(true);
-            localStorage.setItem(CLIPS_STORAGE_KEY, JSON.stringify({ clips: normalizedClips, videoUrl: selectedFile.name, generatedAt: new Date().toISOString() }));
-            // Save derived clips to DB
-            fetch('/api/clips/save', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              credentials: 'include',
-              body: JSON.stringify({ clips: normalizedClips, source_video_name: selectedFile.name }),
-            }).catch(() => {});
-            // Deduct minutes after successful processing
-            if (uploadDuration && uploadDuration > 0) {
-              const minsNeeded = Math.ceil(uploadDuration / 60);
-              fetch('/api/upload-credits', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include',
-                body: JSON.stringify({ minutesNeeded: minsNeeded }),
-              }).then(r => r.json()).then(d => {
-                if (d.minutes_remaining !== undefined) setUserCredits(d.minutes_remaining);
-              }).catch(() => {});
-            }
-            setLoading(false);
-          } else if (statusData.status === 'failed' || statusData.status === 'not_found') {
-            stopPolling();
-            setLoading(false);
-            setStatus('idle');
-            setError(statusData.error || 'Processing failed. Please try again.');
-          }
-          // status === 'processing' → keep polling
-        } catch {
-          // network error mid-poll — keep trying until timeout
-        }
-      }, POLL_INTERVAL_MS);
+      // ── 7. START POLLING VIA EXTRACTED CALLBACK ──
+      startUploadPoll(jobId);
 
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Upload error');
@@ -1024,7 +1087,7 @@ export default function ImportPage() {
       setStatus('idle');
       setUploadProgress(0);
     }
-  }, [selectedFile, durationLoading, category, selectedTs, contentMode, userCredits, userPlan, uploadDuration, stopPolling]);
+  }, [selectedFile, durationLoading, category, selectedTs, contentMode, userPlan, uploadDuration, stopPolling, numClips, startUploadPoll]);
 
   async function handleScheduleImportClip(clip: any, idx: number) {
     setSchedulingClipIdx(idx);
@@ -1556,6 +1619,41 @@ export default function ImportPage() {
                 </div>
               </div>
 
+              {/* Number of clips */}
+              <div>
+                <label style={{ fontSize: 12, color: colors.onSurfaceVariant, display: 'block', marginBottom: 4 }}>
+                  Number of clips (1–40)
+                </label>
+                <p style={{ margin: '0 0 8px', fontSize: 11, color: colors.onSurfaceVariant }}>
+                  Choose how many clips to generate from your video.
+                </p>
+                <input
+                  type="number"
+                  min={1}
+                  max={40}
+                  value={numClips}
+                  onChange={(e) => {
+                    const v = Number(e.target.value);
+                    setNumClips(isNaN(v) || v < 1 ? 1 : v > 40 ? 40 : v);
+                  }}
+                  onBlur={(e) => {
+                    const v = Number(e.target.value);
+                    setNumClips(isNaN(v) || v < 1 ? 1 : v > 40 ? 40 : v);
+                  }}
+                  style={{
+                    width: '100%',
+                    height: 36,
+                    borderRadius: radius.md,
+                    border: `1px solid ${colors.outlineVariant}`,
+                    background: colors.surfaceContainerLowest,
+                    color: colors.onSurface,
+                    fontSize: 13,
+                    textAlign: 'center',
+                    outline: 'none',
+                  }}
+                />
+              </div>
+
               {/* Subtitles */}
               <div
                 style={{
@@ -1730,6 +1828,20 @@ export default function ImportPage() {
                 `Generate Clips`
               )}
             </button>
+
+            {loading && (Status === 'processing' || Status === 'queued') && (
+              <div style={{ padding: '10px 14px', borderRadius: radius.md, background: 'rgba(124,58,237,0.07)', border: '1px solid rgba(124,58,237,0.18)', fontSize: 12, color: colors.onSurfaceVariant, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: 16 }}>💾</span>
+                <span>You can leave this page — we&apos;ll keep processing and your clips will be saved to <strong style={{ color: colors.onSurface }}>My Clips</strong>.</span>
+              </div>
+            )}
+
+            {clipsReadyBanner && !loading && (
+              <div style={{ padding: '12px 16px', borderRadius: radius.md, background: 'rgba(5,150,105,0.08)', border: '1px solid rgba(5,150,105,0.25)', color: '#1A1714', fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                <span>✓ Your clips from a previous session are ready in My Clips.</span>
+                <a href="/clips" style={{ color: colors.primary, fontWeight: 700, textDecoration: 'none', whiteSpace: 'nowrap' }}>View clips →</a>
+              </div>
+            )}
 
             {generationSuccess && !loading && (
               <div style={{ padding: '12px 16px', borderRadius: radius.md, background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.3)', color: '#4ade80', fontSize: '13px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>

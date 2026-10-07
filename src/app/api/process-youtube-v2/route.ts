@@ -132,10 +132,12 @@ export async function POST(req: NextRequest) {
     // Store task_id → user mapping so clip-status can deduct on completion
     if (serverResponse.ok && data.task_id) {
       await admin.from('clip_jobs').insert({
-        user_id: user.id,
-        task_id: data.task_id,
-        source_url: videoUrl,
-        status: 'processing',
+        user_id:     user.id,
+        task_id:     data.task_id,
+        source_url:  videoUrl,
+        source:      'url',
+        source_name: videoUrl,
+        status:      'processing',
       });
     }
 
