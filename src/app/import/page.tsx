@@ -6,7 +6,8 @@ import { createClient } from "@/lib/supabase-browser";
 import DashboardLayout from "@/components/DashboardLayout";
 import { colors as _colors, gradients, radius } from "@/lib/tokens";
 import EngagementPanel, { EngagementProfile } from "@/components/engagement/EngagementPanel";
-import { planMinutes } from '@/lib/planLimits';
+import { planMinutes, planLabel } from '@/lib/planLimits';
+import ErrorBanner from '@/components/ErrorBanner';
 import { useTour } from '@/lib/useTour';
 import Tour from '@/components/tour/Tour';
 import TourInfoIcon from '@/components/tour/TourInfoIcon';
@@ -613,6 +614,12 @@ export default function ImportPage() {
   const minutesRemaining = Math.max(0, planMinutes(userPlan) - userCredits);
   const insufficientCredits = userCredits > 0 && minutesRemaining <= 0;
   const uploadInsufficientCredits = userCredits > 0 && minutesRemaining <= 0;
+
+  const PLAN_VIDEO_MINUTES: Record<string, number> = { starter: 90, solo: 90, pro: 200, professional: 200, agency: 600 };
+  const planVideoMinuteCap = PLAN_VIDEO_MINUTES[(userPlan ?? 'free').toLowerCase()] ?? 0;
+  const uploadMins = uploadDuration != null ? Math.round(uploadDuration / 60) : 0;
+  const videoTooLong = planVideoMinuteCap > 0 && uploadMins > planVideoMinuteCap;
+  const videoTooManyMinutes = !videoTooLong && uploadDuration != null && minutesRemaining > 0 && uploadMins > minutesRemaining;
 
   // Fetch user's plan, credits, and engagement profile on mount
   useEffect(() => {
@@ -1293,6 +1300,19 @@ export default function ImportPage() {
                     </div>
                   )}
 
+                  {videoTooLong && (
+                    <ErrorBanner
+                      message={`This video is ${uploadMins} min. Your ${planLabel(userPlan)} plan clips up to ${planVideoMinuteCap} min per video — use the time-range selector to pick a section, or upgrade.`}
+                      style={{ marginTop: 10 }}
+                    />
+                  )}
+                  {videoTooManyMinutes && (
+                    <ErrorBanner
+                      message={`This video needs ~${uploadMins} min but you have ${minutesRemaining} min left this month. Pick a shorter range or upgrade.`}
+                      style={{ marginTop: 10 }}
+                    />
+                  )}
+
                   {loading && uploadProgress > 0 && uploadProgress < 100 && (
                     <div style={{ marginTop: '12px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#4B4540', marginBottom: '6px' }}>
@@ -1763,21 +1783,7 @@ export default function ImportPage() {
             </div>
 
             {/* Error */}
-            {error && (
-              <div
-                style={{
-                  padding: "14px 16px",
-                  borderRadius: radius.lg,
-                  background: `${colors.errorContainer}30`,
-                  border: `1px solid ${colors.error}40`,
-                  color: colors.error,
-                  fontSize: 13,
-                  lineHeight: 1.5,
-                }}
-              >
-                {error}
-              </div>
-            )}
+            {error && <ErrorBanner message={error} onClose={() => setError(null)} />}
 
             {/* Generate Button */}
             <button

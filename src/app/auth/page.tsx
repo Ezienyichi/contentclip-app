@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase-browser';
 import { clearClipStorage } from '@/lib/clearClipStorage';
 import Icon from '@/components/Icon';
 import { colors, gradients, radius, inputField } from '@/lib/tokens';
+import ErrorBanner from '@/components/ErrorBanner';
 
 declare global {
   interface Window {
@@ -351,11 +352,7 @@ function AuthPageInner() {
         <p style={{ color: '#6B6560', fontSize: 14, marginBottom: 32 }}>
           Enter your email and we will send you a reset link.
         </p>
-        {error && (
-          <div style={{ padding: '12px 16px', borderRadius: radius.md, background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#1A1714', fontSize: 13, marginBottom: 16 }}>
-            {error}
-          </div>
-        )}
+        {error && <ErrorBanner message={error} style={{ marginBottom: 16 }} />}
         <form onSubmit={handleForgotPassword} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div>
             <label style={{ fontSize: 12, fontWeight: 600, color: '#6B6560', display: 'block', marginBottom: 6 }}>Email</label>
@@ -425,11 +422,7 @@ function AuthPageInner() {
           <div style={{ flex: 1, height: 1, background: 'rgba(0,0,0,0.12)' }} />
         </div>
 
-        {error && (
-          <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '8px', padding: '12px 16px', color: '#1A1714', fontSize: '14px', marginBottom: '16px', lineHeight: 1.5 }}>
-            {error}
-          </div>
-        )}
+        {error && <ErrorBanner message={error} style={{ marginBottom: 16 }} />}
         {success && (
           <div style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.3)', borderRadius: '8px', padding: '12px 16px', color: '#059669', fontSize: '14px', marginBottom: '16px', lineHeight: 1.5 }}>
             {success}

@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase-browser';
 import { colors, gradients, radius, inputField } from '@/lib/tokens';
+import ErrorBanner from '@/components/ErrorBanner';
 
 const supabase = createClient();
 
@@ -233,19 +234,7 @@ function ResetPasswordInner() {
               }}
             />
 
-            {errorMsg && (
-              <p style={{
-                margin:       0,
-                fontSize:     13,
-                color:        '#1A1714',
-                background:   'rgba(220,38,38,0.08)',
-                border:       '1px solid rgba(220,38,38,0.25)',
-                borderRadius: radius.md,
-                padding:      '10px 14px',
-              }}>
-                {errorMsg}
-              </p>
-            )}
+            {errorMsg && <ErrorBanner message={errorMsg} />}
 
             <button
               type="submit"

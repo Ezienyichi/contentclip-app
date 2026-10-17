@@ -24,6 +24,8 @@ function r2Client() {
       accessKeyId:     process.env.R2_ACCESS_KEY_ID!,
       secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!,
     },
+    requestChecksumCalculation: 'WHEN_REQUIRED',
+    responseChecksumValidation: 'WHEN_REQUIRED',
   });
 }
 
@@ -71,19 +73,22 @@ export async function POST(req: NextRequest) {
     .single();
 
   // Inline lapse check: treat cancelled + expired subscriptions as free.
-  let effectivePlan = (profile?.plan ?? 'free').toLowerCase();
-  if (
+  const isLapsed = (
     profile?.subscription_status === 'cancelled' &&
-    profile?.next_renewal_at &&
+    !!profile?.next_renewal_at &&
     new Date(profile.next_renewal_at) < new Date()
-  ) {
-    effectivePlan = 'free';
-  }
+  );
+  let effectivePlan = (profile?.plan ?? 'free').toLowerCase();
+  if (isLapsed) effectivePlan = 'free';
 
   const plan = effectivePlan;
   const limits = PLAN_LIMITS[plan];
   if (!limits) {
-    return NextResponse.json({ error: 'Video upload is available on Starter, Pro, and Agency plans.' }, { status: 403 });
+    return NextResponse.json({
+      error: isLapsed
+        ? 'Your subscription has expired. Renew your plan to continue uploading.'
+        : 'Video upload requires a paid plan. Upgrade to upload videos.',
+    }, { status: 403 });
   }
 
   if (fileSize > limits.maxBytes) {

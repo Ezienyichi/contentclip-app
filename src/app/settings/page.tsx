@@ -194,8 +194,8 @@ export default function SettingsPage() {
 
         {/* Toast */}
         {toast && (
-          <div style={{ position: 'fixed', bottom: 24, right: 24, zIndex: 200, padding: '12px 20px', borderRadius: radius.lg, background: toast.ok ? 'rgba(74,222,128,0.15)' : 'rgba(239,68,68,0.15)', border: `1px solid ${toast.ok ? 'rgba(74,222,128,0.35)' : 'rgba(239,68,68,0.35)'}`, color: toast.ok ? '#4ade80' : '#fca5a5', fontSize: '13px', fontWeight: 600 }}>
-            {toast.msg}
+          <div style={{ position: 'fixed', bottom: 24, right: 24, zIndex: 200, padding: '12px 20px', borderRadius: radius.lg, background: toast.ok ? 'rgba(74,222,128,0.15)' : '#111111', border: `1px solid ${toast.ok ? 'rgba(74,222,128,0.35)' : '#FF4D4D'}`, color: toast.ok ? '#4ade80' : '#FF4D4D', fontSize: '13px', fontWeight: 600 }}>
+            {toast.ok ? '' : '⚠ '}{toast.msg}
           </div>
         )}
 

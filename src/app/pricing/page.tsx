@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Icon from '@/components/Icon';
 import { colors as _colors, gradients, radius, shadows } from '@/lib/tokens';
+import ErrorBanner from '@/components/ErrorBanner';
 import { PLAN_DATA, COMPARISON_KEYS } from '@/lib/pricingData';
 import { createClient } from '@/lib/supabase-browser';
 
@@ -113,12 +114,7 @@ export default function PricingPage() {
           </div>
         </div>
 
-        {checkoutError && (
-          <div style={{ maxWidth: 500, margin: '0 auto 20px', padding: '12px 16px', borderRadius: radius.md, background: 'rgba(220,38,38,0.08)', border: '1px solid rgba(220,38,38,0.2)', color: '#1A1714', fontSize: '13px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span>{checkoutError}</span>
-            <button onClick={() => setCheckoutError(null)} style={{ background: 'none', border: 'none', color: '#1A1714', cursor: 'pointer', fontSize: 18, lineHeight: 1, padding: 0 }}>×</button>
-          </div>
-        )}
+        {checkoutError && <ErrorBanner message={checkoutError} onClose={() => setCheckoutError(null)} style={{ maxWidth: 500, margin: '0 auto 20px' }} />}
 
         {/* Minutes explainer */}
         <div style={{ maxWidth: 600, margin: '0 auto 32px', padding: '14px 20px', borderRadius: radius.lg, background: colors.surfaceContainerHigh, border: '1px solid rgba(0,0,0,0.08)', fontSize: '13px', color: colors.onSurfaceVariant, lineHeight: 1.6 }}>

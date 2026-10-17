@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { createClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
-import { planMinutes } from '@/lib/planLimits';
+import { planMinutes, planLabel } from '@/lib/planLimits';
 
 export const dynamic = 'force-dynamic';
 
@@ -102,6 +102,31 @@ export async function POST(req: NextRequest) {
           },
           { status: 402 }
         );
+      }
+
+      // Per-video duration cap and remaining-minutes check
+      const PLAN_VIDEO_MINUTES: Record<string, number> = {
+        starter: 90, solo: 90, pro: 200, professional: 200, agency: 600,
+      };
+      const effectiveSecs = (timeStart != null && timeEnd != null)
+        ? timeEnd - timeStart
+        : duration_seconds;
+      if (effectiveSecs != null) {
+        const planKey = (profile.plan ?? 'free').toLowerCase();
+        const maxMins = PLAN_VIDEO_MINUTES[planKey];
+        if (maxMins != null && effectiveSecs / 60 > maxMins) {
+          return NextResponse.json({
+            error: `Your selected range is ${Math.round(effectiveSecs / 60)} min. Your ${planLabel(profile.plan)} plan clips up to ${maxMins} min per video — pick a shorter range or upgrade.`,
+            code: 'DURATION_EXCEEDED',
+          }, { status: 422 });
+        }
+        const remaining = Math.max(0, cap - (profile.minutes_used ?? 0));
+        if (remaining > 0 && effectiveSecs / 60 > remaining) {
+          return NextResponse.json({
+            error: `This video needs ~${Math.round(effectiveSecs / 60)} min but you have ${remaining} min left this month. Pick a shorter range or upgrade.`,
+            code: 'INSUFFICIENT_MINUTES',
+          }, { status: 402 });
+        }
       }
     }
 

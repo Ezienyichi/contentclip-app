@@ -4,6 +4,7 @@ import DashboardLayout from '@/components/DashboardLayout';
 import Icon from '@/components/Icon';
 import { useRouter } from 'next/navigation';
 import { colors as _colors, gradients, radius } from '@/lib/tokens';
+import ErrorBanner from '@/components/ErrorBanner';
 import { CLIP_RETENTION_DAYS } from '@/lib/retention';
 import UpgradeModal from '@/components/UpgradeModal';
 import { createClient as createSupabaseBrowser } from '@/lib/supabase-browser';
@@ -356,12 +357,7 @@ export default function ClipsPage() {
       )}
 
       {/* Upload error */}
-      {uploadError && (
-        <div style={{ padding:'10px 16px', borderRadius:radius.md, background:'rgba(220,38,38,0.08)', border:'1px solid rgba(220,38,38,0.2)', color:'#1A1714', fontSize:'13px', fontWeight:500, marginBottom:16, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-          <span>{uploadError}</span>
-          <button onClick={() => setUploadError(null)} style={{ background:'none', border:'none', color:'#1A1714', cursor:'pointer', fontSize:18, lineHeight:1, padding:0 }}>×</button>
-        </div>
-      )}
+      {uploadError && <ErrorBanner message={uploadError} onClose={() => setUploadError(null)} style={{ marginBottom: 16 }} />}
 
       {/* Clips grouped by date */}
       {groupKeys.map((key, groupIdx) => {
