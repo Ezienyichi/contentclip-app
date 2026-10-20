@@ -23,6 +23,16 @@ export const PLAN_MINUTES: Record<string, number> = {
 
 export const DEFAULT_PLAN_MINUTES = PLAN_MINUTES.free;
 
+/** Upload limits that apply to the Free plan. */
+export const FREE_UPLOAD_LIMITS = {
+  maxBytes:        500 * 1024 * 1024, // 500 MB
+  dailyCap:        3,
+  maxVideoMinutes: 30,
+};
+
+/** Max WayinVideo link-clipping minutes/month on the Free plan. */
+export const FREE_LINK_MINUTES = 10;
+
 /** Monthly minute cap for a plan. Unknown/missing plans fall back to Free. */
 export function planMinutes(plan?: string | null): number {
   return PLAN_MINUTES[(plan ?? 'free').toLowerCase()] ?? DEFAULT_PLAN_MINUTES;

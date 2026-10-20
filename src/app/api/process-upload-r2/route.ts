@@ -88,7 +88,7 @@ export async function POST(req: NextRequest) {
       if (daysSinceReset >= 30) {
         await admin
           .from('profiles')
-          .update({ minutes_used: 0, minutes_reset_at: new Date().toISOString() })
+          .update({ minutes_used: 0, link_minutes_used: 0, minutes_reset_at: new Date().toISOString() })
           .eq('id', user.id);
         profile.minutes_used = 0;
       }
@@ -106,7 +106,7 @@ export async function POST(req: NextRequest) {
 
       // Per-video duration cap and remaining-minutes check
       const PLAN_VIDEO_MINUTES: Record<string, number> = {
-        starter: 90, solo: 90, pro: 200, professional: 200, agency: 600,
+        free: 30, starter: 90, solo: 90, pro: 200, professional: 200, agency: 600,
       };
       const effectiveSecs = (timeStart != null && timeEnd != null)
         ? timeEnd - timeStart

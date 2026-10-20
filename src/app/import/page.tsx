@@ -552,6 +552,8 @@ export default function ImportPage() {
   const [numClips, setNumClips] = useState(10);
   const [userPlan, setUserPlan] = useState<string>("free");
   const [userCredits, setUserCredits] = useState<number>(0);
+  const [userLinkMinsUsed, setUserLinkMinsUsed] = useState(0);
+  const [uploadTodayCount, setUploadTodayCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const [Status, setStatus] = useState<string>("idle");
   const [error, setError] = useState<string | null>(null);
@@ -615,7 +617,9 @@ export default function ImportPage() {
   const insufficientCredits = userCredits > 0 && minutesRemaining <= 0;
   const uploadInsufficientCredits = userCredits > 0 && minutesRemaining <= 0;
 
-  const PLAN_VIDEO_MINUTES: Record<string, number> = { starter: 90, solo: 90, pro: 200, professional: 200, agency: 600 };
+  const PLAN_VIDEO_MINUTES: Record<string, number> = { free: 30, starter: 90, solo: 90, pro: 200, professional: 200, agency: 600 };
+  const FREE_MAX_BYTES = 500 * 1024 * 1024;
+  const freeFileTooLarge = (userPlan ?? 'free') === 'free' && selectedFile != null && selectedFile.size > FREE_MAX_BYTES;
   const planVideoMinuteCap = PLAN_VIDEO_MINUTES[(userPlan ?? 'free').toLowerCase()] ?? 0;
   const uploadMins = uploadDuration != null ? Math.round(uploadDuration / 60) : 0;
   const videoTooLong = planVideoMinuteCap > 0 && uploadMins > planVideoMinuteCap;
@@ -628,7 +632,7 @@ export default function ImportPage() {
       setUserId(user.id);
       supabase
         .from("profiles")
-        .select("plan, minutes_used, acquisition_source, content_category")
+        .select("plan, minutes_used, link_minutes_used, acquisition_source, content_category")
         .eq("id", user.id)
         .single()
         .then(({ data }) => {
@@ -638,6 +642,9 @@ export default function ImportPage() {
           if (typeof data?.minutes_used === "number") {
             setUserCredits(data.minutes_used);
           }
+          if (typeof data?.link_minutes_used === "number") {
+            setUserLinkMinsUsed(data.link_minutes_used);
+          }
           setEngagementProfile({
             acquisition_source: data?.acquisition_source ?? null,
             content_category:   data?.content_category   ?? null,
@@ -645,6 +652,15 @@ export default function ImportPage() {
         });
     });
   }, []);
+
+  // Fetch today's upload count for Free users (used for the 3/day advisory)
+  useEffect(() => {
+    if (!userId || userPlan !== 'free') return;
+    fetch('/api/upload/usage-today')
+      .then(r => r.json())
+      .then(d => { if (typeof d.count === 'number') setUploadTodayCount(d.count); })
+      .catch(() => {});
+  }, [userId, userPlan]);
 
   // Resume in-progress jobs and surface recently completed ones when the page loads
   useEffect(() => {
@@ -1222,6 +1238,12 @@ export default function ImportPage() {
                       </div>
                     </div>
                   )}
+                  {userPlan === 'free' && userLinkMinsUsed >= 10 && (
+                    <ErrorBanner
+                      message="Free plan includes 10 min of link clipping per month. Upload your video instead, or upgrade."
+                      style={{ marginTop: 12 }}
+                    />
+                  )}
                 </>
               ) : (
                 <>
@@ -1309,6 +1331,18 @@ export default function ImportPage() {
                   {videoTooManyMinutes && (
                     <ErrorBanner
                       message={`This video needs ~${uploadMins} min but you have ${minutesRemaining} min left this month. Pick a shorter range or upgrade.`}
+                      style={{ marginTop: 10 }}
+                    />
+                  )}
+                  {freeFileTooLarge && (
+                    <ErrorBanner
+                      message="Free plan files can be up to 500 MB. Upgrade for up to 2 GB."
+                      style={{ marginTop: 10 }}
+                    />
+                  )}
+                  {userPlan === 'free' && uploadTodayCount >= 3 && (
+                    <ErrorBanner
+                      message="You've used your 3 free uploads today. Try again tomorrow or upgrade."
                       style={{ marginTop: 10 }}
                     />
                   )}

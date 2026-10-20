@@ -72,7 +72,7 @@ export async function POST(req: NextRequest) {
     const admin = getAdmin();
     const { data: profile } = await admin
       .from('profiles')
-      .select('plan, minutes_used, minutes_reset_at, subscription_status, next_renewal_at')
+      .select('plan, minutes_used, link_minutes_used, minutes_reset_at, subscription_status, next_renewal_at')
       .eq('id', user.id)
       .single();
 
@@ -94,9 +94,10 @@ export async function POST(req: NextRequest) {
       if (daysSinceReset >= 30) {
         await admin
           .from('profiles')
-          .update({ minutes_used: 0, minutes_reset_at: new Date().toISOString() })
+          .update({ minutes_used: 0, link_minutes_used: 0, minutes_reset_at: new Date().toISOString() })
           .eq('id', user.id);
         profile.minutes_used = 0;
+        profile.link_minutes_used = 0;
       }
 
       const cap = planMinutes(profile.plan);
@@ -108,6 +109,17 @@ export async function POST(req: NextRequest) {
           },
           { status: 402 }
         );
+      }
+
+      // Free plan: separate 10-min/month cap on link (WayinVideo) clipping
+      if ((profile.plan ?? 'free').toLowerCase() === 'free') {
+        const linkUsed = profile.link_minutes_used ?? 0;
+        if (linkUsed >= 10) {
+          return NextResponse.json({
+            error: 'Free plan includes 10 min of link clipping per month. Upload your video instead, or upgrade.',
+            code: 'LINK_QUOTA_EXCEEDED',
+          }, { status: 402 });
+        }
       }
     }
 

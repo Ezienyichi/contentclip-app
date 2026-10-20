@@ -6,6 +6,7 @@ import { cookies } from 'next/headers';
 export const dynamic = 'force-dynamic';
 
 const PLAN_LIMITS: Record<string, { maxBytes: number; dailyCap: number }> = {
+  free:         { maxBytes: 500 * 1024 * 1024,       dailyCap: 3  }, // 500 MB, 3/day
   starter:      { maxBytes: 1024 * 1024 * 1024,      dailyCap: 10 }, // 1 GB
   solo:         { maxBytes: 1024 * 1024 * 1024,      dailyCap: 10 }, // 1 GB
   pro:          { maxBytes: 1536 * 1024 * 1024,      dailyCap: 10 }, // 1.5 GB

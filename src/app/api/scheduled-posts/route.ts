@@ -40,7 +40,7 @@ export async function GET(_req: NextRequest) {
 
   const { data, error } = await supabase
     .from('scheduled_posts')
-    .select('id, platform, scheduled_at, caption, status, published_url, error_message, pfm_post_id, created_at, clips ( id, title, thumbnail_url, video_url )')
+    .select('id, platform, social_connection_id, scheduled_at, caption, status, published_url, error_message, pfm_post_id, created_at, clips ( id, title, thumbnail_url, video_url )')
     .eq('user_id', user.id)
     .order('scheduled_at', { ascending: true })
     .limit(200);
@@ -70,6 +70,7 @@ export async function POST(req: NextRequest) {
     scheduled_at   = String(body.scheduled_at   ?? '');
     caption        = String(body.caption        ?? '');
     pfm_account_id = typeof body.pfm_account_id === 'string' && body.pfm_account_id ? body.pfm_account_id : null;
+    // social_connection_id is derived server-side from the verified connection — not trusted from client
   } catch {
     return NextResponse.json({ error: 'Invalid request body.' }, { status: 400 });
   }
@@ -101,11 +102,11 @@ export async function POST(req: NextRequest) {
   // When pfm_account_id is supplied (e.g. a specific Facebook Page), verify ownership by
   // requiring BOTH user_id (from the verified session) AND the matching pfm_account_id —
   // so a client can never post to an account/page that isn't theirs.
-  let connection: { pfm_account_id: string } | null = null;
+  let connection: { id: string; pfm_account_id: string } | null = null;
   if (pfm_account_id) {
     const { data } = await supabase
       .from('social_connections')
-      .select('pfm_account_id')
+      .select('id, pfm_account_id')
       .eq('user_id', user.id)              // session user — cannot be forged by client
       .eq('platform', platform)
       .eq('pfm_account_id', pfm_account_id) // narrows to the specific account they picked
@@ -115,7 +116,7 @@ export async function POST(req: NextRequest) {
   } else {
     const { data } = await supabase
       .from('social_connections')
-      .select('pfm_account_id')
+      .select('id, pfm_account_id')
       .eq('user_id', user.id)
       .eq('platform', platform)
       .eq('status', 'active')
@@ -129,7 +130,7 @@ export async function POST(req: NextRequest) {
   // Insert our scheduled_post row first so we have an ID for PfM's external_id
   const { data: post, error: dbError } = await supabase
     .from('scheduled_posts')
-    .insert({ user_id: user.id, clip_id, platform, scheduled_at, caption, status: 'scheduled' })
+    .insert({ user_id: user.id, clip_id, platform, scheduled_at, caption, status: 'scheduled', social_connection_id: connection.id })
     .select('id')
     .single();
 

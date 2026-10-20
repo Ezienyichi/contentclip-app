@@ -63,7 +63,7 @@ export async function GET(
 
       const { data: job, error: jobErr } = await admin
         .from('clip_jobs')
-        .select('id, minutes_charged, clips_saved, source_name')
+        .select('id, minutes_charged, clips_saved, source_name, source')
         .eq('task_id', task_id)
         .eq('user_id', user.id)
         .single();
@@ -78,7 +78,7 @@ export async function GET(
         // Fetch profile before deduction so we can compute remaining minutes
         const { data: currentProfile, error: profileErr } = await admin
           .from('profiles')
-          .select('minutes_used, plan')
+          .select('minutes_used, link_minutes_used, plan')
           .eq('id', user.id)
           .single();
 
@@ -101,6 +101,12 @@ export async function GET(
             console.error('[clip-status] clip_jobs claim FAILED:', claimErr.message);
           } else if (claimed) {
             await addMinutesUsed(admin, user.id, minutesUsed, currentProfile?.minutes_used ?? 0);
+            // Free plan URL jobs also consume from the 10-min link quota
+            if (job.source === 'url' && (currentProfile?.plan ?? 'free').toLowerCase() === 'free') {
+              await admin.from('profiles')
+                .update({ link_minutes_used: (currentProfile?.link_minutes_used ?? 0) + minutesUsed })
+                .eq('id', user.id);
+            }
           } else {
             console.log('[clip-status] task', task_id, 'already charged by a concurrent poll — skipping');
           }

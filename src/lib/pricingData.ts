@@ -27,7 +27,7 @@ export const COMPARISON_KEYS = [
 export const PLAN_DATA: PlanData[] = [
   {
     name:        'Free',
-    tagline:     'Videos under 30 min · Facebook only.',
+    tagline:     'Uploads up to 30 min · 500 MB · 3/day',
     monthly:     0,
     annual:      0,
     annualTotal: 0,
@@ -37,7 +37,9 @@ export const PLAN_DATA: PlanData[] = [
     cta:         'Start free',
     includes:    "30 minutes / month · What's included",
     features: [
-      '30 minutes of processing / month',
+      '30 minutes / month (uploads + links)',
+      'Upload: up to 30 min per video · 500 MB · 3/day',
+      '10 min link clipping / month',
       'Facebook only',
       '1 post / month',
       '720p export',
@@ -48,7 +50,7 @@ export const PLAN_DATA: PlanData[] = [
       'Platforms':       'Facebook',
       'Posts/month':     '1',
       'Export':          '720p MP4',
-      'Video Upload':    '—',
+      'Video Upload':    '30 min · 500 MB · 3/day',
       'Captions':        'Basic',
       'Hook Detection':  '✓',
       'Priority Support':'—',

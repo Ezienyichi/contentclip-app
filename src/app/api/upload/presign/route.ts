@@ -9,6 +9,7 @@ import { randomUUID } from 'crypto';
 export const dynamic = 'force-dynamic';
 
 const PLAN_LIMITS: Record<string, { maxBytes: number; dailyCap: number }> = {
+  free:         { maxBytes: 500 * 1024 * 1024,       dailyCap: 3  }, // 500 MB, 3/day
   starter:      { maxBytes: 1024 * 1024 * 1024,      dailyCap: 10 }, // 1 GB
   solo:         { maxBytes: 1024 * 1024 * 1024,      dailyCap: 10 }, // 1 GB
   pro:          { maxBytes: 1536 * 1024 * 1024,      dailyCap: 10 }, // 1.5 GB
@@ -85,9 +86,7 @@ export async function POST(req: NextRequest) {
   const limits = PLAN_LIMITS[plan];
   if (!limits) {
     return NextResponse.json({
-      error: isLapsed
-        ? 'Your subscription has expired. Renew your plan to continue uploading.'
-        : 'Video upload requires a paid plan. Upgrade to upload videos.',
+      error: 'Video upload is not available on your current plan.',
     }, { status: 403 });
   }
 
