@@ -740,7 +740,7 @@ export default function SchedulerPage() {
       else { setSortCol(col); setSortDir('asc'); }
     };
     const sortArrow = (col: 'date' | 'status') => sortCol === col ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ' ↕';
-    const thSt: React.CSSProperties = { padding: '10px 12px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: colors.onSurfaceVariant, textTransform: 'uppercase', letterSpacing: '0.06em', background: '#F9F7F5', borderBottom: '1px solid rgba(0,0,0,0.08)', whiteSpace: 'nowrap' };
+    const thSt: React.CSSProperties = { padding: '10px 12px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: colors.onSurfaceVariant, textTransform: 'uppercase', letterSpacing: '0.06em', background: '#F9F7F5', borderBottom: '1px solid rgba(0,0,0,0.08)', whiteSpace: 'nowrap', position: 'sticky', top: 0, zIndex: 1 };
     const tdSt: React.CSSProperties = { padding: '10px 12px', fontSize: 12, color: colors.onSurface, borderBottom: '1px solid rgba(0,0,0,0.05)', verticalAlign: 'middle' };
     return (
       <div>
@@ -751,7 +751,7 @@ export default function SchedulerPage() {
         {sortedFilteredPosts.length === 0
           ? <div style={{ textAlign: 'center', padding: '40px 0', fontSize: 13, color: colors.onSurfaceVariant }}>No posts match your filters.</div>
           : (
-            <div style={{ overflowX: 'auto', borderRadius: radius.lg, border: '1px solid rgba(0,0,0,0.07)' }}>
+            <div style={{ overflowX: 'auto', overflowY: 'auto', height: 'calc(100vh - 280px)', minHeight: 400, borderRadius: radius.lg, border: '1px solid rgba(0,0,0,0.07)' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 900 }}>
                 <thead>
                   <tr>
@@ -826,7 +826,7 @@ export default function SchedulerPage() {
   // ── Render: list (grouped) ────────────────────────────────────────────────────
 
   const renderList = () => (
-    <>
+    <div style={{ height: 'calc(100vh - 280px)', minHeight: 400, overflowY: 'auto', overflowX: 'hidden' }}>
       {!loadingPosts && upcomingGroups.length === 0 && (
         <div style={{ background: '#F9F7F5', border: '1px solid rgba(0,0,0,0.07)', borderRadius: radius.lg, padding: '36px 24px', textAlign: 'center', marginBottom: 16 }}>
           <p style={{ fontSize: 24, margin: '0 0 8px' }}>📅</p>
@@ -851,7 +851,7 @@ export default function SchedulerPage() {
           {showPast && <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8, opacity: 0.7 }}>{pastPosts.map(renderPostCard)}</div>}
         </div>
       )}
-    </>
+    </div>
   );
 
   // ── Render: sidebar ───────────────────────────────────────────────────────────
