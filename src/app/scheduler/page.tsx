@@ -190,13 +190,15 @@ export default function SchedulerPage() {
   const [savedClips, setSavedClips] = useState<SavedClip[]>([]);
 
   // Compose modal
-  const [showModal,       setShowModal]       = useState(false);
-  const [modalClipId,     setModalClipId]     = useState('');
-  const [selectedConnIds, setSelectedConnIds] = useState<string[]>([]);
-  const [modalCaption,    setModalCaption]    = useState('');
-  const [modalDate,       setModalDate]       = useState('');
-  const [modalTime,       setModalTime]       = useState('');
-  const [submitting,      setSubmitting]      = useState(false);
+  const [showModal,          setShowModal]          = useState(false);
+  const [modalClipId,        setModalClipId]        = useState('');
+  const [selectedConnIds,    setSelectedConnIds]    = useState<string[]>([]);
+  const [modalCaption,       setModalCaption]       = useState('');
+  const [modalDate,          setModalDate]          = useState('');
+  const [modalTime,          setModalTime]          = useState('');
+  const [submitting,         setSubmitting]         = useState(false);
+  const [generatingCaption,  setGeneratingCaption]  = useState(false);
+  const [captionGenErr,      setCaptionGenErr]      = useState<string | null>(null);
 
   // Side panel
   const [previewPost,    setPreviewPost]    = useState<ScheduledPost | null>(null);
@@ -385,12 +387,34 @@ export default function SchedulerPage() {
 
   // ── Compose modal ─────────────────────────────────────────────────────────────
 
-  const openModal = () => {
-    const next = new Date(); next.setHours(next.getHours() + 1, 0, 0, 0);
+  const openModal = (prefillDate?: Date) => {
+    const base = prefillDate ?? new Date();
+    const next = prefillDate ? new Date(base) : new Date();
+    if (!prefillDate) next.setHours(next.getHours() + 1, 0, 0, 0);
+    else { next.setHours(9, 0, 0, 0); if (next <= new Date()) next.setHours(10, 0, 0, 0); }
     setModalDate(next.toISOString().split('T')[0]);
     setModalTime(`${String(next.getHours()).padStart(2, '0')}:00`);
     setModalClipId(''); setSelectedConnIds([]); setModalCaption('');
+    setCaptionGenErr(null);
     setShowModal(true);
+  };
+
+  const handleGenerateCaption = async () => {
+    if (!modalClipId) return;
+    setGeneratingCaption(true); setCaptionGenErr(null);
+    try {
+      const firstConnId = selectedConnIds[0];
+      const platform    = firstConnId ? (connections.find(c => c.id === firstConnId)?.platform ?? 'tiktok') : 'tiktok';
+      const res  = await fetch('/api/caption', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ clip_id: modalClipId, platform, current_caption: modalCaption }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setCaptionGenErr(data.error ?? 'Failed to generate caption.'); return; }
+      setModalCaption([data.caption, data.hashtags].filter(Boolean).join('\n\n'));
+    } catch { setCaptionGenErr('Network error. Please try again.'); }
+    finally { setGeneratingCaption(false); }
   };
 
   const handleClipSelect = (clipId: string) => {
@@ -533,7 +557,10 @@ export default function SchedulerPage() {
     const canCancel      = post.status === 'scheduled';
     return (
       <div key={post.id} onClick={() => openPreview(post)} style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.07)', borderLeft: `3px solid ${effSt.color}`, borderRadius: radius.lg, padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer' }}>
-        <div style={{ width: 34, height: 34, borderRadius: radius.md, background: plat?.bgColor ?? '#f0ede9', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{plat?.icon ?? '📱'}</div>
+        {post.clips?.thumbnail_url
+          ? <img src={post.clips.thumbnail_url} alt="" style={{ width: 28, height: 50, objectFit: 'cover', borderRadius: 4, flexShrink: 0 }} />
+          : <div style={{ width: 28, height: 50, borderRadius: 4, background: plat?.bgColor ?? '#f0ede9', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{plat?.iconSm ?? '📱'}</div>
+        }
         <div style={{ flex: 1, minWidth: 0 }}>
           <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: colors.onSurface, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{post.clips?.title ?? 'Clip'}</p>
           <p style={{ margin: '2px 0 0', fontSize: 11, color: colors.onSurfaceVariant }}>{plat?.label ?? post.platform} · {date} at {time}</p>
@@ -585,20 +612,23 @@ export default function SchedulerPage() {
             const isToday   = isCurrentMo && day === todayDate.getDate();
             const isPastDay = new Date(calYear, calMonth, day + 1) <= todayDate;
             return (
-              <div key={day} style={{ minHeight: 80, background: isToday ? 'rgba(124,58,237,0.06)' : '#fff', border: isToday ? '1.5px solid rgba(124,58,237,0.4)' : '1px solid rgba(0,0,0,0.06)', borderRadius: 8, padding: '4px', overflow: 'hidden', opacity: isPastDay && dayPosts.length === 0 ? 0.35 : 1 }}>
+              <div key={day} onClick={() => { if (hasConnections && dayPosts.length === 0) openModal(new Date(calYear, calMonth, day)); }} style={{ minHeight: 80, background: isToday ? 'rgba(124,58,237,0.06)' : '#fff', border: isToday ? '1.5px solid rgba(124,58,237,0.4)' : '1px solid rgba(0,0,0,0.06)', borderRadius: 8, padding: '4px', overflow: 'hidden', opacity: isPastDay && dayPosts.length === 0 ? 0.35 : 1, cursor: hasConnections && dayPosts.length === 0 && !isPastDay ? 'pointer' : 'default' }}>
                 <div style={{ fontSize: 10, fontWeight: isToday ? 800 : 500, color: isToday ? '#7C3AED' : colors.onSurfaceVariant, marginBottom: 3, lineHeight: 1 }}>{day}</div>
                 {dayPosts.slice(0, 2).map(p => {
                   const effSt       = STATUS_STYLE[getEffectiveStatus(p)] ?? STATUS_STYLE.scheduled;
                   const { time }    = formatScheduledAt(p.scheduled_at);
                   const platData    = PLATFORMS.find(pl => pl.id === p.platform);
                   return (
-                    <div key={p.id} onClick={() => openPreview(p)} title={`${p.clips?.title ?? 'Clip'} at ${time}`}
-                      style={{ marginBottom: 2, padding: '3px 5px 3px 5px', borderRadius: 4, background: effSt.bg, borderLeft: `3px solid ${effSt.color}`, cursor: 'pointer', overflow: 'hidden' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2 }}>
-                        <span style={{ fontSize: 9, fontWeight: 600, color: effSt.color, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, lineHeight: 1.3 }}>{p.clips?.title ?? 'Clip'}</span>
-                        <span style={{ flexShrink: 0, display: 'flex', alignItems: 'center', marginLeft: 2 }}>{platData?.iconXs}</span>
+                    <div key={p.id} onClick={(e) => { e.stopPropagation(); openPreview(p); }} title={`${p.clips?.title ?? 'Clip'} at ${time}`}
+                      style={{ marginBottom: 2, padding: '3px 5px 3px 5px', borderRadius: 4, background: effSt.bg, borderLeft: `3px solid ${effSt.color}`, cursor: 'pointer', overflow: 'hidden', display: 'flex', alignItems: 'center', gap: 4 }}>
+                      {p.clips?.thumbnail_url && <img src={p.clips.thumbnail_url} alt="" style={{ width: 16, height: 28, objectFit: 'cover', borderRadius: 2, flexShrink: 0 }} />}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2 }}>
+                          <span style={{ fontSize: 9, fontWeight: 600, color: effSt.color, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, lineHeight: 1.3 }}>{p.clips?.title ?? 'Clip'}</span>
+                          <span style={{ flexShrink: 0, display: 'flex', alignItems: 'center', marginLeft: 2 }}>{platData?.iconXs}</span>
+                        </div>
+                        <div style={{ fontSize: 8, color: colors.onSurfaceVariant, lineHeight: 1.3, marginTop: 1 }}>{time}</div>
                       </div>
-                      <div style={{ fontSize: 8, color: colors.onSurfaceVariant, lineHeight: 1.3, marginTop: 1 }}>{time}</div>
                     </div>
                   );
                 })}
@@ -646,12 +676,15 @@ export default function SchedulerPage() {
                   const platData = PLATFORMS.find(pl => pl.id === p.platform);
                   return (
                     <div key={p.id} onClick={() => openPreview(p)} title={p.clips?.title ?? 'Clip'}
-                      style={{ padding: '3px 5px 3px 5px', borderRadius: 4, background: effSt.bg, borderLeft: `3px solid ${effSt.color}`, cursor: 'pointer' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2 }}>
-                        <span style={{ fontSize: 9, color: effSt.color, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{time}</span>
-                        <span style={{ flexShrink: 0, display: 'flex' }}>{platData?.iconXs}</span>
+                      style={{ padding: '3px 5px 3px 5px', borderRadius: 4, background: effSt.bg, borderLeft: `3px solid ${effSt.color}`, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
+                      {p.clips?.thumbnail_url && <img src={p.clips.thumbnail_url} alt="" style={{ width: 14, height: 25, objectFit: 'cover', borderRadius: 2, flexShrink: 0 }} />}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2 }}>
+                          <span style={{ fontSize: 9, color: effSt.color, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{time}</span>
+                          <span style={{ flexShrink: 0, display: 'flex' }}>{platData?.iconXs}</span>
+                        </div>
+                        <span style={{ fontSize: 9, color: colors.onSurface, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }}>{p.clips?.title ?? 'Clip'}</span>
                       </div>
-                      <span style={{ fontSize: 9, color: colors.onSurface, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }}>{p.clips?.title ?? 'Clip'}</span>
                     </div>
                   );
                 })}
@@ -969,7 +1002,7 @@ export default function SchedulerPage() {
           </button>
 
           {/* Schedule */}
-          <button onClick={hasConnections ? openModal : () => setShowConnectMenu(true)} style={{ fontSize: 12, fontWeight: 700, color: '#fff', background: gradients.primary, border: 'none', padding: '0 16px', height: 32, borderRadius: radius.full, cursor: 'pointer', fontFamily: "'Inter',sans-serif", whiteSpace: 'nowrap' as const, opacity: loadingConns ? 0.5 : 1, flexShrink: 0 }}>
+          <button onClick={hasConnections ? () => openModal() : () => setShowConnectMenu(true)} style={{ fontSize: 12, fontWeight: 700, color: '#fff', background: gradients.primary, border: 'none', padding: '0 16px', height: 32, borderRadius: radius.full, cursor: 'pointer', fontFamily: "'Inter',sans-serif", whiteSpace: 'nowrap' as const, opacity: loadingConns ? 0.5 : 1, flexShrink: 0 }}>
             + Schedule
           </button>
         </div>
@@ -1216,8 +1249,19 @@ export default function SchedulerPage() {
                 </div>
               )
             }
-            <label style={{ fontSize: 12, fontWeight: 700, color: colors.onSurfaceVariant, textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: 8 }}>Caption</label>
-            <textarea value={modalCaption} onChange={e => setModalCaption(e.target.value)} rows={3} placeholder="Write a caption..." style={{ width: '100%', padding: '10px 12px', borderRadius: radius.md, border: '1px solid rgba(0,0,0,0.12)', background: '#fff', fontSize: 13, color: colors.onSurface, fontFamily: "'Inter',sans-serif", resize: 'vertical', boxSizing: 'border-box', marginBottom: 20 }} />
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+              <label style={{ fontSize: 12, fontWeight: 700, color: colors.onSurfaceVariant, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Caption</label>
+              <button
+                onClick={handleGenerateCaption}
+                disabled={!modalClipId || generatingCaption}
+                title={!modalClipId ? 'Select a clip first' : ''}
+                style={{ fontSize: 11, fontWeight: 700, color: (!modalClipId || generatingCaption) ? colors.onSurfaceVariant : '#7C3AED', background: (!modalClipId || generatingCaption) ? 'transparent' : 'rgba(124,58,237,0.08)', border: `1px solid ${(!modalClipId || generatingCaption) ? 'rgba(0,0,0,0.1)' : 'rgba(124,58,237,0.25)'}`, borderRadius: radius.full, padding: '4px 12px', cursor: (!modalClipId || generatingCaption) ? 'default' : 'pointer', fontFamily: "'Inter',sans-serif", display: 'flex', alignItems: 'center', gap: 4 }}
+              >
+                {generatingCaption ? '✨ Writing…' : modalCaption ? '✨ Regenerate' : '✨ Write with AI'}
+              </button>
+            </div>
+            {captionGenErr && <p style={{ margin: '0 0 6px', fontSize: 11, color: '#DC2626' }}>{captionGenErr}</p>}
+            <textarea value={modalCaption} onChange={e => { setModalCaption(e.target.value); setCaptionGenErr(null); }} rows={3} placeholder="Write a caption, or use ✨ Write with AI above…" style={{ width: '100%', padding: '10px 12px', borderRadius: radius.md, border: '1px solid rgba(0,0,0,0.12)', background: '#fff', fontSize: 13, color: colors.onSurface, fontFamily: "'Inter',sans-serif", resize: 'vertical', boxSizing: 'border-box', marginBottom: 20 }} />
             <label style={{ fontSize: 12, fontWeight: 700, color: colors.onSurfaceVariant, textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: 8 }}>Date &amp; Time</label>
             <div style={{ display: 'flex', gap: 10, marginBottom: 28, flexWrap: 'wrap' }}>
               <input type="date" min={todayStr} value={modalDate} onChange={e => setModalDate(e.target.value)} style={{ flex: '1 1 140px', minWidth: 0, padding: '10px 12px', borderRadius: radius.md, border: '1px solid rgba(0,0,0,0.12)', background: '#fff', fontSize: 13, color: colors.onSurface, fontFamily: "'Inter',sans-serif", boxSizing: 'border-box' as const }} />

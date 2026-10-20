@@ -4,9 +4,54 @@ import { createClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
 import { CLIP_RETENTION_DAYS, retentionExpiryISO } from '@/lib/retention';
 import { r2Client, rehostToR2, missingR2Env, triggerSweep } from '@/lib/rehost';
+import { PutObjectCommand } from '@aws-sdk/client-s3';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import { promises as fs } from 'fs';
+import { execFile } from 'child_process';
+import { promisify } from 'util';
+import path from 'path';
+import os from 'os';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
+
+const execFileP = promisify(execFile);
+
+async function generateThumbnailFromR2(
+  admin: SupabaseClient,
+  clipId: string,
+  userId: string,
+  videoUrl: string,
+): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const ffmpegBin = require('ffmpeg-static') as string;
+  const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'thumb-'));
+  const videoPath = path.join(tmpDir, 'video.mp4');
+  const framePath = path.join(tmpDir, 'frame.jpg');
+  try {
+    const res = await fetch(videoUrl, { signal: AbortSignal.timeout(25_000) });
+    if (!res.ok) throw new Error(`video fetch ${res.status}`);
+    await fs.writeFile(videoPath, Buffer.from(await res.arrayBuffer()));
+
+    const args = ['-ss', '1', '-i', videoPath, '-frames:v', '1', '-q:v', '3', '-y', framePath];
+    await execFileP(ffmpegBin, args, { timeout: 20_000 }).catch(() =>
+      execFileP(ffmpegBin, ['-ss', '0.1', '-i', videoPath, '-frames:v', '1', '-q:v', '3', '-y', framePath], { timeout: 20_000 })
+    );
+
+    const jpegBuf = await fs.readFile(framePath);
+    const today   = new Date().toISOString().slice(0, 10);
+    const key     = `thumbnails/${userId}/${today}/${clipId}.jpg`;
+    await r2Client().send(new PutObjectCommand({
+      Bucket: process.env.R2_BUCKET!, Key: key, Body: jpegBuf,
+      ContentType: 'image/jpeg', ContentLength: jpegBuf.length,
+    }));
+    const thumbnail_url = `${process.env.R2_PUBLIC_URL}/${key}`;
+    await admin.from('clips').update({ thumbnail_url }).eq('id', clipId);
+    console.log(`[clips/save] thumbnail generated for clip=${clipId}`);
+  } finally {
+    await fs.rm(tmpDir, { recursive: true, force: true }).catch(() => {});
+  }
+}
 
 // Parallel R2 uploads. Each worker holds a whole clip in memory, so keep this
 // low — unbounded fan-out is what used to push this route past maxDuration.
@@ -143,6 +188,13 @@ export async function POST(req: NextRequest) {
           failed++;
         } else {
           ok++;
+          // Generate thumbnail if clip doesn't already have one
+          const { data: clipRow } = await admin.from('clips').select('thumbnail_url').eq('id', job.id).single();
+          if (!clipRow?.thumbnail_url) {
+            await generateThumbnailFromR2(admin, job.id, user.id, r2Url).catch(e =>
+              console.warn(`[clips/save] thumbnail gen for clip=${job.id} failed:`, e instanceof Error ? e.message : String(e))
+            );
+          }
         }
       }
     };
