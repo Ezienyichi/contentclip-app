@@ -32,17 +32,22 @@ type Clip = {
   created_at?: string | null;
 };
 
-function ExpiryBadge({ expiresAt }: { expiresAt?: string | null }) {
-  if (!expiresAt) return null;
-  const daysLeft = Math.ceil((new Date(expiresAt).getTime() - Date.now()) / 86_400_000);
+function ExpiryBadge({ expiresAt, createdAt }: { expiresAt?: string | null; createdAt?: string | null }) {
+  // Fall back to created_at + 7 days (the R2 lifecycle rule) when no explicit expiry is stored
+  const base = expiresAt ?? (createdAt
+    ? new Date(new Date(createdAt).getTime() + 7 * 86_400_000).toISOString()
+    : null);
+  if (!base) return null;
+  const daysLeft = Math.ceil((new Date(base).getTime() - Date.now()) / 86_400_000);
+  const label = daysLeft === 1 ? 'Expires in 1 day' : `Expires in ${daysLeft} days`;
   if (daysLeft < 0)
     return <span style={{ fontSize:10, fontWeight:600, color:'#DC2626', background:'rgba(220,38,38,0.1)', padding:'2px 7px', borderRadius:99 }}>Expired</span>;
   if (daysLeft <= 2)
-    return <span style={{ fontSize:10, fontWeight:600, color:'#D97706', background:'rgba(245,158,11,0.1)', padding:'2px 7px', borderRadius:99 }}>Expires in {daysLeft}d</span>;
+    return <span style={{ fontSize:10, fontWeight:600, color:'#D97706', background:'rgba(245,158,11,0.1)', padding:'2px 7px', borderRadius:99 }}>{label}</span>;
   return <span
-    title={new Date(expiresAt).toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric' })}
+    title={new Date(base).toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric' })}
     style={{ fontSize:10, color:'#6B6560', background:'#E8E5DF', padding:'2px 7px', borderRadius:99 }}>
-    Expires in {daysLeft}d
+    {label}
   </span>;
 }
 
@@ -415,7 +420,7 @@ export default function ClipsPage() {
                   <span style={{ fontSize:10, fontWeight:600, color:'#0369a1', background:'rgba(3,105,161,0.1)', padding:'2px 7px', borderRadius:99 }}>AI Clip</span>
                 )}
                 {/* Uploads set only delete_after; generated clips set both. */}
-                <ExpiryBadge expiresAt={clip.delete_after ?? clip.expires_at} />
+                <ExpiryBadge expiresAt={clip.delete_after ?? clip.expires_at} createdAt={clip.created_at} />
                 {clip.source_video_name && (
                   <span style={{ fontSize:10, color:colors.onSurfaceVariant, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', maxWidth:120 }}>{clip.source_video_name}</span>
                 )}

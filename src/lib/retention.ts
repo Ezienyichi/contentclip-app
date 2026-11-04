@@ -10,8 +10,8 @@
 // If the R2 rule is lowered BEFORE these values, files vanish while rows still
 // advertise them — broken links. Change the code first, R2 second.
 
-/** Days a generated clip stays available. */
-export const CLIP_RETENTION_DAYS = 10;
+/** Days a generated clip stays available. Must match the Cloudflare R2 lifecycle rule. */
+export const CLIP_RETENTION_DAYS = 7;
 
 /**
  * Days an uploaded clip stays available, by plan.
@@ -20,11 +20,11 @@ export const CLIP_RETENTION_DAYS = 10;
  * generated clip. Agency keeps its longer 14-day entitlement.
  */
 export const UPLOAD_RETENTION_DAYS: Record<string, number> = {
-  free:         Math.max(10, CLIP_RETENTION_DAYS),
-  starter:      Math.max(10, CLIP_RETENTION_DAYS),
-  solo:         Math.max(10, CLIP_RETENTION_DAYS),  // legacy alias
-  pro:          Math.max(10, CLIP_RETENTION_DAYS),
-  professional: Math.max(10, CLIP_RETENTION_DAYS),
+  free:         CLIP_RETENTION_DAYS,
+  starter:      CLIP_RETENTION_DAYS,
+  solo:         CLIP_RETENTION_DAYS,  // legacy alias
+  pro:          CLIP_RETENTION_DAYS,
+  professional: CLIP_RETENTION_DAYS,
   agency:       Math.max(14, CLIP_RETENTION_DAYS),
 };
 

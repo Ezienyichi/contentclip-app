@@ -5,7 +5,7 @@
 //   - api/clips/save        — background pass right after clips are created
 //   - api/admin/rehost-orphans — rescue pass for rows that never got re-hosted
 
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, CopyObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 export const R2_ENV_KEYS = [
@@ -89,6 +89,94 @@ export async function rehostToR2(
     console.error(`[rehostToR2] clip=${clipId} threw:`, err instanceof Error ? err.message : String(err));
     return null;
   }
+}
+
+// ── Scheduled-prefix helpers ─────────────────────────────────────────────────
+// Posts scheduled more than 5 days out are likely to outlive the clip's R2
+// lifecycle rule. We copy the video (and thumbnail) to a `scheduled/` prefix
+// that has no lifecycle rule, so PfM can still fetch the file at posting time.
+// After the post publishes, fails, or is cancelled we delete the copies.
+
+/** Extract the R2 object key from a public R2 URL, or null if not an R2 URL. */
+export function r2KeyFromUrl(url: string): string | null {
+  const base = process.env.R2_PUBLIC_URL;
+  if (!base || !url) return null;
+  try {
+    if (new URL(url).origin !== new URL(base).origin) return null;
+    return decodeURIComponent(new URL(url).pathname.replace(/^\//, ''));
+  } catch {
+    return null;
+  }
+}
+
+export function scheduledVideoKey(userId: string, postId: string): string {
+  return `scheduled/${userId}/${postId}.mp4`;
+}
+
+export function scheduledThumbKey(userId: string, postId: string): string {
+  return `scheduled/${userId}/${postId}.jpg`;
+}
+
+/**
+ * Copy a clip's video (and optionally thumbnail) to the `scheduled/` prefix.
+ * Returns the new public URLs to send to PfM.
+ * Throws on video copy failure; thumbnail failure is swallowed.
+ */
+export async function copyToScheduledPrefix(
+  s3: S3Client,
+  userId: string,
+  postId: string,
+  videoUrl: string,
+  thumbnailUrl?: string | null,
+): Promise<{ videoUrl: string; thumbnailUrl: string | null }> {
+  const bucket    = process.env.R2_BUCKET!;
+  const publicUrl = process.env.R2_PUBLIC_URL!;
+
+  const srcVideoKey = r2KeyFromUrl(videoUrl);
+  if (!srcVideoKey) throw new Error(`videoUrl is not an R2 URL: ${videoUrl.slice(0, 100)}`);
+
+  const destVideoKey = scheduledVideoKey(userId, postId);
+  await s3.send(new CopyObjectCommand({
+    Bucket:     bucket,
+    CopySource: `${bucket}/${srcVideoKey}`,
+    Key:        destVideoKey,
+  }));
+
+  let newThumbUrl: string | null = null;
+  if (thumbnailUrl) {
+    const srcThumbKey = r2KeyFromUrl(thumbnailUrl);
+    if (srcThumbKey) {
+      const destThumbKey = scheduledThumbKey(userId, postId);
+      await s3.send(new CopyObjectCommand({
+        Bucket:     bucket,
+        CopySource: `${bucket}/${srcThumbKey}`,
+        Key:        destThumbKey,
+      })).catch(e =>
+        console.warn(`[copyToScheduledPrefix] thumbnail copy failed for post=${postId}:`, e instanceof Error ? e.message : String(e))
+      );
+      newThumbUrl = `${publicUrl}/${destThumbKey}`;
+    }
+  }
+
+  return { videoUrl: `${publicUrl}/${destVideoKey}`, thumbnailUrl: newThumbUrl };
+}
+
+/**
+ * Delete the `scheduled/` copies for a set of posts (best-effort).
+ * Safe to call even if no copy was made — DeleteObject on a missing key is a no-op.
+ */
+export async function deleteScheduledCopies(
+  posts: Array<{ id: string; user_id: string }>,
+): Promise<void> {
+  if (!posts.length || !process.env.R2_BUCKET) return;
+  const s3 = r2Client();
+  const bucket = process.env.R2_BUCKET;
+  await Promise.allSettled(
+    posts.flatMap(p => [
+      s3.send(new DeleteObjectCommand({ Bucket: bucket, Key: scheduledVideoKey(p.user_id, p.id) })),
+      s3.send(new DeleteObjectCommand({ Bucket: bucket, Key: scheduledThumbKey(p.user_id, p.id) })),
+    ])
+  );
 }
 
 // ── Sweep ────────────────────────────────────────────────────────────────────

@@ -3,7 +3,7 @@ import { createServerClient } from '@supabase/ssr';
 import { createClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
 import { insertNotification } from '@/lib/notify';
-import { isR2Url } from '@/lib/rehost';
+import { isR2Url, r2Client, copyToScheduledPrefix, deleteScheduledCopies } from '@/lib/rehost';
 
 export const dynamic = 'force-dynamic';
 
@@ -90,7 +90,7 @@ export async function POST(req: NextRequest) {
   // gating here — it would block uploads from being scheduled.
   const { data: clip, error: clipError } = await supabase
     .from('clips')
-    .select('id, title, video_url, download_url')
+    .select('id, title, video_url, download_url, thumbnail_url')
     .eq('id', clip_id)
     .eq('user_id', user.id)
     .single();
@@ -176,7 +176,22 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  pfmPayload.media = [{ url: mediaUrl }];
+  // If the post is more than 5 days away the clip may expire before PfM posts it.
+  // Copy the video (and thumbnail) to the scheduled/ prefix which has no lifecycle rule.
+  const COPY_THRESHOLD_MS = 5 * 24 * 60 * 60 * 1000;
+  let pfmMediaUrl = mediaUrl;
+  if (new Date(scheduled_at).getTime() - Date.now() > COPY_THRESHOLD_MS && process.env.R2_BUCKET) {
+    try {
+      const s3     = r2Client();
+      const copied = await copyToScheduledPrefix(s3, user.id, post.id, mediaUrl, (clip as any).thumbnail_url ?? null);
+      pfmMediaUrl  = copied.videoUrl;
+      console.log(`[scheduled-posts POST] scheduled/ copy created for post=${post.id}`);
+    } catch (err) {
+      console.warn('[scheduled-posts POST] scheduled/ copy failed, using original URL:', err instanceof Error ? err.message : String(err));
+    }
+  }
+
+  pfmPayload.media = [{ url: pfmMediaUrl }];
 
   if (platform === 'instagram') {
     pfmPayload.platform_configurations = { instagram: { placement: 'reels' } };
@@ -244,4 +259,65 @@ export async function POST(req: NextRequest) {
   });
 
   return NextResponse.json({ post: { id: post.id, pfm_post_id: pfmPostId } });
+}
+
+// ── DELETE — bulk delete by id array ─────────────────────────────────────────
+
+export async function DELETE(req: NextRequest) {
+  const cookieStore = await cookies();
+  const supabase = makeSupabase(cookieStore);
+
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError || !user) return NextResponse.json({ error: 'Not authenticated.' }, { status: 401 });
+
+  let ids: string[];
+  try {
+    const body = await req.json();
+    ids = Array.isArray(body.ids) ? body.ids.map(String).filter(Boolean) : [];
+  } catch {
+    return NextResponse.json({ error: 'Invalid request body.' }, { status: 400 });
+  }
+  if (ids.length === 0) return NextResponse.json({ error: 'No ids provided.' }, { status: 400 });
+  if (ids.length > 200) return NextResponse.json({ error: 'Too many ids (max 200).' }, { status: 400 });
+
+  // Fetch only the user's own rows so we never touch another user's posts
+  const { data: posts } = await supabase
+    .from('scheduled_posts')
+    .select('id, status, pfm_post_id')
+    .in('id', ids)
+    .eq('user_id', user.id);
+
+  if (!posts || posts.length === 0) return NextResponse.json({ deleted: 0 });
+
+  // Cancel scheduled posts in Post for Me before deleting
+  const pfmApiKey = process.env.POST_FOR_ME_API_KEY;
+  if (pfmApiKey) {
+    const toCancel = posts.filter(p => p.status === 'scheduled' && p.pfm_post_id);
+    await Promise.allSettled(
+      toCancel.map(p =>
+        fetch(`${PFM_API}/social-posts/${p.pfm_post_id}`, {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${pfmApiKey}` },
+          signal: AbortSignal.timeout(8_000),
+        }).catch(e => console.warn(`[scheduled-posts DELETE] PfM cancel post=${p.id} failed:`, e instanceof Error ? e.message : String(e)))
+      )
+    );
+  }
+
+  const ownedIds = posts.map(p => p.id);
+  const { error: deleteError, count } = await supabase
+    .from('scheduled_posts')
+    .delete({ count: 'exact' })
+    .in('id', ownedIds)
+    .eq('user_id', user.id);
+
+  if (deleteError) {
+    console.error('[scheduled-posts DELETE bulk] DB error', deleteError);
+    return NextResponse.json({ error: 'Failed to delete posts.' }, { status: 500 });
+  }
+
+  // Clean up any scheduled/ copies (best-effort; no-op when no copy exists)
+  void deleteScheduledCopies(posts.map(p => ({ id: p.id, user_id: user.id })));
+
+  return NextResponse.json({ deleted: count ?? ownedIds.length });
 }

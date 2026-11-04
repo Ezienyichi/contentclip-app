@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { createClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
-import { isR2Url } from '@/lib/rehost';
+import { isR2Url, deleteScheduledCopies } from '@/lib/rehost';
 
 export const dynamic = 'force-dynamic';
 
@@ -62,6 +62,9 @@ export async function DELETE(
 
   if (!data || data.length === 0)
     return NextResponse.json({ error: 'Post not found.' }, { status: 404 });
+
+  // Clean up scheduled/ copy if one was made for this post (best-effort)
+  void deleteScheduledCopies([{ id, user_id: user.id }]);
 
   return NextResponse.json({ success: true });
 }

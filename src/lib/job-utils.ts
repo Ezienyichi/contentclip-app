@@ -60,6 +60,101 @@ export async function saveClipsAdmin(
   return true;
 }
 
+// processCompletedJob — used by webhook and cron to handle a finished job server-side
+export async function processCompletedJob(
+  admin: SupabaseClient,
+  job: {
+    id: string;
+    user_id: string;
+    source_name: string | null;
+    duration_seconds: number | null;
+    clips_saved: boolean;
+    minutes_charged: number | null;
+  },
+  backendData: { clips?: any[]; cost_usage?: number },
+): Promise<void> {
+  const { insertNotification } = await import('@/lib/notify');
+  const { planMinutes } = await import('@/lib/planLimits');
+
+  const rawClips = Array.isArray(backendData.clips) ? backendData.clips : [];
+
+  if (!job.clips_saved && rawClips.length > 0) {
+    const { data: claimed } = await admin
+      .from('clip_jobs')
+      .update({ clips_saved: true })
+      .eq('id', job.id)
+      .eq('clips_saved', false)
+      .select('id')
+      .maybeSingle();
+    if (claimed) {
+      await saveClipsAdmin(admin, job.user_id, normalizeClips(rawClips), job.source_name ?? job.id);
+      void insertNotification({
+        user_id: job.user_id,
+        title: 'Your clips are ready!',
+        body: `${rawClips.length} clip${rawClips.length === 1 ? '' : 's'} from "${job.source_name ?? 'your video'}" are ready to view.`,
+        type: 'clip_ready',
+        link: '/clips',
+      });
+    }
+  }
+
+  if (job.minutes_charged == null) {
+    let jobData: any = { ...backendData };
+    if (!jobData.cost_usage && job.duration_seconds) {
+      jobData = { ...jobData, clips: [{ end_time: job.duration_seconds }] };
+    }
+    const { minutes: minutesUsed } = minutesForJob(jobData);
+
+    if (minutesUsed > 0) {
+      const { data: profile } = await admin
+        .from('profiles')
+        .select('minutes_used, plan')
+        .eq('id', job.user_id)
+        .single();
+
+      const { data: charged } = await admin
+        .from('clip_jobs')
+        .update({ minutes_charged: minutesUsed, status: 'completed' })
+        .eq('id', job.id)
+        .is('minutes_charged', null)
+        .select('id')
+        .maybeSingle();
+
+      if (charged) {
+        await addMinutesUsed(admin, job.user_id, minutesUsed, profile?.minutes_used ?? 0);
+
+        if (profile) {
+          const planLimit = planMinutes(profile.plan);
+          const remaining = planLimit - ((profile.minutes_used ?? 0) + minutesUsed);
+          if (remaining < planLimit * 0.2) {
+            const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+            const { data: recent } = await admin
+              .from('notifications')
+              .select('id')
+              .eq('user_id', job.user_id)
+              .eq('type', 'credits_low')
+              .eq('read', false)
+              .gte('created_at', since)
+              .limit(1)
+              .maybeSingle();
+            if (!recent) {
+              void insertNotification({
+                user_id: job.user_id,
+                title: 'Running low on minutes',
+                body: `${Math.max(0, remaining)} of ${planLimit} minutes remaining. Upgrade to keep clipping.`,
+                type: 'credits_low',
+                link: '/settings',
+              });
+            }
+          }
+        }
+      }
+    } else {
+      await admin.from('clip_jobs').update({ status: 'completed' }).eq('id', job.id);
+    }
+  }
+}
+
 export function normalizeClips(rawClips: any[]): any[] {
   return rawClips.map((c: any) => ({
     video_url:     c.video_url     || '',

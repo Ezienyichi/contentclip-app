@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase-browser";
 import DashboardLayout from "@/components/DashboardLayout";
+import { useUploadContext } from "@/lib/upload-context";
 import { colors as _colors, gradients, radius } from "@/lib/tokens";
 import EngagementPanel, { EngagementProfile } from "@/components/engagement/EngagementPanel";
 import { planMinutes, planLabel } from '@/lib/planLimits';
@@ -538,6 +539,7 @@ function LazyVideo({ url, label }: { url: string; label?: string }) {
 
 export default function ImportPage() {
   const router = useRouter();
+  const uploadCtx = useUploadContext();
 
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [videoUrl, setVideoUrl] = useState("");
@@ -607,7 +609,8 @@ export default function ImportPage() {
     'Almost ready...',
   ];
 
-  const isClipping = Status === 'queued' || Status === 'preprocessing' || Status === 'processing';
+  const isClipping = Status === 'queued' || Status === 'preprocessing' || Status === 'processing'
+    || (inputTab === 'upload' && (uploadCtx.phase === 'clipping' || uploadCtx.phase === 'uploading'));
   const tour = useTour('import', IMPORT_STEPS.length);
 
   // Was a local map with drifted values (starter 150, agency 1200) that did not
@@ -685,8 +688,12 @@ export default function ImportPage() {
             pollClipStatus(job.task_id);
           } else if (job.source === 'upload') {
             setInputTab('upload');
-            // startUploadPoll is defined below; defined as ref to avoid circular deps
-            startUploadPollRef.current?.(job.task_id);
+            // Delegate upload polling to the global context so it survives navigation
+            if (uploadCtx.phase === 'idle') {
+              uploadCtx.resumePolling(job.task_id);
+            } else {
+              startUploadPollRef.current?.(job.task_id);
+            }
           }
         } else if (job.status === 'completed' && job.clips_saved) {
           setClipsReadyBanner(true);
@@ -1005,112 +1012,43 @@ export default function ImportPage() {
   // Keep ref in sync so the resume effect can call it without circular deps
   useEffect(() => { startUploadPollRef.current = startUploadPoll; }, [startUploadPoll]);
 
-  const handleUpload = useCallback(async () => {
-    if (!selectedFile || durationLoading) return;
-
-    setGenerationSuccess(false);
-    setEngagementDismissed(false);
-    setLoading(true);
-    setStatus('processing');
-    setError(null);
-    setResult(null);
-    setUploadProgress(0);
-
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { setError('Please sign in.'); setLoading(false); setStatus('idle'); return; }
-
-      // ── 1. GET PRESIGNED URL ──
-      const presignRes = await fetch('/api/upload/presign', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ file_name: selectedFile.name, file_size: selectedFile.size, mime_type: selectedFile.type }),
-      });
-      const presignData = await presignRes.json();
-      if (!presignRes.ok) throw new Error(presignData.error || 'Failed to get upload URL.');
-      const { upload_url, key } = presignData;
-
-      // ── 2. PUT FILE DIRECTLY TO R2 (no Cloudflare proxy, no body-size limit) ──
-      await new Promise<void>((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-        xhr.open('PUT', upload_url);
-        xhr.upload.onprogress = (e) => {
-          if (e.lengthComputable) setUploadProgress(Math.round((e.loaded / e.total) * 100));
-        };
-        xhr.onload = () =>
-          xhr.status >= 200 && xhr.status < 300
-            ? resolve()
-            : reject(new Error(`Upload to storage failed (${xhr.status}). Please try again.`));
-        xhr.onerror = () => reject(new Error('Upload failed. Check your connection and try again.'));
-        xhr.setRequestHeader('Content-Type', selectedFile.type || 'application/octet-stream');
-        xhr.send(selectedFile);
-      });
-
-      // ── 3. SYNC SESSION (long XHR may have rotated tokens outside middleware) ──
-      await supabase.auth.getSession();
-
-      // ── 4. REGISTER UPLOAD IN DB ──
-      const nameNoExt = selectedFile.name.replace(/\.[^.]+$/, '');
-      const completeRes = await fetch('/api/upload/complete', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ key, file_name: selectedFile.name, file_size: selectedFile.size, title: nameNoExt }),
-      });
-      const completeData = await completeRes.json();
-      if (!completeRes.ok) throw new Error(completeData.error || 'Failed to register upload.');
-      const r2Url = completeData.video_url as string;
-
-      // ── 5. CHECK FOR DUPLICATE IN-PROGRESS JOB ──
-      const threeHoursAgo = new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString();
-      const { data: existingJob } = await supabase
-        .from('clip_jobs')
-        .select('task_id')
-        .eq('source_name', selectedFile.name)
-        .eq('status', 'processing')
-        .gte('created_at', threeHoursAgo)
-        .maybeSingle();
-      if (existingJob) {
-        setStatus('processing');
-        startUploadPoll(existingJob.task_id);
-        return;
-      }
-
-      // ── 6. TRIGGER BACKEND PROCESSING (server-to-server, no size limit) ──
-      setUploadProgress(100);
-      const processRes = await fetch('/api/process-upload-r2', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          r2_url:           r2Url,
-          category,
-          prompt:           buildSmartPrompt(category, selectedTs, contentMode),
-          numClips:         numClips,
-          source_name:      selectedFile.name,
-          duration_seconds: uploadDuration ? Math.round(uploadDuration) : undefined,
-        }),
-      });
-      const processData = await processRes.json();
-      if (!processRes.ok) {
-        setError(processData.error || (processRes.status === 402
-          ? 'You have used all your minutes for this month. Upgrade to continue.'
-          : 'Failed to start processing.'));
-        setLoading(false);
-        setStatus('idle');
-        return;
-      }
-      const jobId = processData.job_id as string;
-
-      // ── 7. START POLLING VIA EXTRACTED CALLBACK ──
-      startUploadPoll(jobId);
-
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Upload error');
+  // Sync global upload context phase → local page state so the import page UI reflects
+  // uploads that complete while away (e.g. user navigated to /clips and came back).
+  useEffect(() => {
+    if (inputTab !== 'upload') return;
+    if (uploadCtx.phase === 'uploading' || uploadCtx.phase === 'clipping') {
+      setLoading(true);
+      setStatus('processing');
+    } else if (uploadCtx.phase === 'done' && uploadCtx.clips.length > 0) {
+      setLoading(false);
+      setStatus('completed');
+      setClips(uploadCtx.clips);
+      setResult({ success: true, jobId: uploadCtx.jobId ?? '', clips: uploadCtx.clips, creditsUsed: 0, creditsRemaining: userCredits });
+      setGenerationSuccess(true);
+    } else if (uploadCtx.phase === 'error' && uploadCtx.error) {
       setLoading(false);
       setStatus('idle');
-      setUploadProgress(0);
+      setError(uploadCtx.error);
     }
-  }, [selectedFile, durationLoading, category, selectedTs, contentMode, userPlan, uploadDuration, stopPolling, numClips, startUploadPoll]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [uploadCtx.phase, uploadCtx.clips, uploadCtx.error]);
+
+  // Delegate to global context — upload and polling survive in-app navigation.
+  const handleUpload = useCallback(() => {
+    if (!selectedFile || durationLoading) return;
+    setGenerationSuccess(false);
+    setEngagementDismissed(false);
+    setResult(null);
+    setError(null);
+
+    void uploadCtx.startUpload(selectedFile, {
+      category,
+      prompt:           buildSmartPrompt(category, selectedTs, contentMode),
+      numClips,
+      duration_seconds: uploadDuration ? Math.round(uploadDuration) : undefined,
+      source_name:      selectedFile.name,
+    });
+  }, [selectedFile, durationLoading, category, selectedTs, contentMode, numClips, uploadDuration, uploadCtx]);
 
   async function handleScheduleImportClip(clip: any, idx: number) {
     setSchedulingClipIdx(idx);
@@ -1347,16 +1285,16 @@ export default function ImportPage() {
                     />
                   )}
 
-                  {loading && uploadProgress > 0 && uploadProgress < 100 && (
+                  {uploadCtx.phase === 'uploading' && uploadCtx.uploadProgress > 0 && uploadCtx.uploadProgress < 100 && (
                     <div style={{ marginTop: '12px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#4B4540', marginBottom: '6px' }}>
-                        <span>Uploading...</span><span>{uploadProgress}%</span>
+                        <span>Uploading...</span><span>{uploadCtx.uploadProgress}%</span>
                       </div>
                       <div style={{ width: '100%', height: '6px', background: 'rgba(0,0,0,0.08)', borderRadius: '3px', overflow: 'hidden' }}>
-                        <div style={{ width: `${uploadProgress}%`, height: '100%', background: 'linear-gradient(90deg,#7c3aed,#5b21b6)', borderRadius: '3px', transition: 'width 0.3s' }} />
+                        <div style={{ width: `${uploadCtx.uploadProgress}%`, height: '100%', background: 'linear-gradient(90deg,#7c3aed,#5b21b6)', borderRadius: '3px', transition: 'width 0.3s' }} />
                       </div>
-                      <div style={{ marginTop: '8px', fontSize: '11px', color: 'rgba(255,255,255,0.4)', textAlign: 'center' }}>
-                        Uploading... {uploadProgress}%. Please keep this tab open.
+                      <div style={{ marginTop: '8px', fontSize: '11px', color: '#6B6560', textAlign: 'center' }}>
+                        Uploading {uploadCtx.uploadProgress}% — you can navigate away, it will continue.
                       </div>
                     </div>
                   )}

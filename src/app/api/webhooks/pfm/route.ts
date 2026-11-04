@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { insertNotification } from '@/lib/notify';
+import { deleteScheduledCopies } from '@/lib/rehost';
 
 export const dynamic = 'force-dynamic';
 
@@ -93,6 +94,9 @@ export async function POST(req: NextRequest) {
   }
 
   console.log('[pfm-webhook] Post', post.id, '→', success ? 'published' : 'failed', publishedUrl ?? '');
+
+  // Clean up scheduled/ copy now that the post has resolved (best-effort)
+  void deleteScheduledCopies([{ id: post.id, user_id: post.user_id }]);
 
   // Notify the post owner (fire and forget)
   if (post.user_id) {

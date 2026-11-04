@@ -186,6 +186,11 @@ export default function SchedulerPage() {
   const [collapsedPlatforms,  setCollapsedPlatforms]  = useState<string[]>([]);
   const [showConnectMenu,     setShowConnectMenu]     = useState(false);
 
+  // Bulk selection & delete
+  const [selectedIds,   setSelectedIds]   = useState<Set<string>>(new Set());
+  const [confirmDialog, setConfirmDialog] = useState<{ ids: string[]; message: string } | null>(null);
+  const [bulkDeleting,  setBulkDeleting]  = useState(false);
+
   // Saved clips
   const [savedClips, setSavedClips] = useState<SavedClip[]>([]);
 
@@ -266,6 +271,14 @@ export default function SchedulerPage() {
   const hasConnections = connections.length > 0;
   const todayStr       = new Date().toISOString().split('T')[0];
   const canSchedule    = modalClipId && selectedConnIds.length > 0 && modalDate && modalTime && !submitting;
+
+  // Quick-clear id lists (across ALL posts, not just filtered)
+  const failedClearIds = scheduledPosts
+    .filter(p => getEffectiveStatus(p) === 'not_published')
+    .map(p => p.id);
+  const pastClearIds = scheduledPosts
+    .filter(p => new Date(p.scheduled_at) < new Date() && (p.status === 'published' || getEffectiveStatus(p) === 'not_published'))
+    .map(p => p.id);
 
   // Sidebar filtered connections
   const sidebarConnections = useMemo(() => {
@@ -528,6 +541,27 @@ export default function SchedulerPage() {
     finally { setCancellingId(null); }
   };
 
+  // ── Bulk delete ───────────────────────────────────────────────────────────────
+
+  const handleDeletePosts = async (ids: string[]) => {
+    setBulkDeleting(true);
+    try {
+      const res  = await fetch('/api/scheduled-posts', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setBanner({ type: 'error', msg: data.error ?? 'Failed to delete posts.' }); return; }
+      setScheduledPosts(prev => prev.filter(p => !ids.includes(p.id)));
+      setSelectedIds(new Set());
+      setConfirmDialog(null);
+      if (previewPost && ids.includes(previewPost.id)) closePreview();
+      setBanner({ type: 'success', msg: `${data.deleted} post${data.deleted !== 1 ? 's' : ''} deleted.` });
+    } catch { setBanner({ type: 'error', msg: 'Network error. Please try again.' }); }
+    finally { setBulkDeleting(false); }
+  };
+
   // ── Export CSV ────────────────────────────────────────────────────────────────
 
   const exportCSV = () => {
@@ -549,14 +583,19 @@ export default function SchedulerPage() {
 
   // ── Render: post card (list / day views) ──────────────────────────────────────
 
-  const renderPostCard = (post: ScheduledPost) => {
+  const renderPostCard = (post: ScheduledPost, selectable = false) => {
     const plat           = PLATFORMS.find(p => p.id === post.platform);
     const effSt          = STATUS_STYLE[getEffectiveStatus(post)] ?? STATUS_STYLE.scheduled;
     const { date, time } = formatScheduledAt(post.scheduled_at);
     const isCancelling   = cancellingId === post.id;
     const canCancel      = post.status === 'scheduled';
+    const isSelected     = selectedIds.has(post.id);
+    const toggleSelect   = (e: React.MouseEvent) => { e.stopPropagation(); setSelectedIds(prev => { const n = new Set(prev); isSelected ? n.delete(post.id) : n.add(post.id); return n; }); };
     return (
-      <div key={post.id} onClick={() => openPreview(post)} style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.07)', borderLeft: `3px solid ${effSt.color}`, borderRadius: radius.lg, padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer' }}>
+      <div key={post.id} onClick={() => openPreview(post)} style={{ background: isSelected ? 'rgba(124,58,237,0.04)' : '#fff', border: isSelected ? '1px solid rgba(124,58,237,0.25)' : '1px solid rgba(0,0,0,0.07)', borderLeft: `3px solid ${effSt.color}`, borderRadius: radius.lg, padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer' }}>
+        {selectable && (
+          <input type="checkbox" checked={isSelected} onChange={() => {}} onClick={toggleSelect} style={{ width: 15, height: 15, flexShrink: 0, cursor: 'pointer', accentColor: '#7C3AED' }} />
+        )}
         {post.clips?.thumbnail_url
           ? <img src={post.clips.thumbnail_url} alt="" style={{ width: 28, height: 50, objectFit: 'cover', borderRadius: 4, flexShrink: 0 }} />
           : <div style={{ width: 28, height: 50, borderRadius: 4, background: plat?.bgColor ?? '#f0ede9', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{plat?.iconSm ?? '📱'}</div>
@@ -704,7 +743,7 @@ export default function SchedulerPage() {
       .sort((a, b) => new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime());
     return dayPosts.length === 0
       ? <div style={{ textAlign: 'center', padding: '40px 0', fontSize: 13, color: colors.onSurfaceVariant }}>No posts on this day.</div>
-      : <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>{dayPosts.map(renderPostCard)}</div>;
+      : <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>{dayPosts.map(p => renderPostCard(p))}</div>;
   };
 
   // ── Render: mobile calendar fallback ─────────────────────────────────────────
@@ -726,7 +765,7 @@ export default function SchedulerPage() {
           {keys.map(k => (
             <div key={k}>
               <p style={{ fontSize: 11, fontWeight: 700, color: colors.onSurfaceVariant, textTransform: 'uppercase', letterSpacing: '0.07em', margin: '0 0 6px' }}>{new Date(k).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</p>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>{byDay[k].map(renderPostCard)}</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>{byDay[k].map(p => renderPostCard(p))}</div>
             </div>
           ))}
         </div>;
@@ -742,6 +781,16 @@ export default function SchedulerPage() {
     const sortArrow = (col: 'date' | 'status') => sortCol === col ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ' ↕';
     const thSt: React.CSSProperties = { padding: '10px 12px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: colors.onSurfaceVariant, textTransform: 'uppercase', letterSpacing: '0.06em', background: '#F9F7F5', borderBottom: '1px solid rgba(0,0,0,0.08)', whiteSpace: 'nowrap', position: 'sticky', top: 0, zIndex: 1 };
     const tdSt: React.CSSProperties = { padding: '10px 12px', fontSize: 12, color: colors.onSurface, borderBottom: '1px solid rgba(0,0,0,0.05)', verticalAlign: 'middle' };
+    const allFilteredSelected = sortedFilteredPosts.length > 0 && sortedFilteredPosts.every(p => selectedIds.has(p.id));
+    const someFilteredSelected = sortedFilteredPosts.some(p => selectedIds.has(p.id));
+    const toggleAllFiltered = () => {
+      setSelectedIds(prev => {
+        const n = new Set(prev);
+        if (allFilteredSelected) sortedFilteredPosts.forEach(p => n.delete(p.id));
+        else sortedFilteredPosts.forEach(p => n.add(p.id));
+        return n;
+      });
+    };
     return (
       <div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
@@ -755,6 +804,9 @@ export default function SchedulerPage() {
               <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 900 }}>
                 <thead>
                   <tr>
+                    <th style={{ ...thSt, width: 40, textAlign: 'center' }}>
+                      <input type="checkbox" checked={allFilteredSelected} ref={el => { if (el) el.indeterminate = someFilteredSelected && !allFilteredSelected; }} onChange={toggleAllFiltered} style={{ cursor: 'pointer', accentColor: '#7C3AED' }} />
+                    </th>
                     <th onClick={() => toggleSort('date')} style={{ ...thSt, cursor: 'pointer' }}>Date{sortArrow('date')}</th>
                     <th style={thSt}>Time</th>
                     <th style={thSt}>Account</th>
@@ -774,7 +826,10 @@ export default function SchedulerPage() {
                     const effSt  = STATUS_STYLE[getEffectiveStatus(p)] ?? STATUS_STYLE.scheduled;
                     const rowBg  = idx % 2 === 0 ? '#fff' : '#FAFAF9';
                     return (
-                      <tr key={p.id} onClick={() => openPreview(p)} style={{ background: rowBg, cursor: 'pointer', borderLeft: `3px solid ${effSt.color}` }}>
+                      <tr key={p.id} onClick={() => openPreview(p)} style={{ background: selectedIds.has(p.id) ? 'rgba(124,58,237,0.04)' : rowBg, cursor: 'pointer', borderLeft: `3px solid ${effSt.color}`, outline: selectedIds.has(p.id) ? '1px solid rgba(124,58,237,0.2)' : 'none' }}>
+                        <td style={{ ...tdSt, textAlign: 'center', width: 40 }} onClick={e => { e.stopPropagation(); setSelectedIds(prev => { const n = new Set(prev); selectedIds.has(p.id) ? n.delete(p.id) : n.add(p.id); return n; }); }}>
+                          <input type="checkbox" checked={selectedIds.has(p.id)} onChange={() => {}} style={{ cursor: 'pointer', accentColor: '#7C3AED' }} />
+                        </td>
                         <td style={tdSt}>{date}</td>
                         <td style={tdSt}>{time}</td>
                         <td style={tdSt}>
@@ -838,7 +893,7 @@ export default function SchedulerPage() {
         {upcomingGroups.map(group => (
           <div key={group.key}>
             <p style={{ fontSize: 11, fontWeight: 700, color: colors.onSurfaceVariant, textTransform: 'uppercase', letterSpacing: '0.07em', margin: '0 0 8px' }}>{group.label}</p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>{group.posts.map(renderPostCard)}</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>{group.posts.map(p => renderPostCard(p, true))}</div>
           </div>
         ))}
       </div>
@@ -848,7 +903,7 @@ export default function SchedulerPage() {
             <span style={{ fontSize: 10 }}>{showPast ? '▲' : '▼'}</span>
             {showPast ? 'Hide' : `Show ${pastPosts.length} past post${pastPosts.length !== 1 ? 's' : ''}`}
           </button>
-          {showPast && <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8, opacity: 0.7 }}>{pastPosts.map(renderPostCard)}</div>}
+          {showPast && <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8, opacity: 0.7 }}>{pastPosts.map(p => renderPostCard(p, true))}</div>}
         </div>
       )}
     </div>
@@ -1044,6 +1099,24 @@ export default function SchedulerPage() {
             <span style={{ fontSize: 11, color: colors.onSurfaceVariant, marginLeft: 4 }}>Connect an account to schedule posts.</span>
           )}
         </div>
+
+        {/* Quick-clear buttons — sheet / list only */}
+        {(calView === 'sheet' || calView === 'list') && (failedClearIds.length > 0 || pastClearIds.length > 0) && (
+          <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
+            {failedClearIds.length > 0 && (
+              <button onClick={() => setConfirmDialog({ ids: failedClearIds, message: `Delete ${failedClearIds.length} not-published post${failedClearIds.length !== 1 ? 's' : ''}? This can't be undone.` })}
+                style={{ fontSize: 11, fontWeight: 600, color: '#DC2626', background: 'rgba(220,38,38,0.06)', border: '1px solid rgba(220,38,38,0.2)', borderRadius: radius.md, padding: '5px 12px', cursor: 'pointer', fontFamily: "'Inter',sans-serif" }}>
+                Clear failed ({failedClearIds.length})
+              </button>
+            )}
+            {pastClearIds.length > 0 && (
+              <button onClick={() => setConfirmDialog({ ids: pastClearIds, message: `Delete ${pastClearIds.length} past post${pastClearIds.length !== 1 ? 's' : ''}? This can't be undone.` })}
+                style={{ fontSize: 11, fontWeight: 600, color: colors.onSurfaceVariant, background: colors.surfaceContainerHighest, border: '1px solid rgba(0,0,0,0.1)', borderRadius: radius.md, padding: '5px 12px', cursor: 'pointer', fontFamily: "'Inter',sans-serif" }}>
+                Clear past posts ({pastClearIds.length})
+              </button>
+            )}
+          </div>
+        )}
       </div>
     );
   };
@@ -1188,6 +1261,11 @@ export default function SchedulerPage() {
                       View Published Post ↗
                     </a>
                   )}
+                  <button
+                    onClick={() => setConfirmDialog({ ids: [previewPost.id], message: "Delete this post? This can't be undone." })}
+                    style={{ padding: '10px', borderRadius: radius.md, border: '1px solid rgba(220,38,38,0.25)', background: 'rgba(220,38,38,0.06)', color: '#DC2626', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: "'Inter',sans-serif" }}>
+                    Delete Post
+                  </button>
                   <button onClick={closePreview} style={{ padding: '10px', borderRadius: radius.md, border: '1px solid rgba(0,0,0,0.1)', background: colors.surfaceContainerHighest, color: colors.onSurface, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: "'Inter',sans-serif" }}>Close</button>
                 </div>
               </div>
@@ -1195,6 +1273,38 @@ export default function SchedulerPage() {
           </div>
         );
       })()}
+
+      {/* ── Bulk action bar ── */}
+      {selectedIds.size > 0 && (
+        <div style={{ position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', zIndex: 55, background: '#1A1714', borderRadius: radius.full, padding: '10px 20px', display: 'flex', alignItems: 'center', gap: 16, boxShadow: '0 4px 24px rgba(0,0,0,0.35)', whiteSpace: 'nowrap' }}>
+          <span style={{ fontSize: 13, fontWeight: 600, color: '#fff' }}>{selectedIds.size} selected</span>
+          <span style={{ width: 1, height: 18, background: 'rgba(255,255,255,0.15)' }} />
+          <button
+            onClick={() => setConfirmDialog({ ids: Array.from(selectedIds), message: `Delete ${selectedIds.size} post${selectedIds.size !== 1 ? 's' : ''}? This can't be undone.` })}
+            style={{ fontSize: 12, fontWeight: 700, color: '#FCA5A5', background: 'rgba(220,38,38,0.2)', border: '1px solid rgba(220,38,38,0.4)', borderRadius: radius.md, padding: '5px 14px', cursor: 'pointer', fontFamily: "'Inter',sans-serif" }}>
+            Delete
+          </button>
+          <button onClick={() => setSelectedIds(new Set())} style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.6)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'Inter',sans-serif", padding: '5px 4px' }}>
+            Cancel
+          </button>
+        </div>
+      )}
+
+      {/* ── Confirm delete dialog ── */}
+      {confirmDialog && (
+        <div onClick={() => { if (!bulkDeleting) setConfirmDialog(null); }} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 70, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: '#F5F3EF', borderRadius: radius.xl, padding: '28px', width: '100%', maxWidth: 380 }}>
+            <h3 style={{ margin: '0 0 10px', fontSize: 16, fontWeight: 800, color: colors.onSurface }}>Confirm Delete</h3>
+            <p style={{ margin: '0 0 24px', fontSize: 14, color: colors.onSurfaceVariant, lineHeight: 1.6 }}>{confirmDialog.message}</p>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button onClick={() => setConfirmDialog(null)} disabled={bulkDeleting} style={{ flex: 1, padding: '10px', borderRadius: radius.md, border: '1px solid rgba(0,0,0,0.1)', background: colors.surfaceContainerHighest, color: colors.onSurface, fontSize: 13, fontWeight: 600, cursor: bulkDeleting ? 'default' : 'pointer', fontFamily: "'Inter',sans-serif" }}>Cancel</button>
+              <button onClick={() => handleDeletePosts(confirmDialog.ids)} disabled={bulkDeleting} style={{ flex: 1, padding: '10px', borderRadius: radius.md, border: 'none', background: bulkDeleting ? colors.surfaceContainerHighest : '#DC2626', color: bulkDeleting ? colors.onSurfaceVariant : '#fff', fontSize: 13, fontWeight: 700, cursor: bulkDeleting ? 'default' : 'pointer', fontFamily: "'Inter',sans-serif" }}>
+                {bulkDeleting ? 'Deleting…' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Compose Modal ── */}
       {showModal && (
