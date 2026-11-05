@@ -587,6 +587,7 @@ export default function ImportPage() {
   const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pollDeadlineRef = useRef<number>(0);
   const startUploadPollRef = useRef<((jobId: string) => void) | null>(null);
+  const urlCheckTimerRef   = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [inputTab, setInputTab] = useState<'youtube' | 'upload'>('youtube');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -599,6 +600,7 @@ export default function ImportPage() {
   const [engagementDismissed, setEngagementDismissed] = useState(false);
   const [msgIdx, setMsgIdx] = useState(0);
   const [clipsReadyBanner, setClipsReadyBanner] = useState(false);
+  const [isUrlAlreadyProcessing, setIsUrlAlreadyProcessing] = useState(false);
 
   const CLIPPING_MESSAGES = [
     'Analyzing your video...',
@@ -725,6 +727,27 @@ export default function ImportPage() {
     } catch(e) {}
   }, []);
 
+  // Disable submit and show info when a clip_job for this URL is already running
+  useEffect(() => {
+    if (urlCheckTimerRef.current) clearTimeout(urlCheckTimerRef.current);
+    if (inputTab !== 'youtube' || !videoUrl.startsWith('http')) {
+      setIsUrlAlreadyProcessing(false);
+      return;
+    }
+    urlCheckTimerRef.current = setTimeout(async () => {
+      const threeHoursAgo = new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString();
+      const { data: existing } = await supabase
+        .from('clip_jobs')
+        .select('task_id')
+        .eq('source_name', videoUrl)
+        .eq('status', 'processing')
+        .gte('created_at', threeHoursAgo)
+        .maybeSingle();
+      setIsUrlAlreadyProcessing(!!existing);
+    }, 500);
+    return () => { if (urlCheckTimerRef.current) clearTimeout(urlCheckTimerRef.current); };
+  }, [videoUrl, inputTab]);
+
   const isValidUrl = videoUrl.startsWith("http");
   const isYouTube =
     videoUrl.includes("youtube.com") || videoUrl.includes("youtu.be");
@@ -732,7 +755,8 @@ export default function ImportPage() {
     (inputTab === 'youtube' ? !isValidUrl : !selectedFile) ||
     loading ||
     (inputTab === 'upload' && durationLoading) ||
-    (inputTab === 'upload' && uploadInsufficientCredits);
+    (inputTab === 'upload' && uploadInsufficientCredits) ||
+    (inputTab === 'youtube' && isUrlAlreadyProcessing);
 
   const handleUrlChange = (url: string) => {
     setVideoUrl(url);
@@ -912,6 +936,15 @@ export default function ImportPage() {
       });
 
       const data = await response.json();
+
+      // Backend (or our route) says this URL is already being processed —
+      // resume polling the existing job silently.
+      if (data.already_processing && data.task_id) {
+        setStatus('processing');
+        setIsUrlAlreadyProcessing(false); // polling is now driving the UI
+        pollClipStatus(data.task_id);
+        return;
+      }
 
       if (!response.ok || data.success === false) {
         setError(data.error || "Processing failed.");
@@ -1756,6 +1789,14 @@ export default function ImportPage() {
 
             {/* Error */}
             {error && <ErrorBanner message={error} onClose={() => setError(null)} />}
+
+            {/* Already-processing info */}
+            {inputTab === 'youtube' && isUrlAlreadyProcessing && !loading && (
+              <div style={{ padding: '10px 14px', borderRadius: radius.md, background: 'rgba(234,179,8,0.08)', border: '1px solid rgba(234,179,8,0.3)', fontSize: 12, color: colors.onSurface, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span>⏳</span>
+                <span>Already processing this video — we&apos;ll notify you when clips are ready.</span>
+              </div>
+            )}
 
             {/* Generate Button */}
             <button

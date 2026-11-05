@@ -141,6 +141,30 @@ export async function POST(req: NextRequest) {
 
     const data = await serverResponse.json();
 
+    // When WayinVideo says the video is already being processed, resume the
+    // existing clip_jobs row instead of surfacing an error to the user.
+    if (!serverResponse.ok) {
+      const msg = String(data?.error ?? data?.detail ?? '').toLowerCase();
+      if (
+        msg.includes('similar task') ||
+        msg.includes('already in progress') ||
+        serverResponse.status === 409
+      ) {
+        const { data: existing } = await admin
+          .from('clip_jobs')
+          .select('task_id')
+          .eq('user_id', user.id)
+          .eq('source_name', videoUrl)
+          .eq('status', 'processing')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (existing) {
+          return NextResponse.json({ task_id: existing.task_id, already_processing: true });
+        }
+      }
+    }
+
     // Store task_id → user mapping so clip-status can deduct on completion
     if (serverResponse.ok && data.task_id) {
       await admin.from('clip_jobs').insert({
