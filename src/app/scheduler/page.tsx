@@ -76,20 +76,18 @@ const PLATFORMS: { id: string; label: string; sublabel: string; icon: React.Reac
 ];
 
 const POST_STATUSES = [
-  { label: 'Scheduled',     desc: 'Queued and waiting for its posting time.',         bg: 'rgba(59,130,246,0.10)',  color: '#2563EB' },
-  { label: 'Publishing',    desc: 'Being sent to the platform right now.',             bg: 'rgba(245,158,11,0.10)',  color: '#D97706' },
-  { label: 'Published',     desc: 'Live on the platform. Shareable link available.',  bg: 'rgba(5,150,105,0.10)',   color: '#059669' },
-  { label: 'Failed',        desc: "Something went wrong. We'll retry or notify you.", bg: 'rgba(220,38,38,0.10)',   color: '#DC2626' },
-  { label: 'Not Published', desc: 'Failed, cancelled, or missed the posting window.', bg: 'rgba(220,38,38,0.10)',   color: '#DC2626' },
+  { label: 'Scheduled',  desc: 'Queued — before the posting time, or while Post for Me is working on it.', bg: 'rgba(59,130,246,0.10)', color: '#2563EB' },
+  { label: 'Posted',     desc: 'Live on the platform. Click the link to view the post.',                   bg: 'rgba(5,150,105,0.10)',  color: '#059669' },
+  { label: 'Not posted', desc: 'Post for Me reported a failure, or no result after 2 hours.',              bg: 'rgba(220,38,38,0.10)',  color: '#DC2626' },
 ];
 
 const STATUS_STYLE: Record<string, { bg: string; color: string; label: string }> = {
-  scheduled:     { bg: 'rgba(59,130,246,0.12)',  color: '#2563EB', label: 'Scheduled'     },
-  publishing:    { bg: 'rgba(245,158,11,0.12)',  color: '#D97706', label: 'Publishing'    },
-  published:     { bg: 'rgba(5,150,105,0.12)',   color: '#059669', label: 'Published'     },
-  failed:        { bg: 'rgba(220,38,38,0.12)',   color: '#DC2626', label: 'Failed'        },
-  cancelled:     { bg: 'rgba(0,0,0,0.06)',       color: '#9CA3AF', label: 'Cancelled'     },
-  not_published: { bg: 'rgba(220,38,38,0.12)',   color: '#DC2626', label: 'Not Published' },
+  scheduled:     { bg: 'rgba(59,130,246,0.12)', color: '#2563EB', label: 'Scheduled'  },
+  publishing:    { bg: 'rgba(59,130,246,0.12)', color: '#2563EB', label: 'Scheduled'  },
+  published:     { bg: 'rgba(5,150,105,0.12)',  color: '#059669', label: 'Posted'     },
+  failed:        { bg: 'rgba(220,38,38,0.12)',  color: '#DC2626', label: 'Not posted' },
+  cancelled:     { bg: 'rgba(220,38,38,0.12)',  color: '#DC2626', label: 'Not posted' },
+  not_published: { bg: 'rgba(220,38,38,0.12)',  color: '#DC2626', label: 'Not posted' },
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -97,8 +95,8 @@ const STATUS_STYLE: Record<string, { bg: string; color: string; label: string }>
 function getEffectiveStatus(post: { status: string; scheduled_at: string }): string {
   const d = new Date(post.scheduled_at), now = new Date();
   if (post.status === 'failed' || post.status === 'cancelled') return 'not_published';
-  if (post.status === 'scheduled'  && d < new Date(now.getTime() - 15 * 60_000)) return 'not_published';
-  if (post.status === 'publishing' && d < new Date(now.getTime() - 30 * 60_000)) return 'not_published';
+  if ((post.status === 'scheduled' || post.status === 'publishing') && d < new Date(now.getTime() - 2 * 60 * 60_000)) return 'not_published';
+  if (post.status === 'publishing') return 'scheduled';
   return post.status;
 }
 
@@ -1079,9 +1077,8 @@ export default function SchedulerPage() {
           <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} style={{ ...selSt, fontSize: 11 }}>
             <option value="">All statuses</option>
             <option value="scheduled">Scheduled</option>
-            <option value="publishing">Publishing</option>
-            <option value="published">Published</option>
-            <option value="not_published">Not Published</option>
+            <option value="published">Posted</option>
+            <option value="not_published">Not posted</option>
           </select>
 
           {/* Date range */}

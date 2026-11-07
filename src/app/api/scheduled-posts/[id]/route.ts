@@ -17,8 +17,7 @@ function getEffectiveStatusServer(status: string, scheduledAt: string): string {
   const d   = new Date(scheduledAt);
   const now = new Date();
   if (status === 'failed' || status === 'cancelled') return 'not_published';
-  if (status === 'scheduled'  && d < new Date(now.getTime() - 15 * 60_000)) return 'not_published';
-  if (status === 'publishing' && d < new Date(now.getTime() - 30 * 60_000)) return 'not_published';
+  if ((status === 'scheduled' || status === 'publishing') && d < new Date(now.getTime() - 2 * 60 * 60_000)) return 'not_published';
   return status;
 }
 
